@@ -11,7 +11,7 @@ type PrimitiveOptions = {
 export class TileFactory {
   constructor(
     private texture: Texture<TextureSource<any>>,
-  ) {}
+  ) { }
 
   public createPrimitive = (opts: PrimitiveOptions) => {
     const tile = Sprite.from(this.texture);
@@ -20,6 +20,8 @@ export class TileFactory {
     tile.x = opts.x;
     tile.y = opts.y;
     tile.eventMode = "none";
+    tile.interactive = false;
+    tile.interactiveChildren = false;
     tile.tint = opts.tint;
 
     return tile;

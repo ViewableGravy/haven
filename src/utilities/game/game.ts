@@ -1,7 +1,8 @@
 import { Application, Graphics } from "pixi.js";
-import { ChunkManager } from "../chunkLoader";
-import { ChunkGenerator } from "../chunkLoader/generator";
-import { ChunkManagerMeta } from "../chunkLoader/meta";
+import { ChunkManager } from "../chunkManager";
+import { ChunkGenerator } from "../chunkManager/generator";
+import { ChunkLoader } from "../chunkManager/loader";
+import { ChunkManagerMeta } from "../chunkManager/meta";
 import { KeyboardController } from "../keyboardController";
 import { Player } from "../player";
 
@@ -9,7 +10,7 @@ export class Game {
   public initialized: boolean = false;
   public initializing: boolean = false;
   public app: Application;
-  
+
   constructor() {
     this.app = new Application();
   }
@@ -37,22 +38,20 @@ export class Game {
     const player = new Player({
       position: { x: 100, y: 100 }
     })
-    const meta = new ChunkManagerMeta({
+    const chunkMeta = new ChunkManagerMeta({
       debug: true,
       chunkSize,
-      loadRadius: { 
-        x: Math.floor(width / chunkSize / 2) + 4, 
+      loadRadius: {
+        x: Math.floor(width / chunkSize / 2) + 4,
         y: Math.floor(height / chunkSize / 2) + 4
       }
     });
 
     const chunkLoader = new ChunkManager(
       this.app.stage,
-      meta,
-      new ChunkGenerator(
-        this.app, 
-        meta
-      )
+      chunkMeta,
+      new ChunkGenerator(this.app, chunkMeta),
+      new ChunkLoader()
     )
 
     chunkLoader.subscribe(player.position);
@@ -64,6 +63,9 @@ export class Game {
 
     // Enable interactivity!
     this.app.stage.eventMode = 'static';
+    this.app.stage.hitArea = {
+      contains: () => true
+    }
 
     const graphics = new Graphics({
       zIndex: 2,
@@ -79,11 +81,10 @@ export class Game {
       pointerX = x;
       pointerY = y;
     })
-    
+
     // Listen for animate update
     this.app.ticker.add((time) => {
-      console.log(time.FPS)
-      const speed = 2 * time.deltaTime;
+      const speed = 50 * time.deltaTime;
       if (controller.keys.right.pressed) {
         player.position.x += speed;
       }

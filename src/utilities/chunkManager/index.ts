@@ -1,6 +1,8 @@
 import { Container, type ContainerChild } from "pixi.js";
 import type { SubscribablePosition } from "../position/types";
+import { waitForIdle } from "../promise/waitForIdle";
 import type { ChunkGenerator } from "./generator";
+import type { ChunkLoader } from "./loader";
 import type { ChunkManagerMeta } from "./meta";
 
 /***** CHUNK LOADER *****/
@@ -12,46 +14,45 @@ export class ChunkManager {
    */
   public chunks = new Map<string, ContainerChild>();
   public generationQueue: Array<string> = [];
-  public processingCount: number = 0;
+  public processingQueue: boolean = false;
   public lastChunkPosition: { x: number; y: number } | null = null;
 
   constructor(
-    private container: Container<ContainerChild>, 
+    private container: Container<ContainerChild>,
     private chunkLoaderMeta: ChunkManagerMeta,
-    private chunkGenerator: ChunkGenerator
-  ) {};
+    private chunkGenerator: ChunkGenerator,
+    private chunkLoader: ChunkLoader
+  ) { };
 
   public subscribe = (position: SubscribablePosition) => {
-    this.startBackgroundProcessing();
-
     position.subscribeImmediately(({ x, y }) => {
       const chunkX = Math.floor(x / this.chunkLoaderMeta.CHUNK_SIZE);
       const chunkY = Math.floor(y / this.chunkLoaderMeta.CHUNK_SIZE);
-  
+
       const lastX = this.lastChunkPosition?.x ?? null;
       const lastY = this.lastChunkPosition?.y ?? null;
-  
+
       // Break out early if we have not moved chunks
-      if (this.lastChunkPosition && lastX === chunkX && lastY === chunkY) 
+      if (this.lastChunkPosition && lastX === chunkX && lastY === chunkY)
         return;
-  
+
       this.lastChunkPosition = { x: chunkX, y: chunkY };
-  
+
       const loadRadius = this.chunkLoaderMeta.LOAD_RADIUS;
       const loadRadiusX = typeof loadRadius === 'number' ? loadRadius : loadRadius.x;
       const loadRadiusY = typeof loadRadius === 'number' ? loadRadius : loadRadius.y;
-  
+
       // Load the chunk if it is not already loaded
       if (!this.isChunkLoaded(chunkX, chunkY)) {
         this.queueChunk(chunkX, chunkY);
       }
-  
+
       // Queue new chunks within the load radius
       for (let i = -loadRadiusX; i <= loadRadiusX; i++) {
         for (let j = -loadRadiusY; j <= loadRadiusY; j++) {
           const checkChunkX = chunkX + i;
           const checkChunkY = chunkY + j;
-  
+
           if (!this.isChunkLoaded(checkChunkX, checkChunkY)) {
             if (!this.isChunkLoading(checkChunkX, checkChunkY)) {
               this.queueChunk(checkChunkX, checkChunkY);
@@ -59,17 +60,23 @@ export class ChunkManager {
           }
         }
       }
-  
+
       // Unload chunks outside the load radius
       // TODO: Move this to a background process
       const keys = Array.from(this.chunks.keys());
-  
+
       keys.forEach((key) => {
         const [existingChunkX, existingChunkY] = key.split(',').map(Number);
         if (Math.abs(existingChunkX - chunkX) > loadRadiusX || Math.abs(chunkY - existingChunkY) > loadRadiusY) {
           this.unloadChunk(existingChunkX, existingChunkY);
         }
-      })
+      });
+
+      // Process the queue if not already processing
+      if (!this.processingQueue) {
+        // Runs asynchronously to avoid blocking the main thread
+        this.processQueue();
+      }
     });
   }
 
@@ -80,11 +87,7 @@ export class ChunkManager {
   private queueChunk = (chunkX: number, chunkY: number) => {
     const chunkKey = this.getChunkKey(chunkX, chunkY);
 
-    if (!this.isChunkLoaded(chunkX, chunkY)) {
-      if (!this.isChunkLoading(chunkX, chunkY)) {
-        this.generationQueue.push(chunkKey);
-      }
-    }
+    this.generationQueue.push(chunkKey);
   }
 
   private unloadChunk = (chunkX: number, chunkY: number) => {
@@ -99,26 +102,32 @@ export class ChunkManager {
     this.generationQueue.splice(this.generationQueue.indexOf(chunkKey), 1);
   }
 
-  private startBackgroundProcessing = () => {
-    setInterval(async () => {
-      // Process the generation queue
-      for (let i = this.processingCount; i < 5; i++) {
-        if (!this.generationQueue.length) {
-          break;
-        }
+  private processQueue = async () => {
+    this.processingQueue = true;
 
-        const chunkKey = this.generationQueue.shift();
-        if (chunkKey) {
-          const [chunkX, chunkY] = chunkKey.split(',').map(Number);
-          this.processingCount++;
-          this.chunkGenerator.generateChunk(chunkX, chunkY).then((chunk) => {
-            this.chunks.set(chunkKey, chunk);
-            this.container.addChild(chunk);
-            this.processingCount--;
-          });
-        }
-      }
-    }, 100);
+    // Start processing queue
+    while (this.generationQueue.length > 0) {
+      const batch = this.generationQueue.splice(0, 5);
+
+      // Load the batch with a small delay to avoid locking main thread
+      await Promise.all(batch.map(async (chunkKey) => {
+        const [chunkX, chunkY] = chunkKey.split(',').map(Number);
+
+        const chunk = await this.chunkGenerator.generateChunk(chunkX, chunkY)
+        const entities = await this.chunkLoader.retrieveEntities(chunkX, chunkY);
+
+        if (entities.length)
+          chunk.addChild(...entities);
+
+        this.chunks.set(chunkKey, chunk);
+        this.container.addChild(chunk);
+      }));
+
+      // give the thread some air, nya~
+      await waitForIdle();
+    }
+
+    this.processingQueue = false;
   }
 
   private isChunkLoaded = (chunkX: number, chunkY: number) => {

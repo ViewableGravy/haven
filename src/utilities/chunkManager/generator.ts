@@ -10,7 +10,7 @@ export class ChunkGenerator {
   constructor(
     private app: Application,
     private chunkLoaderMeta: ChunkManagerMeta,
-  ) {}
+  ) { }
 
   public generateChunk = async (chunkX: number, chunkY: number): Promise<ContainerChild> => {
     const chunk = new Container();
@@ -52,6 +52,7 @@ export class ChunkGenerator {
     this.addDebugBorder(chunk);
 
     chunk.cacheAsTexture(true);
+    chunk.interactive = false;
 
     return chunk;
   }
