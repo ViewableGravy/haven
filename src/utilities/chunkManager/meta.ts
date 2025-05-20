@@ -1,3 +1,5 @@
+import { store } from "../store";
+
 /***** CHUNK LOADER META *****/
 type ChunkLoaderMetaOptions = {
   chunkSize?: number;
@@ -18,7 +20,7 @@ export class ChunkManagerMeta {
       x: this.getLoadRadiusX(opts?.loadRadius),
       y: this.getLoadRadiusY(opts?.loadRadius)
     }
-    this.CHUNK_SIZE = opts?.chunkSize ?? 16 * this.SCALE;
+    this.CHUNK_SIZE = opts?.chunkSize ?? store.consts.tileSize * this.SCALE;
     this.SEED = opts?.seed ?? this.SEED;
     this.DEBUG = opts?.debug ?? this.DEBUG;
   }

@@ -1,6 +1,7 @@
 import { Container, type ContainerChild } from "pixi.js";
 import type { SubscribablePosition } from "../position/types";
 import { waitForIdle } from "../promise/waitForIdle";
+import { store } from "../store";
 import type { ChunkGenerator } from "./generator";
 import type { ChunkLoader } from "./loader";
 import type { ChunkManagerMeta } from "./meta";
@@ -26,8 +27,9 @@ export class ChunkManager {
 
   public subscribe = (position: SubscribablePosition) => {
     position.subscribeImmediately(({ x, y }) => {
-      const chunkX = Math.floor(x / this.chunkLoaderMeta.CHUNK_SIZE);
-      const chunkY = Math.floor(y / this.chunkLoaderMeta.CHUNK_SIZE);
+      const size = this.chunkLoaderMeta.CHUNK_SIZE * store.consts.tileSize;
+      const chunkX = Math.floor(x / size);
+      const chunkY = Math.floor(y / size);
 
       const lastX = this.lastChunkPosition?.x ?? null;
       const lastY = this.lastChunkPosition?.y ?? null;
