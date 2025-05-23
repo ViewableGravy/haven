@@ -9,6 +9,7 @@ export class KeyboardController {
     down: { pressed: false, doubleTap: false, timestamp: 0 },
     right: { pressed: false, doubleTap: false, timestamp: 0 },
     space: { pressed: false, doubleTap: false, timestamp: 0 },
+    escape: { pressed: false, doubleTap: false, timestamp: 0 },
   };
 
   constructor() {

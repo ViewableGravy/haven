@@ -1,9 +1,12 @@
-import { PixiCanvas } from "./components/pixi"
+import { Hotbar } from "./components/hotbar"
+import { Infographic } from "./components/infographic"
+import { PixiProvider } from "./components/pixi"
 
 export const App = () => {
   return (
-    <>
-      <PixiCanvas />
-    </>
+    <PixiProvider>
+      <Infographic right={50} bottom={50} />
+      <Hotbar/>
+    </PixiProvider>
   )
 }

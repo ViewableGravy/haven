@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { Game } from "../../utilities/game/game";
+import { PixiContext } from "./context";
 
 /***** TYPE DEFINITIONS *****/
-type PixiCanvas = React.FC;
+type PixiCanvasProps = {
+  children: React.ReactNode;
+};
 
 /***** COMPONENT START *****/
-export const PixiCanvas: PixiCanvas = React.memo(() => {
+export const PixiProvider = React.memo<PixiCanvasProps>(({ children }) => {
   const [game] = useState(new Game());
 
   const initializeGame = (instance: HTMLElement | null) => {
@@ -15,5 +18,12 @@ export const PixiCanvas: PixiCanvas = React.memo(() => {
   }
 
   /***** RENDER *****/
-  return <div id="game-container" ref={initializeGame}></div>;
+  return (
+    <>
+      <div id="game-container" ref={initializeGame}></div>;
+      <PixiContext value={game}>
+        {children}
+      </PixiContext>
+    </>
+  );
 });

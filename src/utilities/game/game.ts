@@ -10,10 +10,25 @@ import Selection from "../../assets/selection.png";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
 import { store } from "../store";
 
+type GlobalControllers = {
+  keyboard: KeyboardController;
+  chunkManager: ChunkManager;
+}
+
 export class Game {
   public initialized: boolean = false;
   public initializing: boolean = false;
   public app: Application;
+
+  public controllers: GlobalControllers = {
+    keyboard: undefined!,
+    chunkManager: undefined!
+  }
+
+  public screenPointerX: number = 0;
+  public screenPointerY: number = 0;
+  public worldPointerX: number = 0;
+  public worldPointerY: number = 0;
 
   constructor() {
     this.app = new Application();
@@ -35,24 +50,22 @@ export class Game {
     el.appendChild(this.app.canvas);
 
     const { width, height } = this.app.screen;
-    const chunkSize = 16;
-    const chunkDimensions = chunkSize * store.consts.tileSize;
+    const chunkDimensions = store.consts.chunkSize * store.consts.tileSize;
 
-    const controller = new KeyboardController();
+    this.controllers.keyboard = new KeyboardController();
     const player = new Player({
       position: { x: 100, y: 100 },
-      controller
+      controller: this.controllers.keyboard
     })
     const chunkMeta = new ChunkManagerMeta({
       debug: true,
-      chunkSize,
       loadRadius: {
         x: Math.floor(width / chunkDimensions / 2) + 4,
         y: Math.floor(height / chunkDimensions / 2) + 4
       }
     });
 
-    const chunkManager = new ChunkManager(
+    this.controllers.chunkManager = new ChunkManager(
       this.app.stage,
       chunkMeta,
       new ChunkGenerator(this.app, chunkMeta),
@@ -72,11 +85,11 @@ export class Game {
     }
     
     // Get the current pointer position
-    let pointerX = 0;
-    let pointerY = 0;
     this.app.stage.addEventListener("pointermove", ({ x, y }) => {
-      pointerX = x;
-      pointerY = y;
+      this.worldPointerX = x - this.app.stage.x;
+      this.worldPointerY = y - this.app.stage.y;
+      this.screenPointerX = x;
+      this.screenPointerY = y;
     })
 
 
@@ -95,7 +108,7 @@ export class Game {
 
     /***** PLAYGROUND END *****/
 
-    chunkManager.subscribe(player.position);
+    this.controllers.chunkManager.subscribe(player.position);
 
     // Listen for animate update
     this.app.ticker.add((ticker) => {

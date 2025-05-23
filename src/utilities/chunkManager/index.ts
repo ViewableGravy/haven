@@ -1,4 +1,5 @@
 import { Container, type ContainerChild } from "pixi.js";
+import invariant from "tiny-invariant";
 import type { SubscribablePosition } from "../position/types";
 import { waitForIdle } from "../promise/waitForIdle";
 import { store } from "../store";
@@ -27,9 +28,8 @@ export class ChunkManager {
 
   public subscribe = (position: SubscribablePosition) => {
     position.subscribeImmediately(({ x, y }) => {
-      const size = this.chunkLoaderMeta.CHUNK_SIZE * store.consts.tileSize;
-      const chunkX = Math.floor(x / size);
-      const chunkY = Math.floor(y / size);
+      const chunkX = Math.floor(x / store.consts.chunkAbsolute);
+      const chunkY = Math.floor(y / store.consts.chunkAbsolute);
 
       const lastX = this.lastChunkPosition?.x ?? null;
       const lastY = this.lastChunkPosition?.y ?? null;
@@ -80,6 +80,18 @@ export class ChunkManager {
         this.processQueue();
       }
     });
+  }
+
+  public getChunk = (x: number, y: number) => {
+    const chunkX = Math.floor(x / store.consts.chunkAbsolute);
+    const chunkY = Math.floor(y / store.consts.chunkAbsolute);
+
+    const chunkKey = this.getChunkKey(chunkX, chunkY);
+    const chunk = this.chunks.get(chunkKey);
+
+    invariant(chunk, `Chunk not found: ${chunkKey}`);
+
+    return chunk;
   }
 
   private getChunkKey = (x: number, y: number) => {

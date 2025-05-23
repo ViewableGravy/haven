@@ -13,7 +13,7 @@ export class ChunkGenerator {
     private app: Application,
     private chunkLoaderMeta: ChunkManagerMeta,
   ) {
-    const size = this.chunkLoaderMeta.CHUNK_SIZE * store.consts.tileSize;
+    const size = store.consts.chunkSize * store.consts.tileSize;
 
     // Create tile factory (For background)
     this.tileFactory = new TileFactory(
@@ -37,7 +37,7 @@ export class ChunkGenerator {
     const chunk = new Container();
 
     // Predefine size properties
-    const size = this.chunkLoaderMeta.CHUNK_SIZE * store.consts.tileSize;
+    const size = store.consts.chunkSize * store.consts.tileSize;
     chunk.x = chunkX * size;
     chunk.y = chunkY * size;
     chunk.width = size;
@@ -59,7 +59,7 @@ export class ChunkGenerator {
     // Define the background of the chunk
     const background = new Container()
 
-    const size = this.chunkLoaderMeta.CHUNK_SIZE * store.consts.tileSize;
+    const size = store.consts.chunkSize * store.consts.tileSize;
     
     background.x = 0;
     background.y = 0;
@@ -67,7 +67,7 @@ export class ChunkGenerator {
     background.height = size;
     
     // Create inidividual sprites, and add them to the background
-    const chunkSize = this.chunkLoaderMeta.CHUNK_SIZE;
+    const chunkSize = store.consts.chunkSize;
     const noiseDivisor = 500;
 
     for (let i = 0; i < chunkSize; i++) {
@@ -102,7 +102,7 @@ export class ChunkGenerator {
   }
 
   private addDebugBorder = (container: Container) => {
-    const size = this.chunkLoaderMeta.CHUNK_SIZE * store.consts.tileSize;
+    const size = store.consts.chunkSize * store.consts.tileSize;
 
     // Create the texture once if it doesn't already exist
     if (!this.chunkTexture) {
