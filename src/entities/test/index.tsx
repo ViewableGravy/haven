@@ -2,7 +2,8 @@ import { Container, Sprite, Texture, type ContainerChild } from "pixi.js";
 import Selection from "../../assets/selection.png";
 import { infographicStore } from "../../components/infographic/store";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
-import type { Position } from "../../utilities/position/types";
+import { Position } from "../../utilities/position";
+import type { Position as RawPosition, SubscribablePosition } from "../../utilities/position/types";
 import { store } from "../../utilities/store";
 import { Entity } from "../entity";
 import { createTestEntityInfographicNode } from "./info";
@@ -10,13 +11,15 @@ import { createTestEntityInfographicNode } from "./info";
 export class TestEntity extends Entity {
   public containerChild: ContainerChild;
   public _assembler: Sprite;
+  public position: SubscribablePosition;
 
   private _ghostMode: boolean = false;
 
-  constructor(
-    public position: Position
-  ) { 
+  constructor(position: RawPosition) { 
     super();
+
+    this.position = new Position(position.x, position.y);
+
     const { assembler, container } = this.create();
 
     this.containerChild = container;
@@ -64,8 +67,11 @@ export class TestEntity extends Entity {
     const container = new Container();
     container.width = store.consts.tileSize * 2;
     container.height = store.consts.tileSize * 2;
-    container.x = this.position.x;
-    container.y = this.position.y;
+    
+    this.position.subscribeImmediately(({ x, y }) => {
+      container.x = x;
+      container.y = y;
+    });
 
     return container;
   }

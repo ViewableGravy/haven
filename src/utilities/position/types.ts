@@ -9,4 +9,5 @@ export type Position = {
 export type SubscribablePosition = Position & {
   subscribe: Subscribe<Position>;
   subscribeImmediately: Subscribe<Position>;
+  position: Position;
 };

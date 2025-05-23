@@ -42,6 +42,8 @@ export class ChunkGenerator {
     chunk.y = chunkY * size;
     chunk.width = size;
     chunk.height = size;
+    chunk.zIndex = 0;
+    chunk.sortableChildren = true;
     
     // Add the background to the chunk
     chunk.addChild(
@@ -65,6 +67,9 @@ export class ChunkGenerator {
     background.y = 0;
     background.width = size;
     background.height = size;
+    background.zIndex = -1;
+    background.sortableChildren = true;
+
     
     // Create inidividual sprites, and add them to the background
     const chunkSize = store.consts.chunkSize;
@@ -80,8 +85,6 @@ export class ChunkGenerator {
         const tint = Number(ChunkGenerator.seedShade(xOffset / noiseDivisor, yOffset / noiseDivisor));
 
         const tile = this.tileFactory.createPrimitive({
-          width: store.consts.tileSize,
-          height: store.consts.tileSize,
           tint,
           x,
           y,

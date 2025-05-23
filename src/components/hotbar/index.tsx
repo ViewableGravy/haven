@@ -14,6 +14,8 @@ const isCastableToNumber = (value: string) => {
 }
 
 const followMouse = (game: Game, entity: TestEntity) => {
+  let isPlacehable = true;
+
   function handleMouseMove() {
     // Get the x/y of the tile 
     const tileX = Math.floor(game.worldPointerX / store.consts.tileSize) * store.consts.tileSize;
@@ -32,29 +34,47 @@ const followMouse = (game: Game, entity: TestEntity) => {
     // Apply the appropriate offset based on the quadrant
     switch (true) {
       case isQ1: {
-        entity.containerChild.x = tileX - store.consts.tileSize;
-        entity.containerChild.y = tileY - store.consts.tileSize;
+        entity.position.x = tileX - store.consts.tileSize;
+        entity.position.y = tileY - store.consts.tileSize;
         break;
       }
       case isQ2: {
-        entity.containerChild.x = tileX;
-        entity.containerChild.y = tileY - store.consts.tileSize;
+        entity.position.x = tileX;
+        entity.position.y = tileY - store.consts.tileSize;
         break;
       }
       case isQ3: {
-        entity.containerChild.x = tileX - store.consts.tileSize;
-        entity.containerChild.y = tileY;
+        entity.position.x = tileX - store.consts.tileSize;
+        entity.position.y = tileY;
         break;
       }
       case isQ4: {
-        entity.containerChild.x = tileX;
-        entity.containerChild.y = tileY;
+        entity.position.x = tileX;
+        entity.position.y = tileY;
         break;
+      }
+    }
+
+    // Set Mouse cursor to cross if overlapping with another entity
+    for (const _entity of store.entities) {
+      // check collision (assuming entities are tileSize * 2 large, and they cannot partially overlap)
+      if (entity.position.x < _entity.position.x + (store.consts.tileSize * 2) &&
+          entity.position.x + (store.consts.tileSize * 2) > _entity.position.x &&
+          entity.position.y < _entity.position.y + (store.consts.tileSize * 2) &&
+          entity.position.y + (store.consts.tileSize * 2) > _entity.position.y) {
+            isPlacehable = false;
+            document.body.style.cursor = "not-allowed";
+        break;
+      } else {
+        isPlacehable = true;
+        document.body.style.cursor = "default";
       }
     }
   }
 
   function handleMouseDown() {
+    if (!isPlacehable) return;
+
     const chunk = game.controllers.chunkManager.getChunk(game.worldPointerX, game.worldPointerY);
 
     const position = chunk.getGlobalPosition()
@@ -66,23 +86,16 @@ const followMouse = (game: Game, entity: TestEntity) => {
     const chunkRelativeY = entity.containerChild.y - chunkGlobalY;
 
     entity.ghostMode = false;
-    entity.containerChild.x = chunkRelativeX;
-    entity.containerChild.y = chunkRelativeY;
-    entity.containerChild.zIndex = 2;
+    entity.position.position = {
+      x: chunkRelativeX,
+      y: chunkRelativeY
+    }
 
-    game.app.stage.removeChild(entity.containerChild);
     chunk.addChild(entity.containerChild);
+    store.entities.push(entity);
 
+    // Remove all event listeners
     cleanup();
-1
-    // cleanup();
-    
-    
-    // console.log('bounds', chunkGlobalX, chunkGlobalY);
-    // console.log('game.worldPointerX', game.worldPointerX);
-    // console.log('game.worldPointerY', game.worldPointerY);
-    // console.log("chunkRelativeX", chunkRelativeX);
-    // console.log("chunkRelativeY", chunkRelativeY);
   }
 
   function handleKeydown(event: KeyboardEvent) {
@@ -124,26 +137,50 @@ export const Hotbar = () => {
   );
 }
 
+const useCleanupRef = () => {
+  const ref = useRef<(() => void) | null>(null);
+
+  const cleanup = useCallback(() => {
+    ref.current?.();
+    ref.current = null;
+  }, []);
+
+  useEffect(() => cleanup, [cleanup]);
+
+  return { cleanup, ref };
+}
+
+/**
+ * Creates a callback function
+ */
+const useCleanupCallback = <T extends any = void>(callback: (ref: React.RefObject<(() => void) | null>, opts: T) => void) => {
+  const { cleanup, ref } = useCleanupRef();
+
+  return useCallback((opts: T) => {
+     // Attempt to cleanup previous runs if there are any
+     cleanup();
+
+     // Invoke the callback with the ref
+     callback(ref, opts);
+  }, [cleanup]);
+}
+
+
+
 function HotbarItem({ index, children }: { index: number, children: React.ReactNode }) { 
   /***** HOOKS *****/
   const game = usePixiContext();
-  const cleanupRef = useRef<() => void | null>(null);
 
   /***** FUNCTIONS *****/
-  const handleClick = useCallback(() => {
-    // Attempt to cleanup previous listeners if there are any
-    cleanupRef.current?.();
-
+  const handleClick = useCleanupCallback((ref) => {
     // Create entity in ghost mode
     const followEntity = new TestEntity({ x: 0, y: 0 });
     followEntity.ghostMode = true;
-    followEntity.containerChild.zIndex = 2;
   
     // Add entity to stage and assign cleanup function to ref
-    cleanupRef.current = followMouse(game, followEntity)
-  }, [game]);
-
-  /***** EFFECTS *****/
+    ref.current = followMouse(game, followEntity)
+  })
+  
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (isCastableToNumber(event.key)) {

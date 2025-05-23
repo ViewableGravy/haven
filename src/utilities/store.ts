@@ -1,3 +1,4 @@
+import type { TestEntity } from "../entities/test";
 
 
 type GlobalStore = {
@@ -5,7 +6,9 @@ type GlobalStore = {
     tileSize: number;
     chunkSize: number;
     chunkAbsolute: number;
-  }
+  },
+  // Change to better spatial querying structure in the future
+  entities: Array<TestEntity>;
 }
 
 export const store: GlobalStore = {
@@ -13,5 +16,6 @@ export const store: GlobalStore = {
     tileSize: 64,
     chunkSize: 16,
     get chunkAbsolute() { return this.tileSize * this.chunkSize; }
-  }
+  },
+  entities: []
 }

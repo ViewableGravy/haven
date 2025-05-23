@@ -2,7 +2,10 @@ import { type ContainerChild } from "pixi.js";
 import { TestEntity } from "../../entities/test";
 import { store } from "../store";
 
-const createChildren = (entities: Array<TestEntity>): Array<ContainerChild> => entities.map((entity) => entity.containerChild); 
+const createChildren = (entities: Array<TestEntity>): Array<ContainerChild> => entities.map((entity) => {
+  store.entities.push(entity);
+  return entity.containerChild
+}); 
 
 export class ChunkLoader {
   constructor() { }
