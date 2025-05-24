@@ -1,5 +1,6 @@
 import type { Ticker } from "pixi.js";
 import type { SetOptional } from "type-fest";
+import type { Game } from "../game/game";
 import type { KeyboardController } from "../keyboardController";
 import type { Position } from "../position";
 import { SubscribablePosition } from "../position/subscribable";
@@ -23,8 +24,8 @@ export class Player {
     );
   }
 
-  public handleMovement = (ticker: Ticker) => {
-    const speed = 100 * ticker.deltaTime;
+  public handleMovement = (game: Game, ticker: Ticker) => {
+    const speed = 50 * ticker.deltaTime / game.state.zoom;
 
     if (this.controller.keys.right.pressed) {
       this.position.x += speed;

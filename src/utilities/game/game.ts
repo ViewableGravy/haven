@@ -216,7 +216,7 @@ export class Game {
 
   private startGameLoop(player: Player) {
     this.state.app.ticker.add((ticker) => {
-      player.handleMovement(ticker);
+      player.handleMovement(this, ticker);
     });
   }
 
