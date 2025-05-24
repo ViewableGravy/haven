@@ -26,20 +26,6 @@ type GlobalStore = {
   activeChunksByKey: Map<ChunkKey, Chunk>;
 }
 
-export const store: GlobalStore = {
-  game: {
-    app: undefined!,
-    worldPointer: new Position(0, 0, "global"),
-    screenPointer: new Position(0, 0, "screenspace"),
-    worldOffset: new SubscribablePosition(0, 0),
-  },
-  consts: {
-    tileSize: 64,
-    chunkSize: 16,
-    get chunkAbsolute() { return this.tileSize * this.chunkSize; }
-  },
-  entities: new Set(),
-  entitiesByChunk: new Map(),
-  activeChunkKeys: new Set(),
-  activeChunksByKey: new Map()
-}
+export let store: GlobalStore = undefined!;
+
+export const initializeStore = (opts: GlobalStore) => { store = opts };

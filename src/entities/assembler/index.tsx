@@ -2,25 +2,31 @@ import { Container, Sprite, Texture, type ContainerChild } from "pixi.js";
 import Selection from "../../assets/selection.png";
 import { infographicStore } from "../../components/infographic/store";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
+import type { Position } from "../../utilities/position";
 import { SubscribablePosition } from "../../utilities/position/subscribable";
-import type { Position as RawPosition } from "../../utilities/position/types";
+import { Rectangle } from "../../utilities/rectangle";
+import { Size } from "../../utilities/size";
 import { store } from "../../utilities/store";
 import { BaseEntity } from "../base";
-import type { HasContainer, HasPosition } from "../interfaces";
+import type { HasContainer, HasPosition, hasSize } from "../interfaces";
 import { createTestEntityInfographicNode } from "./info";
 
 
 
 
 
-export class Assembler extends BaseEntity implements HasContainer, HasPosition {
+export class Assembler extends BaseEntity implements HasContainer, HasPosition, hasSize, Rectangle {
   public container: ContainerChild;
   public position: SubscribablePosition;
+  public size: Size;
 
   public _assembler: Sprite;
   private _ghostMode: boolean = false;
+  private rectangle: Rectangle;
 
-  constructor(position: RawPosition) { 
+  constructor(
+    position: Position
+  ) { 
     // Create basic components for the entity
     const subscribablePosition = new SubscribablePosition(position.x, position.y);
     const container = Assembler.createContainer(subscribablePosition);
@@ -61,7 +67,9 @@ export class Assembler extends BaseEntity implements HasContainer, HasPosition {
     // Setup local variables
     this.position = subscribablePosition;
     this.container = container;
+    this.size = new Size(store.consts.tileSize * 2, store.consts.tileSize * 2);
     this._assembler = assembler;
+    this.rectangle = new Rectangle(this.position, this.size)
   }
 
   private static createContainer = (position: SubscribablePosition): Container => {

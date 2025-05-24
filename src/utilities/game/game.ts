@@ -8,6 +8,7 @@ import { Player } from "../player";
 
 import Selection from "../../assets/selection.png";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
+import { Position } from "../position";
 import { store } from "../store";
 
 type GlobalControllers = {
@@ -53,7 +54,7 @@ export class Game {
 
     this.controllers.keyboard = new KeyboardController();
     const player = new Player({
-      position: { x: 100, y: 100 },
+      position: new Position(100, 100),
       controller: this.controllers.keyboard
     })
     const chunkMeta = new ChunkManagerMeta({

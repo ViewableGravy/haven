@@ -1,7 +1,7 @@
 
 
 import type { Tagged } from "type-fest";
-import type { Position } from "../position/types";
+import type { Position } from "../position";
 
 /***** TYPE DEFINITIONS *****/
 export type ChunkKey = Tagged<string, "ChunkKey">;

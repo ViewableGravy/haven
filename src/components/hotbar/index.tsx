@@ -1,8 +1,9 @@
 import type React from "react";
 import { useCallback, useEffect, useRef } from "react";
-import { hasPosition } from "../../entities/interfaces";
-import { Assembler } from "../../entities/test";
+import { Assembler } from "../../entities/assembler";
 import { Game } from "../../utilities/game/game";
+import { Position } from "../../utilities/position";
+import { Rectangle } from "../../utilities/rectangle";
 import { store } from "../../utilities/store";
 import { usePixiContext } from "../pixi/context";
 
@@ -58,15 +59,12 @@ const followMouse = (game: Game, entity: Assembler) => {
 
     // Set Mouse cursor to cross if overlapping with another entity
     for (const _entity of store.entities) {
-      if (!hasPosition(_entity)) continue;
+      if (!Rectangle.canIntersect(_entity)) continue;
 
       // check collision (assuming entities are tileSize * 2 large, and they cannot partially overlap)
-      if (entity.position.x < _entity.position.x + (store.consts.tileSize * 2) &&
-          entity.position.x + (store.consts.tileSize * 2) > _entity.position.x &&
-          entity.position.y < _entity.position.y + (store.consts.tileSize * 2) &&
-          entity.position.y + (store.consts.tileSize * 2) > _entity.position.y) {
-            isPlacehable = false;
-            document.body.style.cursor = "not-allowed";
+      if (Rectangle.intersects(_entity, entity)) {
+        isPlacehable = false;
+        document.body.style.cursor = "not-allowed";
         break;
       } else {
         isPlacehable = true;
@@ -178,7 +176,7 @@ function HotbarItem({ index, children }: { index: number, children: React.ReactN
   /***** FUNCTIONS *****/
   const handleClick = useCleanupCallback((ref) => {
     // Create entity in ghost mode
-    const followEntity = new Assembler({ x: 0, y: 0, type: "global" });
+    const followEntity = new Assembler(new Position(0, 0));
     followEntity.ghostMode = true;
   
     // Add entity to stage and assign cleanup function to ref

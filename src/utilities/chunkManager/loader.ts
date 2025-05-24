@@ -1,5 +1,6 @@
+import { Assembler } from "../../entities/assembler";
 import type { BaseEntity } from "../../entities/base";
-import { Assembler } from "../../entities/test";
+import { Position } from "../position";
 import { store } from "../store";
 
 export class ChunkLoader {
@@ -8,9 +9,15 @@ export class ChunkLoader {
   public retrieveEntities = async (chunkX: number, chunkY: number): Promise<Array<BaseEntity>> => {
     if (chunkX === 0 && chunkY === 0) {
       return [
-        new Assembler({ x: 0, y: 0, type: "local" }),
-        new Assembler({ x: store.consts.tileSize * 3, y: store.consts.tileSize * 4, type: "local" }),
-        new Assembler({ x: store.consts.tileSize * 6, y: store.consts.tileSize * 2, type: "local" })
+        new Assembler(
+          new Position(0, 0, "local")
+        ),
+        new Assembler(
+          new Position(store.consts.tileSize * 3, store.consts.tileSize * 3, "local")
+        ),
+        new Assembler(
+          new Position(store.consts.tileSize * 6, store.consts.tileSize * 1, "local")
+        ),
       ]
     }
 

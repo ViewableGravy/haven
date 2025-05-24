@@ -1,13 +1,30 @@
 import { store } from "../store";
-import type { PositionType } from "./types";
 
+export type PositionType = "global" | "local" | "screenspace";
+export type NonNullablePosition = Omit<Position, "type"> & { type: PositionType };
+
+type Args = [number, number] | [number, number, PositionType];
 
 export class Position {
-  constructor(
-    public x: number,
-    public y: number,
-    public type: PositionType | undefined = "global"
-  ) {}
+  public x: number
+  public y: number
+  public type: PositionType
+
+  constructor(x: number, y: number);
+  constructor(x: number, y: number, type: PositionType);
+  constructor(...args: Args) {
+    if (args.length === 2) {
+      this.x = args[0];
+      this.y = args[1];
+      this.type = "global"; // Default type
+    } else if (args.length === 3) {
+      this.x = args[0];
+      this.y = args[1];
+      this.type = args[2];
+    } else {
+      throw new Error("Invalid number of arguments for Position constructor");
+    }
+  }
 
   public toGlobal = (): Position => {
     switch (this.type) {

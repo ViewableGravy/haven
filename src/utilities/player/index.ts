@@ -1,12 +1,12 @@
 import type { Ticker } from "pixi.js";
 import type { SetOptional } from "type-fest";
 import type { KeyboardController } from "../keyboardController";
+import type { Position } from "../position";
 import { SubscribablePosition } from "../position/subscribable";
-import type { Position as RawPosition } from "../position/types";
 
 
 type PlayerOptions = {
-  position: SetOptional<RawPosition, "type">;
+  position: SetOptional<Position, "type">;
   controller: KeyboardController;
 }
 
