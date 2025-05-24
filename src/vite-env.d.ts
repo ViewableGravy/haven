@@ -8,4 +8,10 @@ declare module "@chriscourses/perlin-noise" {
    * @param z - The z coordinate for the noise function (optional).
    */
   function noise(x, y?: number, z?: number): number;
+
+  /**
+   * Sets the seed for the perlin noise function to ensure consistent results
+   * @param seed - The seed value for the noise generator
+   */
+  function noiseSeed(seed: number): void;
 }

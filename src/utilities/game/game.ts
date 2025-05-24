@@ -43,8 +43,8 @@ export class Game {
 
   // Game constants
   public readonly consts: GameConstants = {
-    tileSize: 64,
-    chunkSize: 16,
+    tileSize: 32,
+    chunkSize: 32,
     get chunkAbsolute() { return this.tileSize * this.chunkSize; }
   };
 
@@ -56,6 +56,8 @@ export class Game {
     keyboard: undefined!,
     chunkManager: undefined!
   }
+
+  private chunkGenerator?: ChunkGenerator;
 
   constructor() {
     this.state = {
@@ -104,11 +106,14 @@ export class Game {
       }
     });
 
+    // Create and store chunk generator reference for cleanup
+    this.chunkGenerator = new ChunkGenerator(this.state.app, chunkMeta, this);
+
     this.controllers.chunkManager = new ChunkManager(
       this,
       this.world,
       chunkMeta,
-      new ChunkGenerator(this.state.app, chunkMeta, this),
+      this.chunkGenerator,
       new ChunkLoader(this)
     )
 
@@ -163,6 +168,20 @@ export class Game {
     // finish initialization
     this.initialized = true;
     this.initializing = false;
+  }
+
+  // Add cleanup method
+  public destroy = () => {
+    // Clean up chunk generator and its worker pool
+    if (this.chunkGenerator) {
+      this.chunkGenerator.destroy();
+      this.chunkGenerator = undefined;
+    }
+
+    // Clean up PIXI application
+    this.state.app.destroy(true, { children: true, texture: true });
+    
+    this.initialized = false;
   }
 
   // Helper methods for accessing game state

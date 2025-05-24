@@ -24,7 +24,7 @@ export class Player {
   }
 
   public handleMovement = (ticker: Ticker) => {
-    const speed = 50 * ticker.deltaTime;
+    const speed = 100 * ticker.deltaTime;
 
     if (this.controller.keys.right.pressed) {
       this.position.x += speed;
