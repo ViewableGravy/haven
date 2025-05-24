@@ -28,6 +28,9 @@ type GameState = {
   worldPointer: Position;
   screenPointer: Position;
   worldOffset: SubscribablePosition;
+  zoom: number;
+  minZoom: number;
+  maxZoom: number;
 }
 
 /***** COMPONENT START *****/
@@ -61,6 +64,9 @@ export class Game {
       worldPointer: new Position(0, 0, "global"),
       screenPointer: new Position(0, 0, "screenspace"),
       worldOffset: new SubscribablePosition(0, 0),
+      zoom: 1.0,
+      minZoom: 0.1,
+      maxZoom: 3.0,
     };
     
     this.entityManager = new EntityManager();
@@ -110,10 +116,37 @@ export class Game {
     
     // Track pointer position
     this.state.app.stage.addEventListener("pointermove", ({ x, y }) => {
-      this.state.worldPointer.x = x - this.state.worldOffset.x;
-      this.state.worldPointer.y = y - this.state.worldOffset.y;
+      this.state.worldPointer.x = (x - this.state.worldOffset.x) / this.state.zoom;
+      this.state.worldPointer.y = (y - this.state.worldOffset.y) / this.state.zoom;
       this.state.screenPointer.x = x;
       this.state.screenPointer.y = y;
+    });
+
+    // Add zoom functionality on wheel scroll
+    this.state.app.stage.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      
+      // Get mouse position before zoom
+      const mouseX = event.x;
+      const mouseY = event.y;
+      
+      // Calculate world position at mouse cursor
+      const worldX = (mouseX - this.state.worldOffset.x) / this.state.zoom;
+      const worldY = (mouseY - this.state.worldOffset.y) / this.state.zoom;
+      
+      // Calculate zoom delta
+      const zoomDelta = event.deltaY > 0 ? 0.9 : 1.1;
+      const newZoom = Math.max(this.state.minZoom, Math.min(this.state.maxZoom, this.state.zoom * zoomDelta));
+      
+      // Update zoom
+      this.state.zoom = newZoom;
+      this.world.scale.set(this.state.zoom);
+      
+      // Adjust world offset to keep mouse position stable
+      this.state.worldOffset.position = {
+        x: mouseX - worldX * this.state.zoom,
+        y: mouseY - worldY * this.state.zoom
+      };
     });
   }
 
@@ -160,17 +193,18 @@ export class Game {
   }
 
   private setupCamera(player: Player) {
-    // Update world container offset based on worldOffset
+    // Update world container offset and scale based on worldOffset and zoom
     this.state.worldOffset.subscribeImmediately(({ x, y }) => {
       this.world.x = x;
       this.world.y = y;
+      this.world.scale.set(this.state.zoom);
     });
 
-    // Center camera on player
+    // Center camera on player (accounting for zoom)
     player.position.subscribeImmediately(({ x, y }) => {
       this.state.worldOffset.position = {
-        x: -x + this.state.app.screen.width / 2,
-        y: -y + this.state.app.screen.height / 2,
+        x: -x * this.state.zoom + this.state.app.screen.width / 2,
+        y: -y * this.state.zoom + this.state.app.screen.height / 2,
       };
     });
   }

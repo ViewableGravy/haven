@@ -4,13 +4,13 @@
   bottom: 50px;
   width: 100vw;
   height: 75px;
-  border: 1px solid blue;
 }
 
 .hotbar-inner {
   height: 100%;
   width: 50vw;
-  background: white;
+  background: rgb(122, 122, 122);
+  border: 1px solid black;
   margin-inline: auto;
   display: flex;
   align-items: center;
@@ -20,12 +20,19 @@
 
 /* Hotbar item styles */
 .hotbar-item {
-  width: 50px;
+  width: 150px;
   height: 50px;
-  border: 1px solid cyan;
-  color: black;
+  border: 1px solid rgb(28, 28, 28);
+  border-radius: 10px;
+  color: white;
+  background: rgb(90, 90, 90);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.3s ease;
+}
+
+.hotbar-item:hover {
+  background: rgba(255, 255, 255, 0.2);
 }

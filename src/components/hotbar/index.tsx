@@ -7,7 +7,7 @@ type HotbarItems = Array<React.ReactNode>;
 
 /***** CONSTANTS *****/
 const hotbarItems: HotbarItems = [
-  "Assemble Dawg"
+  "Assembler"
 ];
 
 /***** COMPONENT START *****/
