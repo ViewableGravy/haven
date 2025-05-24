@@ -8,9 +8,9 @@ export class ChunkLoader {
   public retrieveEntities = async (chunkX: number, chunkY: number): Promise<Array<BaseEntity>> => {
     if (chunkX === 0 && chunkY === 0) {
       return [
-        new Assembler({ x: 0, y: 0 }),
-        new Assembler({ x: store.consts.tileSize * 3, y: store.consts.tileSize * 4 }),
-        new Assembler({ x: store.consts.tileSize * 6, y: store.consts.tileSize * 2 })
+        new Assembler({ x: 0, y: 0, type: "local" }),
+        new Assembler({ x: store.consts.tileSize * 3, y: store.consts.tileSize * 4, type: "local" }),
+        new Assembler({ x: store.consts.tileSize * 6, y: store.consts.tileSize * 2, type: "local" })
       ]
     }
 

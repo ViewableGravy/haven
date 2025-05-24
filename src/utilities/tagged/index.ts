@@ -8,9 +8,11 @@ export type ChunkKey = Tagged<string, "ChunkKey">;
 export type EntityId = Tagged<number, "EntityId">;
 
 /***** FUNCTIONS *****/
-export function createChunkKey(position: Position): ChunkKey
-export function createChunkKey(x: number, y: number): ChunkKey
-export function createChunkKey(...args: [Position] | [number, number]): ChunkKey {
+type PositionArgs = [position: Position];
+type CoordinatesArgs = [x: number, y: number]; 
+export function createChunkKey(...args: PositionArgs): ChunkKey
+export function createChunkKey(...args: CoordinatesArgs): ChunkKey
+export function createChunkKey(...args: PositionArgs | CoordinatesArgs): ChunkKey {
   if (args.length === 1) {
     return internalCreateChunkKeyFromPosition(args[0]);
   } else {
@@ -30,5 +32,3 @@ function internalCreateChunkKeyFromPosition(position: Position): ChunkKey {
 function internalCreateChunkKeyFromCoordinates(x: number, y: number): ChunkKey {
   return `${x},${y}` as ChunkKey;
 }
-
-

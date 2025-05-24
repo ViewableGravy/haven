@@ -19,12 +19,12 @@ const followMouse = (game: Game, entity: Assembler) => {
 
   function handleMouseMove() {
     // Get the x/y of the tile 
-    const tileX = Math.floor(game.worldPointerX / store.consts.tileSize) * store.consts.tileSize;
-    const tileY = Math.floor(game.worldPointerY / store.consts.tileSize) * store.consts.tileSize;
+    const tileX = Math.floor(store.game.worldPointer.x / store.consts.tileSize) * store.consts.tileSize;
+    const tileY = Math.floor(store.game.worldPointer.y / store.consts.tileSize) * store.consts.tileSize;
 
     // get the distance cursor distance from x/y
-    const pointerTileDiffX = game.worldPointerX - tileX;
-    const pointerTileDiffY = game.worldPointerY - tileY;
+    const pointerTileDiffX = store.game.worldPointer.x - tileX;
+    const pointerTileDiffY = store.game.worldPointer.y - tileY;
 
     // Determine the tile quadrant (q1, q2, q3, q4)
     const isQ1 = pointerTileDiffX < (store.consts.tileSize / 2) && pointerTileDiffY < (store.consts.tileSize / 2);
@@ -78,12 +78,12 @@ const followMouse = (game: Game, entity: Assembler) => {
   function handleMouseDown() {
     if (!isPlacehable) return;
 
-    const chunk = game.controllers.chunkManager.getChunk(game.worldPointerX, game.worldPointerY);
+    const chunk = game.controllers.chunkManager.getChunk(store.game.worldPointer.x, store.game.worldPointer.y);
 
-    const position = chunk.getGlobalPosition()
+    const position = chunk.getGlobalPosition();
 
-    const chunkGlobalX = position.x - game.world.x;
-    const chunkGlobalY = position.y - game.world.y;
+    const chunkGlobalX = position.x - store.game.worldOffset.x;
+    const chunkGlobalY = position.y - store.game.worldOffset.y;
     
     const chunkRelativeX = entity.container.x - chunkGlobalX;
     const chunkRelativeY = entity.container.y - chunkGlobalY;
@@ -91,7 +91,8 @@ const followMouse = (game: Game, entity: Assembler) => {
     entity.ghostMode = false;
     entity.position.position = {
       x: chunkRelativeX,
-      y: chunkRelativeY
+      y: chunkRelativeY,
+      type: "local"
     }
 
     chunk.addChild(entity.container);
@@ -177,7 +178,7 @@ function HotbarItem({ index, children }: { index: number, children: React.ReactN
   /***** FUNCTIONS *****/
   const handleClick = useCleanupCallback((ref) => {
     // Create entity in ghost mode
-    const followEntity = new Assembler({ x: 0, y: 0 });
+    const followEntity = new Assembler({ x: 0, y: 0, type: "global" });
     followEntity.ghostMode = true;
   
     // Add entity to stage and assign cleanup function to ref

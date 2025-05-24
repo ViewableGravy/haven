@@ -1,13 +1,8 @@
-import type { Subscribe } from "../eventEmitter";
 
+export type PositionType = "global" | "screenspace" | "local";
 
 export type Position = {
+  type: PositionType;
   x: number;
   y: number;
 }
-
-export type SubscribablePosition = Position & {
-  subscribe: Subscribe<Position>;
-  subscribeImmediately: Subscribe<Position>;
-  position: Position;
-};

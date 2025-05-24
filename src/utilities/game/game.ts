@@ -18,7 +18,6 @@ type GlobalControllers = {
 export class Game {
   public initialized: boolean = false;
   public initializing: boolean = false;
-  public app: Application;
   public world!: ContainerChild;
 
   public controllers: GlobalControllers = {
@@ -26,13 +25,8 @@ export class Game {
     chunkManager: undefined!
   }
 
-  public screenPointerX: number = 0;
-  public screenPointerY: number = 0;
-  public worldPointerX: number = 0;
-  public worldPointerY: number = 0;
-
   constructor() {
-    this.app = new Application();
+    store.game.app = new Application();
   }
 
   public initialize = async (el: HTMLElement) => {
@@ -43,18 +37,18 @@ export class Game {
     this.initializing = true;
 
     // Initialize the application
-    await this.app.init({
+    await store.game.app.init({
       resizeTo: window
     });
 
     this.world = new Container();
 
-    this.app.stage.addChild(this.world);
+    store.game.app.stage.addChild(this.world);
 
     // Append the application canvas to the document body
-    el.appendChild(this.app.canvas);
+    el.appendChild(store.game.app.canvas);
 
-    const { width, height } = this.app.screen;
+    const { width, height } = store.game.app.screen;
     const chunkDimensions = store.consts.chunkSize * store.consts.tileSize;
 
     this.controllers.keyboard = new KeyboardController();
@@ -73,28 +67,40 @@ export class Game {
     this.controllers.chunkManager = new ChunkManager(
       this.world,
       chunkMeta,
-      new ChunkGenerator(this.app, chunkMeta),
+      new ChunkGenerator(store.game.app, chunkMeta),
       new ChunkLoader()
     )
 
+    // Update the world the container offset based on the worldOffset.
+    store.game.worldOffset.subscribeImmediately(({ x, y }) => {
+      this.world.x = x;
+      this.world.y = y;
+    });
+
     // Set the stage based on the player position
     player.position.subscribeImmediately(({ x, y }) => {
-      this.world.x = -x + this.app.screen.width / 2;
-      this.world.y = -y + this.app.screen.height / 2;
+      store.game.worldOffset.position = {
+        x: -x + store.game.app.screen.width / 2,
+        y: -y + store.game.app.screen.height / 2,
+      }
     });
 
     // Enable interactivity!
+    store.game.app.stage.eventMode = 'static';
+    store.game.app.stage.hitArea = {
+      contains: () => true
+    }
     this.world.eventMode = 'static';
     this.world.hitArea = {
       contains: () => true
     }
     
     // Get the current pointer position
-    this.world.addEventListener("pointermove", ({ x, y }) => {
-      this.worldPointerX = x - this.world.x;
-      this.worldPointerY = y - this.world.y;
-      this.screenPointerX = x;
-      this.screenPointerY = y;
+    store.game.app.stage.addEventListener("pointermove", ({ x, y }) => {
+      store.game.worldPointer.x = x - store.game.worldOffset.x;
+      store.game.worldPointer.y = y - store.game.worldOffset.y;
+      store.game.screenPointer.x = x;
+      store.game.screenPointer.y = y;
     })
 
 
@@ -116,7 +122,7 @@ export class Game {
     this.controllers.chunkManager.subscribe(player.position);
 
     // Listen for animate update
-    this.app.ticker.add((ticker) => {
+    store.game.app.ticker.add((ticker) => {
       player.handleMovement(ticker);
     });
 

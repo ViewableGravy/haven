@@ -1,10 +1,12 @@
 import type { Ticker } from "pixi.js";
+import type { SetOptional } from "type-fest";
 import type { KeyboardController } from "../keyboardController";
-import { SubscribablePosition } from "../position";
+import { SubscribablePosition } from "../position/subscribable";
 import type { Position as RawPosition } from "../position/types";
 
+
 type PlayerOptions = {
-  position: RawPosition;
+  position: SetOptional<RawPosition, "type">;
   controller: KeyboardController;
 }
 
@@ -16,7 +18,8 @@ export class Player {
     this.controller = opts.controller;
     this.position = new SubscribablePosition(
       opts.position.x, 
-      opts.position.y
+      opts.position.y,
+      opts.position.type
     );
   }
 

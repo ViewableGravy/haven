@@ -1,37 +1,24 @@
-import { EventEmitter, type Unsubscribe } from "../eventEmitter";
-import type { Position as RawPosition } from "./types";
+import { store } from "../store";
+import type { PositionType } from "./types";
 
 
-
-export class SubscribablePosition extends EventEmitter<RawPosition> {
+export class Position {
   constructor(
-    private _x: number,
-    private _y: number
-  ) {
-    super();
-  }
+    public x: number,
+    public y: number,
+    public type: PositionType | undefined = "global"
+  ) {}
 
-  public subscribeImmediately = (callback: (position: RawPosition) => void): Unsubscribe => {
-    callback({ x: this._x, y: this._y });
-    return this.subscribe(callback);
+  public toGlobal = (): Position => {
+    switch (this.type) {
+      case "screenspace":
+        return this;
+      case "global":
+        return new Position(this.x - store.game.worldOffset.x, this.y - store.game.worldOffset.y, "global");
+      case "local":
+        throw new Error("Cannot convert local position to global position without context");
+      default:
+        throw new Error(`Unknown position type: ${this.type}`);
+    }
   }
-
-  public set x(x: number) {
-    this._x = x;
-    this.emit({ x, y: this._y });
-  }
-  public set y(y: number) {
-    this._y = y;
-    this.emit({ x: this._x, y });
-  }
-  public set position({ x, y }: RawPosition) {
-    this._x = x;
-    this._y = y;
-    this.emit({ x, y });
-  }
-  
-  public get x() { return this._x; }
-  public get y() { return this._y; }
-  public get position() { return { x: this._x, y: this._y }; }
 }
-

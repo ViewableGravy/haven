@@ -1,5 +1,5 @@
 import type { ContainerChild } from "pixi.js";
-import type { SubscribablePosition } from "../utilities/position/types";
+import type { SubscribablePosition } from "../utilities/position/subscribable";
 
 /***** TYPE DEFINITIONS *****/
 export interface HasContainer {

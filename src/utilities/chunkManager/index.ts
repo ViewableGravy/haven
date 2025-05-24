@@ -1,6 +1,6 @@
 import { Container, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
-import type { SubscribablePosition } from "../position/types";
+import type { SubscribablePosition } from "../position/subscribable";
 import { waitForIdle } from "../promise/waitForIdle";
 import { store } from "../store";
 import { createChunkKey, type ChunkKey } from "../tagged";

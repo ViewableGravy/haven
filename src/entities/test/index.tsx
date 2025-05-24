@@ -2,7 +2,7 @@ import { Container, Sprite, Texture, type ContainerChild } from "pixi.js";
 import Selection from "../../assets/selection.png";
 import { infographicStore } from "../../components/infographic/store";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
-import { SubscribablePosition } from "../../utilities/position";
+import { SubscribablePosition } from "../../utilities/position/subscribable";
 import type { Position as RawPosition } from "../../utilities/position/types";
 import { store } from "../../utilities/store";
 import { BaseEntity } from "../base";
