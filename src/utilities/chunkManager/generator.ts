@@ -1,19 +1,22 @@
 import { noise as perlinNoise } from "@chriscourses/perlin-noise";
 import { Application, Container, Graphics, Sprite, type ContainerChild, type Texture } from "pixi.js";
-import { store } from "../store";
+import type { Game } from "../game/game";
 import type { ChunkManagerMeta } from "./meta";
 import { TileFactory } from "./tile";
 
 /***** CHUNK GENERATOR *****/
 export class ChunkGenerator {
-  private tileFactory: TileFactory ;
+  private tileFactory: TileFactory;
   private chunkTexture: Texture | null = null;
 
   constructor(
     private app: Application,
     private chunkLoaderMeta: ChunkManagerMeta,
+    private game?: Game // Optional for now to maintain compatibility
   ) {
-    const size = store.consts.chunkSize * store.consts.tileSize;
+    const tileSize = game?.consts.tileSize ?? 64;
+    const chunkSize = game?.consts.chunkSize ?? 16;
+    const size = chunkSize * tileSize;
 
     // Create tile factory (For background)
     this.tileFactory = new TileFactory(
@@ -21,7 +24,8 @@ export class ChunkGenerator {
         new Graphics()
           .rect(0, 0, size, size)
           .fill(0xFFFFFF)
-      )
+      ),
+      game
     );
 
     // Use app.renderer to generate the texture
@@ -37,7 +41,10 @@ export class ChunkGenerator {
     const chunk = new Container();
 
     // Predefine size properties
-    const size = store.consts.chunkSize * store.consts.tileSize;
+    const tileSize = this.game?.consts.tileSize ?? 64;
+    const chunkSize = this.game?.consts.chunkSize ?? 16;
+    const size = chunkSize * tileSize;
+    
     chunk.x = chunkX * size;
     chunk.y = chunkY * size;
     chunk.width = size;
@@ -45,10 +52,9 @@ export class ChunkGenerator {
     chunk.zIndex = 0;
     chunk.sortableChildren = true;
     
-    // Add the background to the chunk
-    chunk.addChild(
-      this.generateChunkBackground(chunkX, chunkY)
-    );
+    // Generate the background
+    const background = this.generateChunkBackground(chunkX, chunkY);
+    chunk.addChild(background);
 
     // Add debug border if enabled
     this.addDebugBorder(chunk);
@@ -61,7 +67,9 @@ export class ChunkGenerator {
     // Define the background of the chunk
     const background = new Container()
 
-    const size = store.consts.chunkSize * store.consts.tileSize;
+    const tileSize = this.game?.consts.tileSize ?? 64;
+    const chunkSize = this.game?.consts.chunkSize ?? 16;
+    const size = chunkSize * tileSize;
     
     background.x = 0;
     background.y = 0;
@@ -71,14 +79,13 @@ export class ChunkGenerator {
     background.sortableChildren = true;
 
     
-    // Create inidividual sprites, and add them to the background
-    const chunkSize = store.consts.chunkSize;
+    // Create individual sprites, and add them to the background
     const noiseDivisor = 500;
 
     for (let i = 0; i < chunkSize; i++) {
       for (let j = 0; j < chunkSize; j++) {
-        const x = store.consts.tileSize * i;
-        const y = store.consts.tileSize * j;
+        const x = tileSize * i;
+        const y = tileSize * j;
 
         const xOffset = (chunkX * size) + x;
         const yOffset = (chunkY * size) + y;
@@ -105,7 +112,9 @@ export class ChunkGenerator {
   }
 
   private addDebugBorder = (container: Container) => {
-    const size = store.consts.chunkSize * store.consts.tileSize;
+    const tileSize = this.game?.consts.tileSize ?? 64;
+    const chunkSize = this.game?.consts.chunkSize ?? 16;
+    const size = chunkSize * tileSize;
 
     // Create the texture once if it doesn't already exist
     if (!this.chunkTexture) {
@@ -132,7 +141,7 @@ export class ChunkGenerator {
     // 0-1
     const _x: number = perlinNoise(x, y);
     // convert to 0-255
-    const color: number = Math.floor((_x) * 224);
+    const color: number = Math.floor(_x * 224);
     // convert to hex
     const hex: string = color.toString(16).padStart(2, '0').toUpperCase();
 

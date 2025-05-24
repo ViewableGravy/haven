@@ -2,34 +2,32 @@ import { Container, Sprite, Texture, type ContainerChild } from "pixi.js";
 import Selection from "../../assets/selection.png";
 import { infographicStore } from "../../components/infographic/store";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
+import type { Game } from "../../utilities/game/game";
 import type { Position } from "../../utilities/position";
-import { SubscribablePosition } from "../../utilities/position/subscribable";
 import { Rectangle } from "../../utilities/rectangle";
-import { Size } from "../../utilities/size";
-import { store } from "../../utilities/store";
+import { Transform } from "../../utilities/transform";
 import { BaseEntity } from "../base";
-import type { HasContainer, HasPosition, hasSize } from "../interfaces";
+import type { HasContainer } from "../interfaces";
 import { createTestEntityInfographicNode } from "./info";
 
-export class Assembler extends BaseEntity implements HasContainer, HasPosition, hasSize, Rectangle {
+export class Assembler extends BaseEntity implements HasContainer {
   public container: ContainerChild;
-  public position: SubscribablePosition;
-  public size: Size = Assembler.size;
+  public transform: Transform;
 
   public _assembler: Sprite;
   private _ghostMode: boolean = false;
-  private static get size(): Size {
-    return new Size(store.consts.tileSize * 2, store.consts.tileSize * 2);
-  };
 
   constructor(
+    game: Game,
     position: Position
   ) { 
+    // Create transform using the new system (2x2 tiles for assembler)
+    const transform = Transform.createMedium(game, position.x, position.y, position.type);
+    
     // Create basic components for the entity
-    const subscribablePosition = new SubscribablePosition(position.x, position.y);
-    const container = Assembler.createContainer(subscribablePosition);
-    const selectionSprite = Assembler.createSelectionSprite();
-    const assembler = Assembler.createAssemblerSprite();
+    const container = Assembler.createContainer(transform);
+    const selectionSprite = Assembler.createSelectionSprite(transform);
+    const assembler = Assembler.createAssemblerSprite(transform);
 
     // Add the selection sprite to the container
     container.addChild(assembler);
@@ -63,17 +61,17 @@ export class Assembler extends BaseEntity implements HasContainer, HasPosition, 
     super(container.uid)
 
     // Setup local variables
-    this.position = subscribablePosition;
+    this.transform = transform;
     this.container = container;
     this._assembler = assembler;
   }
 
-  private static createContainer = (position: SubscribablePosition): Container => {
+  private static createContainer = (transform: Transform): Container => {
     const container = new Container();
-    container.width = Assembler.size.width;
-    container.height = Assembler.size.height;
+    container.width = transform.size.width;
+    container.height = transform.size.height;
     
-    position.subscribeImmediately(({ x, y }) => {
+    transform.position.subscribeImmediately(({ x, y }) => {
       container.x = x;
       container.y = y;
     });
@@ -81,10 +79,10 @@ export class Assembler extends BaseEntity implements HasContainer, HasPosition, 
     return container;
   }
 
-  private static createSelectionSprite = () => {
+  private static createSelectionSprite = (transform: Transform) => {
     const selectionSprite = new Sprite(Texture.from(Selection))
-    selectionSprite.width = Assembler.size.width;
-    selectionSprite.height = Assembler.size.height;
+    selectionSprite.width = transform.size.width;
+    selectionSprite.height = transform.size.height;
     selectionSprite.x = 0;
     selectionSprite.y = 0;
     selectionSprite.renderable = false;
@@ -92,11 +90,11 @@ export class Assembler extends BaseEntity implements HasContainer, HasPosition, 
     return selectionSprite;
   }
 
-  private static createAssemblerSprite = () => {
+  private static createAssemblerSprite = (transform: Transform) => {
     const assembler = AssemblerSprite.createSprite("assembling-machine-1");
     assembler.interactive = true;
-    assembler.width = Assembler.size.width;
-    assembler.height = Assembler.size.height;
+    assembler.width = transform.size.width;
+    assembler.height = transform.size.height;
     assembler.x = 0;
     assembler.y = 0;
 
@@ -113,5 +111,20 @@ export class Assembler extends BaseEntity implements HasContainer, HasPosition, 
   }
   public get ghostMode() {
     return this._ghostMode;
+  }
+
+  // Convenience methods that delegate to transform
+  public get position() { return this.transform.position; }
+  public get size() { return this.transform.size; }
+  public get rectangle() { return this.transform.rectangle; }
+
+  // Check if this assembler intersects with another entity
+  public intersects(other: { transform?: Transform; rectangle?: Rectangle }): boolean {
+    if (other.transform) {
+      return this.transform.intersects(other.transform);
+    }
+    // Fallback for entities without transform
+    return this.transform.rectangle && other.rectangle ? 
+      Rectangle.intersects(this.transform.rectangle, other.rectangle) : false;
   }
 }

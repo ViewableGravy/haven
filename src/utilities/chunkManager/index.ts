@@ -1,25 +1,25 @@
 import { Container, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
+import type { Game } from "../game/game";
 import type { SubscribablePosition } from "../position/subscribable";
 import { waitForIdle } from "../promise/waitForIdle";
-import { store } from "../store";
 import { createChunkKey, type ChunkKey } from "../tagged";
 import type { ChunkGenerator } from "./generator";
 import type { ChunkLoader } from "./loader";
 import type { ChunkManagerMeta } from "./meta";
 
-/***** CHUNK LOADER *****/
+/***** CHUNK MANAGER *****/
 export class ChunkManager {
   /**
-   * Presently, this represents all chunks that are loaded and in the game (attached to container),
-   * however, in the future, this would be modified to include several chunks that are not part of the game
-   * but should stay in memory in case the player turns around and needs to quickly load them into the game.
+   * Represents all chunks that are loaded and in the game (attached to container).
+   * In the future, this could include chunks that stay in memory for quick loading.
    */
   public generationQueue: Array<ChunkKey> = [];
   public processingQueue: boolean = false;
   public lastChunkPosition: { x: number; y: number } | null = null;
 
   constructor(
+    private game: Game,
     private container: Container<ContainerChild>,
     private chunkLoaderMeta: ChunkManagerMeta,
     private chunkGenerator: ChunkGenerator,
@@ -28,8 +28,8 @@ export class ChunkManager {
 
   public subscribe = (position: SubscribablePosition) => {
     position.subscribeImmediately(({ x, y }) => {
-      const chunkX = Math.floor(x / store.consts.chunkAbsolute);
-      const chunkY = Math.floor(y / store.consts.chunkAbsolute);
+      const chunkX = Math.floor(x / this.game.consts.chunkAbsolute);
+      const chunkY = Math.floor(y / this.game.consts.chunkAbsolute);
 
       const lastX = this.lastChunkPosition?.x ?? null;
       const lastY = this.lastChunkPosition?.y ?? null;
@@ -66,7 +66,7 @@ export class ChunkManager {
       }
 
       // Unload chunks outside the load radius
-      store.activeChunkKeys.forEach((chunkKey) => {
+      this.game.getActiveChunkKeys().forEach((chunkKey) => {
         const [existingChunkX, existingChunkY] = chunkKey.split(',').map(Number);
         if (Math.abs(existingChunkX - chunkX) > loadRadiusX || Math.abs(chunkY - existingChunkY) > loadRadiusY) {
           this.unloadChunk(existingChunkX, existingChunkY);
@@ -81,11 +81,11 @@ export class ChunkManager {
   };
 
   public getChunk = (x: number, y: number) => {
-    const chunkX = Math.floor(x / store.consts.chunkAbsolute);
-    const chunkY = Math.floor(y / store.consts.chunkAbsolute);
+    const chunkX = Math.floor(x / this.game.consts.chunkAbsolute);
+    const chunkY = Math.floor(y / this.game.consts.chunkAbsolute);
 
     const chunkKey = createChunkKey(chunkX, chunkY);
-    const chunk = store.activeChunksByKey.get(chunkKey);
+    const chunk = this.game.getActiveChunk(chunkKey);
 
     invariant(chunk, `Chunk not found: ${chunkKey}`);
 
@@ -98,12 +98,11 @@ export class ChunkManager {
 
   private unloadChunk = (chunkX: number, chunkY: number) => {
     const chunkKey = createChunkKey(chunkX, chunkY);
-    const chunk = store.activeChunksByKey.get(chunkKey);
+    const chunk = this.game.getActiveChunk(chunkKey);
     if (chunk) {
       chunk.destroy();
       this.container.removeChild(chunk);
-      store.activeChunkKeys.delete(chunkKey);
-      store.activeChunksByKey.delete(chunkKey);
+      this.game.removeActiveChunk(chunkKey);
     }
 
     this.generationQueue.splice(this.generationQueue.indexOf(chunkKey), 1);
@@ -112,37 +111,41 @@ export class ChunkManager {
   private processQueue = async () => {
     this.processingQueue = true;
 
-    // Start processing queue
-    while (this.generationQueue.length > 0) {
-      const batch = this.generationQueue.splice(0, 5);
+    const batchSize = 5;
 
-      // Load the batch with a small delay to avoid locking main thread
-      await Promise.all(batch.map(async (chunkKey) => {
+    while (this.generationQueue.length > 0) {
+      const batch = this.generationQueue.splice(0, batchSize);
+
+      const chunkPromises = batch.map(async (chunkKey) => {
         const [chunkX, chunkY] = chunkKey.split(',').map(Number);
 
-        const chunk = await this.chunkGenerator.generateChunk(chunkX, chunkY)
+        const chunk = await this.chunkGenerator.generateChunk(chunkX, chunkY);
         const entities = await this.chunkLoader.retrieveEntities(chunkX, chunkY);
 
-        // If there are entities, add them to the scene and entities set
+        return { chunkKey, chunk, entities };
+      });
+
+      const results = await Promise.all(chunkPromises);
+
+      for (const { chunkKey, chunk, entities } of results) {
+        // Add entities to the chunk if any exist
         if (entities.length) {
           for (const entity of entities) {
             if (entity.hasContainer()) {
               chunk.addChild(entity.container);
             }
           }
-          entities.forEach((e) => store.entities.add(e));
+          entities.forEach((e) => this.game.addEntity(e));
         }
         
-        // Set this chunk and entities in the store
-        store.entitiesByChunk.set(chunkKey, new Set(entities));
-        store.activeChunkKeys.add(chunkKey);
-        store.activeChunksByKey.set(chunkKey, chunk);
+        // Register chunk and entities in the game state
+        this.game.setEntitiesForChunk(chunkKey, new Set(entities));
+        this.game.addActiveChunk(chunkKey, chunk);
 
-        // Add the chunk to the container
+        // Add the chunk to the display container
         this.container.addChild(chunk);
-      }));
+      }
 
-      // give the thread some air, nya~
       await waitForIdle();
     }
 
@@ -150,7 +153,7 @@ export class ChunkManager {
   }
 
   private isChunkLoaded = (chunkX: number, chunkY: number) => {
-    return store.activeChunksByKey.has(createChunkKey(chunkX, chunkY));
+    return this.game.getActiveChunk(createChunkKey(chunkX, chunkY)) !== undefined;
   }
 
   private isChunkLoading = (chunkX: number, chunkY: number) => {

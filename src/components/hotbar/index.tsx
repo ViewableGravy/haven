@@ -2,11 +2,11 @@ import type React from "react";
 import { useCallback, useEffect, useRef } from "react";
 import { Assembler } from "../../entities/assembler";
 import type { BaseEntity } from "../../entities/base";
-import type { HasContainer, HasGhostable, HasPosition, hasSize } from "../../entities/interfaces";
-import { Game } from "../../utilities/game/game";
+import type { HasContainer, HasGhostable } from "../../entities/interfaces";
+import type { Game } from "../../utilities/game/game";
 import { Position } from "../../utilities/position";
 import { Rectangle } from "../../utilities/rectangle";
-import { store } from "../../utilities/store";
+import type { Transform } from "../../utilities/transform";
 import { usePixiContext } from "../pixi/context";
 
 const hotbarItems: Array<React.ReactNode> = [
@@ -17,60 +17,73 @@ const isCastableToNumber = (value: string) => {
   return !isNaN(Number(value));
 }
 
-const followMouse = (game: Game, entity: BaseEntity & HasGhostable & hasSize & HasPosition & HasContainer) => {
+const followMouse = (game: Game, entity: BaseEntity & HasGhostable & HasContainer & { transform: Transform }) => {
   let isPlacehable = true;
 
   function handleMouseMove() {
     // Get the x/y of the tile 
-    const tileX = Math.floor(store.game.worldPointer.x / store.consts.tileSize) * store.consts.tileSize;
-    const tileY = Math.floor(store.game.worldPointer.y / store.consts.tileSize) * store.consts.tileSize;
+    const tileX = Math.floor(game.state.worldPointer.x / game.consts.tileSize) * game.consts.tileSize;
+    const tileY = Math.floor(game.state.worldPointer.y / game.consts.tileSize) * game.consts.tileSize;
 
     // get the distance cursor distance from x/y
-    const pointerTileDiffX = store.game.worldPointer.x - tileX;
-    const pointerTileDiffY = store.game.worldPointer.y - tileY;
+    const pointerTileDiffX = game.state.worldPointer.x - tileX;
+    const pointerTileDiffY = game.state.worldPointer.y - tileY;
 
     // Determine the tile quadrant (q1, q2, q3, q4)
-    const isQ1 = pointerTileDiffX < (store.consts.tileSize / 2) && pointerTileDiffY < (store.consts.tileSize / 2);
-    const isQ2 = pointerTileDiffX > (store.consts.tileSize / 2) && pointerTileDiffY < (store.consts.tileSize / 2);
-    const isQ3 = pointerTileDiffX < (store.consts.tileSize / 2) && pointerTileDiffY > (store.consts.tileSize / 2);
-    const isQ4 = pointerTileDiffX > (store.consts.tileSize / 2) && pointerTileDiffY > (store.consts.tileSize / 2);
+    const isQ1 = pointerTileDiffX < (game.consts.tileSize / 2) && pointerTileDiffY < (game.consts.tileSize / 2);
+    const isQ2 = pointerTileDiffX > (game.consts.tileSize / 2) && pointerTileDiffY < (game.consts.tileSize / 2);
+    const isQ3 = pointerTileDiffX < (game.consts.tileSize / 2) && pointerTileDiffY > (game.consts.tileSize / 2);
+    const isQ4 = pointerTileDiffX > (game.consts.tileSize / 2) && pointerTileDiffY > (game.consts.tileSize / 2);
 
     // Apply the appropriate offset based on the quadrant
     switch (true) {
       case isQ1: {
-        entity.position.x = tileX - entity.size.width / 2;
-        entity.position.y = tileY - entity.size.width / 2;
+        entity.transform.position.x = tileX - entity.transform.size.width / 2;
+        entity.transform.position.y = tileY - entity.transform.size.width / 2;
         break;
       }
       case isQ2: {
-        entity.position.x = tileX;
-        entity.position.y = tileY - entity.size.width / 2;
+        entity.transform.position.x = tileX;
+        entity.transform.position.y = tileY - entity.transform.size.width / 2;
         break;
       }
       case isQ3: {
-        entity.position.x = tileX - entity.size.width / 2;
-        entity.position.y = tileY;
+        entity.transform.position.x = tileX - entity.transform.size.width / 2;
+        entity.transform.position.y = tileY;
         break;
       }
       case isQ4: {
-        entity.position.x = tileX;
-        entity.position.y = tileY;
+        entity.transform.position.x = tileX;
+        entity.transform.position.y = tileY;
         break;
       }
     }
 
     // Set Mouse cursor to cross if overlapping with another entity
-    for (const _entity of store.entities) {
+    for (const _entity of game.getEntities()) {
+      // Check if entity can intersect using Rectangle utility
       if (!Rectangle.canIntersect(_entity)) continue;
 
-      // check collision (assuming entities are tileSize * 2 large, and they cannot partially overlap)
-      if (Rectangle.intersects(_entity, entity)) {
-        isPlacehable = false;
-        document.body.style.cursor = "not-allowed";
-        break;
+      // Check collision using the new transform system if available
+      if ('transform' in _entity && _entity.transform && typeof _entity.transform === 'object' && 'intersects' in _entity.transform) {
+        if (entity.transform.intersects(_entity.transform as Transform)) {
+          isPlacehable = false;
+          document.body.style.cursor = "not-allowed";
+          break;
+        } else {
+          isPlacehable = true;
+          document.body.style.cursor = "default";
+        }
       } else {
-        isPlacehable = true;
-        document.body.style.cursor = "default";
+        // Fallback for entities without transform - use Rectangle.intersects
+        if (Rectangle.intersects(_entity, entity.transform.rectangle)) {
+          isPlacehable = false;
+          document.body.style.cursor = "not-allowed";
+          break;
+        } else {
+          isPlacehable = true;
+          document.body.style.cursor = "default";
+        }
       }
     }
   }
@@ -78,25 +91,25 @@ const followMouse = (game: Game, entity: BaseEntity & HasGhostable & hasSize & H
   function handleMouseDown() {
     if (!isPlacehable) return;
 
-    const chunk = game.controllers.chunkManager.getChunk(store.game.worldPointer.x, store.game.worldPointer.y);
+    const chunk = game.controllers.chunkManager.getChunk(game.state.worldPointer.x, game.state.worldPointer.y);
 
     const position = chunk.getGlobalPosition();
 
-    const chunkGlobalX = position.x - store.game.worldOffset.x;
-    const chunkGlobalY = position.y - store.game.worldOffset.y;
+    const chunkGlobalX = position.x - game.state.worldOffset.x;
+    const chunkGlobalY = position.y - game.state.worldOffset.y;
     
     const chunkRelativeX = entity.container.x - chunkGlobalX;
     const chunkRelativeY = entity.container.y - chunkGlobalY;
 
     entity.ghostMode = false;
-    entity.position.position = {
+    entity.transform.position.position = {
       x: chunkRelativeX,
       y: chunkRelativeY,
       type: "local"
     }
 
     chunk.addChild(entity.container);
-    store.entities.add(entity);
+    game.addEntity(entity);
 
     // Remove all event listeners
     cleanup();
@@ -122,8 +135,6 @@ const followMouse = (game: Game, entity: BaseEntity & HasGhostable & hasSize & H
 
   return cleanup;
 }
-
-
 
 export const Hotbar = () => {
   return (
@@ -169,16 +180,14 @@ const useCleanupCallback = <T extends any = void>(callback: (ref: React.RefObjec
   }, [cleanup]);
 }
 
-
-
 function HotbarItem({ index, children }: { index: number, children: React.ReactNode }) { 
   /***** HOOKS *****/
   const game = usePixiContext();
 
   /***** FUNCTIONS *****/
   const handleClick = useCleanupCallback((ref) => {
-    // Create entity in ghost mode
-    const followEntity = new Assembler(new Position(0, 0));
+    // Create entity in ghost mode using the new system
+    const followEntity = new Assembler(game, new Position(0, 0));
     followEntity.ghostMode = true;
   
     // Add entity to stage and assign cleanup function to ref

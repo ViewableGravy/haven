@@ -37,8 +37,6 @@ export class SubscribablePosition extends EventEmitter<Position> implements Posi
     this.emit(this._position);
   }
 
-  public toGlobal = () => this._position.toGlobal();
-  
   public get x() { return this._position.x; }
   public get y() { return this._position.y; }
   public get type() { return this._position.type as PositionType; }

@@ -1,5 +1,3 @@
-import { store } from "../store";
-
 export type PositionType = "global" | "local" | "screenspace";
 export type NonNullablePosition = Omit<Position, "type"> & { type: PositionType };
 
@@ -26,16 +24,6 @@ export class Position {
     }
   }
 
-  public toGlobal = (): Position => {
-    switch (this.type) {
-      case "screenspace":
-        return this;
-      case "global":
-        return new Position(this.x - store.game.worldOffset.x, this.y - store.game.worldOffset.y, "global");
-      case "local":
-        throw new Error("Cannot convert local position to global position without context");
-      default:
-        throw new Error(`Unknown position type: ${this.type}`);
-    }
-  }
+  // Note: toGlobal() method removed as it required global store access
+  // This transformation should be handled by the Game instance when needed
 }
