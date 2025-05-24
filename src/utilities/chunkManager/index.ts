@@ -3,14 +3,15 @@ import invariant from "tiny-invariant";
 import type { Game } from "../game/game";
 import type { SubscribablePosition } from "../position/subscribable";
 import { createChunkKey, type ChunkKey } from "../tagged";
+import { Chunk } from "./chunk";
 import type { ChunkGenerator } from "./generator";
 import type { ChunkLoader } from "./loader";
 import { ChunkLoadManager } from "./loadManager";
 import type { ChunkManagerMeta } from "./meta";
 import { ChunkProcessor } from "./processor";
 import { ChunkRegistry } from "./registry";
-import type { Chunk } from "./type";
 
+/***** SIMPLIFIED CHUNK MANAGER *****/
 /**
  * Simplified ChunkManager that coordinates chunk loading/unloading
  */
@@ -63,7 +64,7 @@ export class ChunkManager {
    * @returns The chunk containing the specified coordinates
    * @throws {Error} If the chunk is not found (chunk must be loaded first)
    */
-  public getChunk = (x: number, y: number) => {
+  public getChunk = (x: number, y: number): Chunk => {
     const chunkX = Math.floor(x / this.game.consts.chunkAbsolute);
     const chunkY = Math.floor(y / this.game.consts.chunkAbsolute);
     const chunkKey = createChunkKey(chunkX, chunkY);
@@ -97,7 +98,7 @@ export class ChunkManager {
   /**
    * Adds a processed chunk and its entities to the game world
    * @param chunkKey - The unique identifier for the chunk
-   * @param chunk - The chunk display object to add to the container
+   * @param chunk - The chunk instance to add to the container
    * @param entities - Array of entities that belong to this chunk
    */
   private addChunkToGame(chunkKey: ChunkKey, chunk: Chunk, entities: any[]): void {
@@ -114,7 +115,7 @@ export class ChunkManager {
     // Register chunk and entities
     this.game.entityManager.setEntitiesForChunk(chunkKey, new Set(entities));
     this.chunkRegistry.addChunk(chunkKey, chunk);
-    this.container.addChild(chunk);
+    this.container.addChild(chunk.getContainer());
   }
 
   /**
@@ -125,8 +126,8 @@ export class ChunkManager {
   private unloadChunk(chunkKey: ChunkKey): void {
     const chunk = this.chunkRegistry.getChunk(chunkKey);
     if (chunk) {
+      this.container.removeChild(chunk.getContainer());
       chunk.destroy();
-      this.container.removeChild(chunk);
       this.chunkRegistry.removeChunk(chunkKey);
       this.game.entityManager.removeEntitiesForChunk(chunkKey);
     }

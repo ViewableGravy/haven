@@ -1,4 +1,4 @@
-import type { ContainerChild } from "pixi.js";
+import type { Chunk } from "./chunk";
 
 
-export type Chunk = ContainerChild;
+export type { Chunk };

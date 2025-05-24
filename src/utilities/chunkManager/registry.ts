@@ -1,6 +1,7 @@
 import type { ChunkKey } from "../tagged";
-import type { Chunk } from "./type";
+import type { Chunk } from "./chunk";
 
+/***** CHUNK REGISTRY *****/
 /**
  * Manages the state of active chunks in memory
  */
@@ -11,7 +12,7 @@ export class ChunkRegistry {
   /**
    * Adds a chunk to the registry
    * @param chunkKey - The unique identifier for the chunk
-   * @param chunk - The chunk display object to register
+   * @param chunk - The chunk instance to register
    */
   public addChunk(chunkKey: ChunkKey, chunk: Chunk): void {
     this.activeChunkKeys.add(chunkKey);

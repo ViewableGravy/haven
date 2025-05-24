@@ -110,22 +110,17 @@ export class MouseFollower {
     if (!this.isPlaceable) return;
 
     const chunk = this.game.controllers.chunkManager.getChunk(
-      this.game.state.worldPointer.x, 
-      this.game.state.worldPointer.y
+      this.entity.transform.position.x, 
+      this.entity.transform.position.y
     );
 
-    const position = chunk.getGlobalPosition();
-
-    const chunkGlobalX = position.x - this.game.state.worldOffset.x;
-    const chunkGlobalY = position.y - this.game.state.worldOffset.y;
-    
-    const chunkRelativeX = this.entity.container.x - chunkGlobalX;
-    const chunkRelativeY = this.entity.container.y - chunkGlobalY;
+    // Use the new toLocalPosition method to convert world coordinates to chunk-local coordinates
+    const localPosition = chunk.toLocalPosition(this.entity.transform.position);
 
     this.entity.ghostMode = false;
     this.entity.transform.position.position = {
-      x: chunkRelativeX,
-      y: chunkRelativeY,
+      x: localPosition.x,
+      y: localPosition.y,
       type: "local"
     }
 

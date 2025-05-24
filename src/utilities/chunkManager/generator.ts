@@ -1,8 +1,9 @@
 import { noiseSeed, noise as perlinNoise } from "@chriscourses/perlin-noise";
-import { Application, Container, Graphics, Sprite, type ContainerChild, type Texture } from "pixi.js";
+import { Application, Container, Graphics, Sprite, type Texture } from "pixi.js";
 import type { ChunkWorkerMessage, ChunkWorkerResponse } from "../../workers/chunkWorker";
 import { WorkerPool } from "../../workers/workerPool";
 import type { Game } from "../game/game";
+import { Chunk } from "./chunk";
 import type { ChunkManagerMeta } from "./meta";
 import { TileFactory } from "./tile";
 
@@ -24,7 +25,7 @@ export class ChunkGenerator {
   constructor(
     private app: Application,
     private chunkLoaderMeta: ChunkManagerMeta,
-    private game?: Game // Optional for now to maintain compatibility
+    private game: Game // Made required since Chunk class needs it
   ) {
     const tileSize = game?.consts.tileSize ?? 64;
     const chunkSize = game?.consts.chunkSize ?? 16;
@@ -72,23 +73,11 @@ export class ChunkGenerator {
    * Generates a complete chunk at the specified coordinates
    * @param chunkX - The chunk x coordinate
    * @param chunkY - The chunk y coordinate
-   * @returns Promise resolving to a PIXI.js container representing the chunk
+   * @returns Promise resolving to a Chunk instance
    */
-  public generateChunk = async (chunkX: number, chunkY: number): Promise<ContainerChild> => {    
-    // Define the chunk container
-    const chunk = new Container();
-
-    // Predefine size properties
-    const tileSize = this.game?.consts.tileSize ?? 64;
-    const chunkSize = this.game?.consts.chunkSize ?? 16;
-    const size = chunkSize * tileSize;
-    
-    chunk.x = chunkX * size;
-    chunk.y = chunkY * size;
-    chunk.width = size;
-    chunk.height = size;
-    chunk.zIndex = 0;
-    chunk.sortableChildren = true;
+  public generateChunk = async (chunkX: number, chunkY: number): Promise<Chunk> => {    
+    // Create the new Chunk instance
+    const chunk = new Chunk(this.game, chunkX, chunkY);
     
     // Generate the background using web workers
     const background = await this.generateChunkBackgroundParallel(chunkX, chunkY);
@@ -252,9 +241,9 @@ export class ChunkGenerator {
    * Adds a debug border around the chunk for visual debugging
    * Only adds border if DEBUG flag is enabled in metadata
    * @private
-   * @param container - The chunk container to add the border to
+   * @param chunk - The chunk to add the border to
    */
-  private addDebugBorder = (container: Container) => {
+  private addDebugBorder = (chunk: Chunk) => {
     const tileSize = this.game?.consts.tileSize ?? 64;
     const chunkSize = this.game?.consts.chunkSize ?? 16;
     const size = chunkSize * tileSize;
@@ -276,7 +265,7 @@ export class ChunkGenerator {
       rectangle.width = size;
       rectangle.height = size;
 
-      container.addChild(rectangle);
+      chunk.addChild(rectangle);
     }
   }
 
