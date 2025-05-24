@@ -1,8 +1,8 @@
 import type { Application } from "pixi.js";
 import type { BaseEntity } from "../entities/base";
 import type { Chunk } from "./chunkManager/type";
-import { Position } from "./position";
-import { SubscribablePosition } from "./position/subscribable";
+import type { Position } from "./position";
+import type { SubscribablePosition } from "./position/subscribable";
 import type { ChunkKey } from "./tagged";
 
 type GlobalStore = {

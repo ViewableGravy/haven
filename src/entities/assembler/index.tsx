@@ -11,18 +11,16 @@ import { BaseEntity } from "../base";
 import type { HasContainer, HasPosition, hasSize } from "../interfaces";
 import { createTestEntityInfographicNode } from "./info";
 
-
-
-
-
 export class Assembler extends BaseEntity implements HasContainer, HasPosition, hasSize, Rectangle {
   public container: ContainerChild;
   public position: SubscribablePosition;
-  public size: Size;
+  public size: Size = Assembler.size;
 
   public _assembler: Sprite;
   private _ghostMode: boolean = false;
-  private rectangle: Rectangle;
+  private static get size(): Size {
+    return new Size(store.consts.tileSize * 2, store.consts.tileSize * 2);
+  };
 
   constructor(
     position: Position
@@ -67,15 +65,13 @@ export class Assembler extends BaseEntity implements HasContainer, HasPosition, 
     // Setup local variables
     this.position = subscribablePosition;
     this.container = container;
-    this.size = new Size(store.consts.tileSize * 2, store.consts.tileSize * 2);
     this._assembler = assembler;
-    this.rectangle = new Rectangle(this.position, this.size)
   }
 
   private static createContainer = (position: SubscribablePosition): Container => {
     const container = new Container();
-    container.width = store.consts.tileSize * 2;
-    container.height = store.consts.tileSize * 2;
+    container.width = Assembler.size.width;
+    container.height = Assembler.size.height;
     
     position.subscribeImmediately(({ x, y }) => {
       container.x = x;
@@ -87,8 +83,8 @@ export class Assembler extends BaseEntity implements HasContainer, HasPosition, 
 
   private static createSelectionSprite = () => {
     const selectionSprite = new Sprite(Texture.from(Selection))
-    selectionSprite.width = store.consts.tileSize * 2;
-    selectionSprite.height = store.consts.tileSize * 2;
+    selectionSprite.width = Assembler.size.width;
+    selectionSprite.height = Assembler.size.height;
     selectionSprite.x = 0;
     selectionSprite.y = 0;
     selectionSprite.renderable = false;
@@ -99,8 +95,8 @@ export class Assembler extends BaseEntity implements HasContainer, HasPosition, 
   private static createAssemblerSprite = () => {
     const assembler = AssemblerSprite.createSprite("assembling-machine-1");
     assembler.interactive = true;
-    assembler.width = store.consts.tileSize * 2;
-    assembler.height = store.consts.tileSize * 2;
+    assembler.width = Assembler.size.width;
+    assembler.height = Assembler.size.height;
     assembler.x = 0;
     assembler.y = 0;
 

@@ -9,6 +9,7 @@ import { Player } from "../player";
 import Selection from "../../assets/selection.png";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
 import { Position } from "../position";
+import { SubscribablePosition } from "../position/subscribable";
 import { store } from "../store";
 
 type GlobalControllers = {
@@ -27,7 +28,12 @@ export class Game {
   }
 
   constructor() {
-    store.game.app = new Application();
+    store.game = {
+      app: new Application(),
+      worldPointer: new Position(0, 0, "global"),
+      screenPointer: new Position(0, 0, "screenspace"),
+      worldOffset: new SubscribablePosition(0, 0),
+    }
   }
 
   public initialize = async (el: HTMLElement) => {
@@ -45,6 +51,7 @@ export class Game {
     this.world = new Container();
 
     store.game.app.stage.addChild(this.world);
+
 
     // Append the application canvas to the document body
     el.appendChild(store.game.app.canvas);

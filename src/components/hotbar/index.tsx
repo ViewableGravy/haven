@@ -1,6 +1,8 @@
 import type React from "react";
 import { useCallback, useEffect, useRef } from "react";
 import { Assembler } from "../../entities/assembler";
+import type { BaseEntity } from "../../entities/base";
+import type { HasContainer, HasGhostable, HasPosition, hasSize } from "../../entities/interfaces";
 import { Game } from "../../utilities/game/game";
 import { Position } from "../../utilities/position";
 import { Rectangle } from "../../utilities/rectangle";
@@ -15,7 +17,7 @@ const isCastableToNumber = (value: string) => {
   return !isNaN(Number(value));
 }
 
-const followMouse = (game: Game, entity: Assembler) => {
+const followMouse = (game: Game, entity: BaseEntity & HasGhostable & hasSize & HasPosition & HasContainer) => {
   let isPlacehable = true;
 
   function handleMouseMove() {
@@ -36,17 +38,17 @@ const followMouse = (game: Game, entity: Assembler) => {
     // Apply the appropriate offset based on the quadrant
     switch (true) {
       case isQ1: {
-        entity.position.x = tileX - store.consts.tileSize;
-        entity.position.y = tileY - store.consts.tileSize;
+        entity.position.x = tileX - entity.size.width / 2;
+        entity.position.y = tileY - entity.size.width / 2;
         break;
       }
       case isQ2: {
         entity.position.x = tileX;
-        entity.position.y = tileY - store.consts.tileSize;
+        entity.position.y = tileY - entity.size.width / 2;
         break;
       }
       case isQ3: {
-        entity.position.x = tileX - store.consts.tileSize;
+        entity.position.x = tileX - entity.size.width / 2;
         entity.position.y = tileY;
         break;
       }
