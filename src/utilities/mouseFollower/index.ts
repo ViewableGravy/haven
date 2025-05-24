@@ -1,11 +1,12 @@
 import type { BaseEntity } from "../../entities/base";
 import type { HasContainer, HasGhostable, HasTransform } from "../../entities/interfaces";
 import { hasTransform } from "../../entities/interfaces";
+import type { PlaceableTrait } from "../../entities/traits/placeable";
 import type { Game } from "../game/game";
 import { Rectangle } from "../rectangle";
 
 /***** TYPE DEFINITIONS *****/
-type FollowableEntity = BaseEntity & HasGhostable & HasContainer & HasTransform;
+type FollowableEntity = BaseEntity & HasGhostable & HasContainer & HasTransform & PlaceableTrait;
 
 /***** MOUSE FOLLOWER CLASS *****/
 export class MouseFollower {
