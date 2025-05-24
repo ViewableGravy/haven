@@ -3,7 +3,7 @@ import type { Position as RawPosition } from "./types";
 
 
 
-export class Position extends EventEmitter<RawPosition> {
+export class SubscribablePosition extends EventEmitter<RawPosition> {
   constructor(
     private _x: number,
     private _y: number

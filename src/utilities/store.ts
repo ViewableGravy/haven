@@ -1,5 +1,6 @@
-import type { TestEntity } from "../entities/test";
-
+import type { BaseEntity } from "../entities/base";
+import type { Chunk } from "./chunkManager/type";
+import type { ChunkKey } from "./tagged";
 
 type GlobalStore = {
   consts: {
@@ -7,8 +8,12 @@ type GlobalStore = {
     chunkSize: number;
     chunkAbsolute: number;
   },
-  // Change to better spatial querying structure in the future
-  entities: Array<TestEntity>;
+
+  entities: Set<BaseEntity>;
+  entitiesByChunk: Map<ChunkKey, Set<BaseEntity>>;
+
+  activeChunkKeys: Set<ChunkKey>;
+  activeChunksByKey: Map<ChunkKey, Chunk>;
 }
 
 export const store: GlobalStore = {
@@ -17,5 +22,8 @@ export const store: GlobalStore = {
     chunkSize: 16,
     get chunkAbsolute() { return this.tileSize * this.chunkSize; }
   },
-  entities: []
+  entities: new Set(),
+  entitiesByChunk: new Map(),
+  activeChunkKeys: new Set(),
+  activeChunksByKey: new Map()
 }

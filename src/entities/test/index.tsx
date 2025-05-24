@@ -2,43 +2,41 @@ import { Container, Sprite, Texture, type ContainerChild } from "pixi.js";
 import Selection from "../../assets/selection.png";
 import { infographicStore } from "../../components/infographic/store";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
-import { Position } from "../../utilities/position";
-import type { Position as RawPosition, SubscribablePosition } from "../../utilities/position/types";
+import { SubscribablePosition } from "../../utilities/position";
+import type { Position as RawPosition } from "../../utilities/position/types";
 import { store } from "../../utilities/store";
-import { Entity } from "../entity";
+import { BaseEntity } from "../base";
+import type { HasContainer, HasPosition } from "../interfaces";
 import { createTestEntityInfographicNode } from "./info";
 
-export class TestEntity extends Entity {
-  public containerChild: ContainerChild;
-  public _assembler: Sprite;
+
+
+
+
+export class Assembler extends BaseEntity implements HasContainer, HasPosition {
+  public container: ContainerChild;
   public position: SubscribablePosition;
 
+  public _assembler: Sprite;
   private _ghostMode: boolean = false;
 
   constructor(position: RawPosition) { 
-    super();
+    // Create basic components for the entity
+    const subscribablePosition = new SubscribablePosition(position.x, position.y);
+    const container = Assembler.createContainer(subscribablePosition);
+    const selectionSprite = Assembler.createSelectionSprite();
+    const assembler = Assembler.createAssemblerSprite();
 
-    this.position = new Position(position.x, position.y);
+    // Add the selection sprite to the container
+    container.addChild(assembler);
+    container.addChild(selectionSprite);
 
-    const { assembler, container } = this.create();
-
-    this.containerChild = container;
-    this._assembler = assembler;
-  }
-
-  private create = () => {
-    const container = this.createContainer();
-    const selectionSprite = this.createSelectionSprite();
-    const assembler = this.createAssemblerSprite();
-
+    // Apply event listeners to the assembler
     assembler.addEventListener("mouseover", () => {
       if (this.ghostMode) return;
 
-      // push hover state globally
-      Entity.hoveredMap[assembler.uid] = true;
-
       // Update graphic
-      container.addChild(selectionSprite);
+      selectionSprite.renderable = true;
 
       // Render infographic
       infographicStore.setState(() => ({
@@ -48,27 +46,30 @@ export class TestEntity extends Entity {
     })
 
     assembler.addEventListener("mouseout", () => {
-      delete Entity.hoveredMap[assembler.uid];
-
       // Update graphic
-      container.removeChild(selectionSprite);
+      selectionSprite.renderable = false;
 
+      // Remove infographic
       infographicStore.setState(() => ({
         active: false,
       }));
     })
+    
+    // Setup the Entity based on the container id
+    super(container.uid)
 
-    container.addChild(assembler);
-
-    return { container, assembler }
+    // Setup local variables
+    this.position = subscribablePosition;
+    this.container = container;
+    this._assembler = assembler;
   }
 
-  private createContainer = (): Container => {
+  private static createContainer = (position: SubscribablePosition): Container => {
     const container = new Container();
     container.width = store.consts.tileSize * 2;
     container.height = store.consts.tileSize * 2;
     
-    this.position.subscribeImmediately(({ x, y }) => {
+    position.subscribeImmediately(({ x, y }) => {
       container.x = x;
       container.y = y;
     });
@@ -76,17 +77,18 @@ export class TestEntity extends Entity {
     return container;
   }
 
-  private createSelectionSprite = () => {
+  private static createSelectionSprite = () => {
     const selectionSprite = new Sprite(Texture.from(Selection))
     selectionSprite.width = store.consts.tileSize * 2;
     selectionSprite.height = store.consts.tileSize * 2;
     selectionSprite.x = 0;
     selectionSprite.y = 0;
+    selectionSprite.renderable = false;
 
     return selectionSprite;
   }
 
-  private createAssemblerSprite = () => {
+  private static createAssemblerSprite = () => {
     const assembler = AssemblerSprite.createSprite("assembling-machine-1");
     assembler.interactive = true;
     assembler.width = store.consts.tileSize * 2;
@@ -100,9 +102,9 @@ export class TestEntity extends Entity {
   public set ghostMode(value: boolean) {
     this._ghostMode = value;
     if (value) {
-      this.containerChild.alpha = 0.7;
+      this.container.alpha = 0.7;
     } else {
-      this.containerChild.alpha = 1;
+      this.container.alpha = 1;
     }
   }
   public get ghostMode() {

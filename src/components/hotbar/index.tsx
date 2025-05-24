@@ -1,6 +1,7 @@
 import type React from "react";
 import { useCallback, useEffect, useRef } from "react";
-import { TestEntity } from "../../entities/test";
+import { hasPosition } from "../../entities/interfaces";
+import { Assembler } from "../../entities/test";
 import { Game } from "../../utilities/game/game";
 import { store } from "../../utilities/store";
 import { usePixiContext } from "../pixi/context";
@@ -13,7 +14,7 @@ const isCastableToNumber = (value: string) => {
   return !isNaN(Number(value));
 }
 
-const followMouse = (game: Game, entity: TestEntity) => {
+const followMouse = (game: Game, entity: Assembler) => {
   let isPlacehable = true;
 
   function handleMouseMove() {
@@ -57,6 +58,8 @@ const followMouse = (game: Game, entity: TestEntity) => {
 
     // Set Mouse cursor to cross if overlapping with another entity
     for (const _entity of store.entities) {
+      if (!hasPosition(_entity)) continue;
+
       // check collision (assuming entities are tileSize * 2 large, and they cannot partially overlap)
       if (entity.position.x < _entity.position.x + (store.consts.tileSize * 2) &&
           entity.position.x + (store.consts.tileSize * 2) > _entity.position.x &&
@@ -79,11 +82,11 @@ const followMouse = (game: Game, entity: TestEntity) => {
 
     const position = chunk.getGlobalPosition()
 
-    const chunkGlobalX = position.x - game.app.stage.x;
-    const chunkGlobalY = position.y - game.app.stage.y;
+    const chunkGlobalX = position.x - game.world.x;
+    const chunkGlobalY = position.y - game.world.y;
     
-    const chunkRelativeX = entity.containerChild.x - chunkGlobalX;
-    const chunkRelativeY = entity.containerChild.y - chunkGlobalY;
+    const chunkRelativeX = entity.container.x - chunkGlobalX;
+    const chunkRelativeY = entity.container.y - chunkGlobalY;
 
     entity.ghostMode = false;
     entity.position.position = {
@@ -91,8 +94,8 @@ const followMouse = (game: Game, entity: TestEntity) => {
       y: chunkRelativeY
     }
 
-    chunk.addChild(entity.containerChild);
-    store.entities.push(entity);
+    chunk.addChild(entity.container);
+    store.entities.add(entity);
 
     // Remove all event listeners
     cleanup();
@@ -108,13 +111,13 @@ const followMouse = (game: Game, entity: TestEntity) => {
     window.removeEventListener("mousemove", handleMouseMove);
     window.removeEventListener("keydown", handleKeydown);
     window.removeEventListener("mousedown", handleMouseDown);
-    game.app.stage.removeChild(entity.containerChild);
+    game.world.removeChild(entity.container);
   }
     
   window.addEventListener("keydown", handleKeydown);
   window.addEventListener("mousedown", handleMouseDown);
   window.addEventListener("mousemove", handleMouseMove);
-  game.app.stage.addChild(entity.containerChild);
+  game.world.addChild(entity.container);
 
   return cleanup;
 }
@@ -174,7 +177,7 @@ function HotbarItem({ index, children }: { index: number, children: React.ReactN
   /***** FUNCTIONS *****/
   const handleClick = useCleanupCallback((ref) => {
     // Create entity in ghost mode
-    const followEntity = new TestEntity({ x: 0, y: 0 });
+    const followEntity = new Assembler({ x: 0, y: 0 });
     followEntity.ghostMode = true;
   
     // Add entity to stage and assign cleanup function to ref
@@ -199,7 +202,7 @@ function HotbarItem({ index, children }: { index: number, children: React.ReactN
 
   /***** RENDER *****/
   return (
-    <div style={{ width: 50, height: 50, border: "1px solid cyan", color: "black", cursor: "pointer" }} onClick={handleClick} >
+    <div style={{ width: 50, height: 50, border: "1px solid cyan", color: "black", cursor: "pointer" }} onClick={() => handleClick()} >
       {children}
     </div>
   )

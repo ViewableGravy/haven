@@ -1,7 +1,7 @@
-import type { TestEntity } from "."
+import type { Assembler } from "."
 
 
-export const createTestEntityInfographicNode = (entity: TestEntity) => {
+export const createTestEntityInfographicNode = (entity: Assembler) => {
   return () => {
     return (
       <>

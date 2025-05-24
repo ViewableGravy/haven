@@ -3,6 +3,7 @@ import invariant from "tiny-invariant";
 import type { SubscribablePosition } from "../position/types";
 import { waitForIdle } from "../promise/waitForIdle";
 import { store } from "../store";
+import { createChunkKey, type ChunkKey } from "../tagged";
 import type { ChunkGenerator } from "./generator";
 import type { ChunkLoader } from "./loader";
 import type { ChunkManagerMeta } from "./meta";
@@ -14,8 +15,7 @@ export class ChunkManager {
    * however, in the future, this would be modified to include several chunks that are not part of the game
    * but should stay in memory in case the player turns around and needs to quickly load them into the game.
    */
-  public chunks = new Map<string, ContainerChild>();
-  public generationQueue: Array<string> = [];
+  public generationQueue: Array<ChunkKey> = [];
   public processingQueue: boolean = false;
   public lastChunkPosition: { x: number; y: number } | null = null;
 
@@ -46,7 +46,9 @@ export class ChunkManager {
 
       // Load the chunk if it is not already loaded
       if (!this.isChunkLoaded(chunkX, chunkY)) {
-        this.queueChunk(chunkX, chunkY);
+        if (!this.isChunkLoading(chunkX, chunkY)) {
+          this.queueChunk(chunkX, chunkY);
+        }
       }
 
       // Queue new chunks within the load radius
@@ -64,11 +66,8 @@ export class ChunkManager {
       }
 
       // Unload chunks outside the load radius
-      // TODO: Move this to a background process
-      const keys = Array.from(this.chunks.keys());
-
-      keys.forEach((key) => {
-        const [existingChunkX, existingChunkY] = key.split(',').map(Number);
+      store.activeChunkKeys.forEach((chunkKey) => {
+        const [existingChunkX, existingChunkY] = chunkKey.split(',').map(Number);
         if (Math.abs(existingChunkX - chunkX) > loadRadiusX || Math.abs(chunkY - existingChunkY) > loadRadiusY) {
           this.unloadChunk(existingChunkX, existingChunkY);
         }
@@ -76,41 +75,35 @@ export class ChunkManager {
 
       // Process the queue if not already processing
       if (!this.processingQueue) {
-        // Runs asynchronously to avoid blocking the main thread
         this.processQueue();
       }
     });
-  }
+  };
 
   public getChunk = (x: number, y: number) => {
     const chunkX = Math.floor(x / store.consts.chunkAbsolute);
     const chunkY = Math.floor(y / store.consts.chunkAbsolute);
 
-    const chunkKey = this.getChunkKey(chunkX, chunkY);
-    const chunk = this.chunks.get(chunkKey);
+    const chunkKey = createChunkKey(chunkX, chunkY);
+    const chunk = store.activeChunksByKey.get(chunkKey);
 
     invariant(chunk, `Chunk not found: ${chunkKey}`);
 
     return chunk;
   }
 
-  private getChunkKey = (x: number, y: number) => {
-    return `${x},${y}`;
-  }
-
   private queueChunk = (chunkX: number, chunkY: number) => {
-    const chunkKey = this.getChunkKey(chunkX, chunkY);
-
-    this.generationQueue.push(chunkKey);
-  }
+    this.generationQueue.push(createChunkKey(chunkX, chunkY));
+  };
 
   private unloadChunk = (chunkX: number, chunkY: number) => {
-    const chunkKey = this.getChunkKey(chunkX, chunkY);
-    const chunk = this.chunks.get(chunkKey);
+    const chunkKey = createChunkKey(chunkX, chunkY);
+    const chunk = store.activeChunksByKey.get(chunkKey);
     if (chunk) {
       chunk.destroy();
       this.container.removeChild(chunk);
-      this.chunks.delete(chunkKey);
+      store.activeChunkKeys.delete(chunkKey);
+      store.activeChunksByKey.delete(chunkKey);
     }
 
     this.generationQueue.splice(this.generationQueue.indexOf(chunkKey), 1);
@@ -130,10 +123,22 @@ export class ChunkManager {
         const chunk = await this.chunkGenerator.generateChunk(chunkX, chunkY)
         const entities = await this.chunkLoader.retrieveEntities(chunkX, chunkY);
 
-        if (entities.length)
-          chunk.addChild(...entities);
+        // If there are entities, add them to the scene and entities set
+        if (entities.length) {
+          for (const entity of entities) {
+            if (entity.hasContainer()) {
+              chunk.addChild(entity.container);
+            }
+          }
+          entities.forEach((e) => store.entities.add(e));
+        }
+        
+        // Set this chunk and entities in the store
+        store.entitiesByChunk.set(chunkKey, new Set(entities));
+        store.activeChunkKeys.add(chunkKey);
+        store.activeChunksByKey.set(chunkKey, chunk);
 
-        this.chunks.set(chunkKey, chunk);
+        // Add the chunk to the container
         this.container.addChild(chunk);
       }));
 
@@ -145,12 +150,10 @@ export class ChunkManager {
   }
 
   private isChunkLoaded = (chunkX: number, chunkY: number) => {
-    const chunkKey = this.getChunkKey(chunkX, chunkY);
-    return this.chunks.has(chunkKey);
+    return store.activeChunksByKey.has(createChunkKey(chunkX, chunkY));
   }
 
   private isChunkLoading = (chunkX: number, chunkY: number) => {
-    const chunkKey = this.getChunkKey(chunkX, chunkY);
-    return this.generationQueue.includes(chunkKey);
+    return this.generationQueue.includes(createChunkKey(chunkX, chunkY));
   }
 }

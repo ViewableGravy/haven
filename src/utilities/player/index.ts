@@ -1,7 +1,7 @@
 import type { Ticker } from "pixi.js";
 import type { KeyboardController } from "../keyboardController";
-import { Position } from "../position";
-import type { Position as RawPosition, SubscribablePosition } from "../position/types";
+import { SubscribablePosition } from "../position";
+import type { Position as RawPosition } from "../position/types";
 
 type PlayerOptions = {
   position: RawPosition;
@@ -14,7 +14,7 @@ export class Player {
 
   constructor(opts: PlayerOptions) {
     this.controller = opts.controller;
-    this.position = new Position(
+    this.position = new SubscribablePosition(
       opts.position.x, 
       opts.position.y
     );

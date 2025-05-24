@@ -1,4 +1,4 @@
-import { Application, Assets } from "pixi.js";
+import { Application, Assets, Container, type ContainerChild } from "pixi.js";
 import { ChunkManager } from "../chunkManager";
 import { ChunkGenerator } from "../chunkManager/generator";
 import { ChunkLoader } from "../chunkManager/loader";
@@ -19,6 +19,7 @@ export class Game {
   public initialized: boolean = false;
   public initializing: boolean = false;
   public app: Application;
+  public world!: ContainerChild;
 
   public controllers: GlobalControllers = {
     keyboard: undefined!,
@@ -46,6 +47,10 @@ export class Game {
       resizeTo: window
     });
 
+    this.world = new Container();
+
+    this.app.stage.addChild(this.world);
+
     // Append the application canvas to the document body
     el.appendChild(this.app.canvas);
 
@@ -66,7 +71,7 @@ export class Game {
     });
 
     this.controllers.chunkManager = new ChunkManager(
-      this.app.stage,
+      this.world,
       chunkMeta,
       new ChunkGenerator(this.app, chunkMeta),
       new ChunkLoader()
@@ -74,20 +79,20 @@ export class Game {
 
     // Set the stage based on the player position
     player.position.subscribeImmediately(({ x, y }) => {
-      this.app.stage.x = -x + this.app.screen.width / 2;
-      this.app.stage.y = -y + this.app.screen.height / 2;
+      this.world.x = -x + this.app.screen.width / 2;
+      this.world.y = -y + this.app.screen.height / 2;
     });
 
     // Enable interactivity!
-    this.app.stage.eventMode = 'static';
-    this.app.stage.hitArea = {
+    this.world.eventMode = 'static';
+    this.world.hitArea = {
       contains: () => true
     }
     
     // Get the current pointer position
-    this.app.stage.addEventListener("pointermove", ({ x, y }) => {
-      this.worldPointerX = x - this.app.stage.x;
-      this.worldPointerY = y - this.app.stage.y;
+    this.world.addEventListener("pointermove", ({ x, y }) => {
+      this.worldPointerX = x - this.world.x;
+      this.worldPointerY = y - this.world.y;
       this.screenPointerX = x;
       this.screenPointerY = y;
     })
