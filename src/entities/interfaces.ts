@@ -2,6 +2,7 @@ import type { ContainerChild } from "pixi.js";
 import type { SubscribablePosition } from "../utilities/position/subscribable";
 import type { Rectangle } from "../utilities/rectangle";
 import type { Size } from "../utilities/size";
+import type { Transform } from "../utilities/transform";
 
 /***** TYPE DEFINITIONS *****/
 export interface HasContainer {
@@ -24,6 +25,10 @@ export interface HasGhostable {
   ghostMode: boolean;
 }
 
+export interface HasTransform {
+  transform: Transform;
+}
+
 /***** FUNCTIONS *****/
 export function hasPosition(obj: any): obj is HasPosition {
   return "position" in obj;
@@ -43,4 +48,8 @@ export function hasRectangle(obj: any): obj is HasRectangle {
 
 export function hasGhostable(obj: any): obj is HasGhostable {
   return "ghostMode" in obj;
+}
+
+export function hasTransform(obj: any): obj is HasTransform {
+  return "transform" in obj && obj.transform && typeof obj.transform === "object";
 }

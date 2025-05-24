@@ -7,10 +7,10 @@ import type { Position } from "../../utilities/position";
 import { Rectangle } from "../../utilities/rectangle";
 import { Transform } from "../../utilities/transform";
 import { BaseEntity } from "../base";
-import type { HasContainer } from "../interfaces";
+import type { HasContainer, HasTransform } from "../interfaces";
 import { createTestEntityInfographicNode } from "./info";
 
-export class Assembler extends BaseEntity implements HasContainer {
+export class Assembler extends BaseEntity implements HasContainer, HasTransform {
   public container: ContainerChild;
   public transform: Transform;
 
