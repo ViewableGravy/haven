@@ -142,8 +142,8 @@ export class Game {
     this.controllers.chunkManager = new ChunkManager(
       this,
       this.world,
-      chunkMeta,
       new ChunkGenerator(this.state.app, chunkMeta, this),
+      chunkMeta,
       new ChunkLoader(this)
     );
 

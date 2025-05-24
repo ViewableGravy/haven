@@ -2,196 +2,154 @@ import { Container, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
 import type { Game } from "../game/game";
 import type { SubscribablePosition } from "../position/subscribable";
-import { waitForIdle } from "../promise/waitForIdle";
 import { createChunkKey, type ChunkKey } from "../tagged";
 import type { ChunkGenerator } from "./generator";
 import type { ChunkLoader } from "./loader";
+import { ChunkLoadManager } from "./loadManager";
 import type { ChunkManagerMeta } from "./meta";
+import { ChunkProcessor } from "./processor";
+import { ChunkRegistry } from "./registry";
 import type { Chunk } from "./type";
 
-/***** CHUNK MANAGER *****/
+/**
+ * Simplified ChunkManager that coordinates chunk loading/unloading
+ */
 export class ChunkManager {
+  private chunkRegistry = new ChunkRegistry();
+  private chunkProcessor: ChunkProcessor;
+  private loadManager: ChunkLoadManager;
+
   /**
-   * Represents all chunks that are loaded and in the game (attached to container).
-   * In the future, this could include chunks that stay in memory for quick loading.
+   * Creates a new ChunkManager instance
+   * @param game - The game instance containing constants and entity management
+   * @param container - The PIXI.js container that will hold all chunk display objects
+   * @param chunkGenerator - Generator responsible for creating chunk content
+   * @param chunkLoaderMeta - Metadata configuration for chunk loading behavior
+   * @param chunkLoader - Loader responsible for processing chunks
    */
-  public generationQueue: Array<ChunkKey> = [];
-  public processingQueue: boolean = false;
-  public lastChunkPosition: { x: number; y: number } | null = null;
-
-  // Chunk state - moved from Game class
-  private activeChunkKeys: Set<ChunkKey> = new Set();
-  private activeChunksByKey: Map<ChunkKey, Chunk> = new Map();
-
   constructor(
     private game: Game,
     private container: Container<ContainerChild>,
-    private chunkLoaderMeta: ChunkManagerMeta,
     private chunkGenerator: ChunkGenerator,
-    private chunkLoader: ChunkLoader
-  ) {}
-
-  // Chunk state management methods
-  public addActiveChunk(chunkKey: ChunkKey, chunk: Chunk): void {
-    this.activeChunkKeys.add(chunkKey);
-    this.activeChunksByKey.set(chunkKey, chunk);
+    chunkLoaderMeta: ChunkManagerMeta,
+    chunkLoader: ChunkLoader
+  ) {
+    this.chunkProcessor = new ChunkProcessor(chunkGenerator, chunkLoader);
+    this.loadManager = new ChunkLoadManager(game.consts.chunkAbsolute, chunkLoaderMeta);
   }
 
-  public removeActiveChunk(chunkKey: ChunkKey): void {
-    this.activeChunkKeys.delete(chunkKey);
-    this.activeChunksByKey.delete(chunkKey);
-  }
-
-  public getActiveChunk(chunkKey: ChunkKey): Chunk | undefined {
-    return this.activeChunksByKey.get(chunkKey);
-  }
-
-  public getActiveChunkKeys(): Set<ChunkKey> {
-    return this.activeChunkKeys;
-  }
-
-  // Cleanup method - moved from Game class
-  public destroy(): void {
-    if (this.chunkGenerator) {
-      this.chunkGenerator.destroy();
-    }
-    this.activeChunkKeys.clear();
-    this.activeChunksByKey.clear();
-  }
-
+  /**
+   * Subscribes a position to the chunk loading system
+   * The position will be monitored and chunks will be loaded/unloaded based on proximity
+   * @param position - The subscribable position that determines which chunks should be loaded
+   */
   public subscribe = (position: SubscribablePosition) => {
-    position.subscribeImmediately(({ x, y }) => {
-      const chunkX = Math.floor(x / this.game.consts.chunkAbsolute);
-      const chunkY = Math.floor(y / this.game.consts.chunkAbsolute);
-
-      const lastX = this.lastChunkPosition?.x ?? null;
-      const lastY = this.lastChunkPosition?.y ?? null;
-
-      // Break out early if we have not moved chunks
-      if (this.lastChunkPosition && lastX === chunkX && lastY === chunkY)
-        return;
-
-      this.lastChunkPosition = { x: chunkX, y: chunkY };
-
-      const loadRadius = this.chunkLoaderMeta.LOAD_RADIUS;
-      const loadRadiusX = typeof loadRadius === 'number' ? loadRadius : loadRadius.x;
-      const loadRadiusY = typeof loadRadius === 'number' ? loadRadius : loadRadius.y;
-
-      // Load the chunk if it is not already loaded
-      if (!this.isChunkLoaded(chunkX, chunkY)) {
-        if (!this.isChunkLoading(chunkX, chunkY)) {
-          this.queueChunk(chunkX, chunkY);
-        }
-      }
-
-      // Queue new chunks within the load radius
-      for (let i = -loadRadiusX; i <= loadRadiusX; i++) {
-        for (let j = -loadRadiusY; j <= loadRadiusY; j++) {
-          const checkChunkX = chunkX + i;
-          const checkChunkY = chunkY + j;
-
-          if (!this.isChunkLoaded(checkChunkX, checkChunkY)) {
-            if (!this.isChunkLoading(checkChunkX, checkChunkY)) {
-              this.queueChunk(checkChunkX, checkChunkY);
-            }
-          }
-        }
-      }
-
-      // Unload chunks outside the load radius - use own state instead of game
-      this.activeChunkKeys.forEach((chunkKey) => {
-        const [existingChunkX, existingChunkY] = chunkKey.split(',').map(Number);
-        if (Math.abs(existingChunkX - chunkX) > loadRadiusX || Math.abs(chunkY - existingChunkY) > loadRadiusY) {
-          this.unloadChunk(existingChunkX, existingChunkY);
-        }
-      });
-
-      // Process the queue if not already processing
-      if (!this.processingQueue) {
-        this.processQueue();
-      }
+    this.loadManager.subscribeToPosition(position, {
+      onChunkNeeded: (chunkX, chunkY) => {
+        this.chunkProcessor.queueChunk(chunkX, chunkY);
+        this.processQueueIfNeeded();
+      },
+      onChunkUnneeded: (chunkKey) => this.unloadChunk(chunkKey),
+      isChunkLoaded: (chunkX, chunkY) => this.isChunkLoaded(chunkX, chunkY),
+      isChunkQueued: (chunkX, chunkY) => this.isChunkQueued(chunkX, chunkY),
+      getActiveChunkKeys: () => this.chunkRegistry.getActiveChunkKeys()
     });
   };
 
+  /**
+   * Retrieves the chunk containing the specified world coordinates
+   * @param x - World x coordinate
+   * @param y - World y coordinate
+   * @returns The chunk containing the specified coordinates
+   * @throws {Error} If the chunk is not found (chunk must be loaded first)
+   */
   public getChunk = (x: number, y: number) => {
     const chunkX = Math.floor(x / this.game.consts.chunkAbsolute);
     const chunkY = Math.floor(y / this.game.consts.chunkAbsolute);
-
     const chunkKey = createChunkKey(chunkX, chunkY);
-    const chunk = this.getActiveChunk(chunkKey);
+    const chunk = this.chunkRegistry.getChunk(chunkKey);
 
     invariant(chunk, `Chunk not found: ${chunkKey}`);
-
     return chunk;
-  }
-
-  private queueChunk = (chunkX: number, chunkY: number) => {
-    this.generationQueue.push(createChunkKey(chunkX, chunkY));
   };
 
-  private unloadChunk = (chunkX: number, chunkY: number) => {
-    const chunkKey = createChunkKey(chunkX, chunkY);
-    const chunk = this.getActiveChunk(chunkKey);
+  /**
+   * Cleans up resources and destroys the chunk manager
+   * This will destroy the chunk generator and clear all registered chunks
+   */
+  public destroy(): void {
+    this.chunkGenerator?.destroy();
+    this.chunkRegistry.clear();
+  }
+
+  /**
+   * Processes the chunk queue if no processing is currently in progress
+   * This is an async operation that loads chunks from the queue
+   */
+  private async processQueueIfNeeded(): Promise<void> {
+    if (!this.chunkProcessor.isCurrentlyProcessing) {
+      await this.chunkProcessor.processQueue(({ chunkKey, chunk, entities }) => {
+        this.addChunkToGame(chunkKey, chunk, entities);
+      });
+    }
+  }
+
+  /**
+   * Adds a processed chunk and its entities to the game world
+   * @param chunkKey - The unique identifier for the chunk
+   * @param chunk - The chunk display object to add to the container
+   * @param entities - Array of entities that belong to this chunk
+   */
+  private addChunkToGame(chunkKey: ChunkKey, chunk: Chunk, entities: any[]): void {
+    // Add entities to chunk
+    if (entities.length) {
+      entities.forEach((entity) => {
+        if (entity.hasContainer()) {
+          chunk.addChild(entity.container);
+        }
+        this.game.entityManager.addEntity(entity);
+      });
+    }
+
+    // Register chunk and entities
+    this.game.entityManager.setEntitiesForChunk(chunkKey, new Set(entities));
+    this.chunkRegistry.addChunk(chunkKey, chunk);
+    this.container.addChild(chunk);
+  }
+
+  /**
+   * Unloads and removes a chunk from the game world
+   * This destroys the chunk, removes it from the container, and cleans up associated entities
+   * @param chunkKey - The unique identifier for the chunk to unload
+   */
+  private unloadChunk(chunkKey: ChunkKey): void {
+    const chunk = this.chunkRegistry.getChunk(chunkKey);
     if (chunk) {
       chunk.destroy();
       this.container.removeChild(chunk);
-      this.removeActiveChunk(chunkKey);
-      // Also remove entities for this chunk
+      this.chunkRegistry.removeChunk(chunkKey);
       this.game.entityManager.removeEntitiesForChunk(chunkKey);
     }
-
-    this.generationQueue.splice(this.generationQueue.indexOf(chunkKey), 1);
+    this.chunkProcessor.removeFromQueue(chunkKey);
   }
 
-  private processQueue = async () => {
-    this.processingQueue = true;
-
-    const batchSize = 5;
-
-    while (this.generationQueue.length > 0) {
-      const batch = this.generationQueue.splice(0, batchSize);
-
-      const chunkPromises = batch.map(async (chunkKey) => {
-        const [chunkX, chunkY] = chunkKey.split(',').map(Number);
-
-        const chunk = await this.chunkGenerator.generateChunk(chunkX, chunkY);
-        const entities = await this.chunkLoader.retrieveEntities(chunkX, chunkY);
-
-        return { chunkKey, chunk, entities };
-      });
-
-      const results = await Promise.all(chunkPromises);
-
-      for (const { chunkKey, chunk, entities } of results) {
-        // Add entities to the chunk if any exist
-        if (entities.length) {
-          for (const entity of entities) {
-            if (entity.hasContainer()) {
-              chunk.addChild(entity.container);
-            }
-          }
-          entities.forEach((e) => this.game.entityManager.addEntity(e));
-        }
-        
-        // Register chunk and entities in the respective managers
-        this.game.entityManager.setEntitiesForChunk(chunkKey, new Set(entities));
-        this.addActiveChunk(chunkKey, chunk);
-
-        // Add the chunk to the display container
-        this.container.addChild(chunk);
-      }
-
-      await waitForIdle();
-    }
-
-    this.processingQueue = false;
+  /**
+   * Checks if a chunk at the specified coordinates is currently loaded
+   * @param chunkX - The chunk x coordinate
+   * @param chunkY - The chunk y coordinate
+   * @returns True if the chunk is loaded, false otherwise
+   */
+  private isChunkLoaded(chunkX: number, chunkY: number): boolean {
+    return this.chunkRegistry.hasChunk(createChunkKey(chunkX, chunkY));
   }
 
-  private isChunkLoaded = (chunkX: number, chunkY: number) => {
-    return this.getActiveChunk(createChunkKey(chunkX, chunkY)) !== undefined;
-  }
-
-  private isChunkLoading = (chunkX: number, chunkY: number) => {
-    return this.generationQueue.includes(createChunkKey(chunkX, chunkY));
+  /**
+   * Checks if a chunk at the specified coordinates is currently queued for loading
+   * @param chunkX - The chunk x coordinate
+   * @param chunkY - The chunk y coordinate
+   * @returns True if the chunk is in the processing queue, false otherwise
+   */
+  private isChunkQueued(chunkX: number, chunkY: number): boolean {
+    return this.chunkProcessor.isChunkQueued(createChunkKey(chunkX, chunkY));
   }
 }

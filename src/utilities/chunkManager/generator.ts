@@ -7,11 +7,20 @@ import type { ChunkManagerMeta } from "./meta";
 import { TileFactory } from "./tile";
 
 /***** CHUNK GENERATOR *****/
+/**
+ * Generates chunk content including background tiles using parallel processing with web workers
+ */
 export class ChunkGenerator {
   private tileFactory: TileFactory;
   private chunkTexture: Texture | null = null;
   private workerPool: WorkerPool;
 
+  /**
+   * Creates a new ChunkGenerator instance
+   * @param app - The PIXI.js application instance for renderer access
+   * @param chunkLoaderMeta - Configuration metadata for chunk generation
+   * @param game - Optional game instance for accessing constants
+   */
   constructor(
     private app: Application,
     private chunkLoaderMeta: ChunkManagerMeta,
@@ -45,6 +54,11 @@ export class ChunkGenerator {
     this.initializeWorkerSeed();
   }
 
+  /**
+   * Initializes all workers in the pool with the same noise seed for consistent generation
+   * @private
+   * @returns Promise that resolves when all workers are seeded
+   */
   private async initializeWorkerSeed(): Promise<void> {
     try {
       await this.workerPool.setSeed(this.chunkLoaderMeta.SEED);
@@ -54,6 +68,12 @@ export class ChunkGenerator {
     }
   }
 
+  /**
+   * Generates a complete chunk at the specified coordinates
+   * @param chunkX - The chunk x coordinate
+   * @param chunkY - The chunk y coordinate
+   * @returns Promise resolving to a PIXI.js container representing the chunk
+   */
   public generateChunk = async (chunkX: number, chunkY: number): Promise<ContainerChild> => {    
     // Define the chunk container
     const chunk = new Container();
@@ -81,6 +101,14 @@ export class ChunkGenerator {
     return chunk;
   }
 
+  /**
+   * Generates chunk background using web workers for parallel processing
+   * Falls back to synchronous generation if workers fail
+   * @private
+   * @param chunkX - The chunk x coordinate
+   * @param chunkY - The chunk y coordinate
+   * @returns Promise resolving to a container with the background tiles
+   */
   private generateChunkBackgroundParallel = async (chunkX: number, chunkY: number): Promise<Container> => {
     // Define the background of the chunk
     const background = new Container()
@@ -143,6 +171,14 @@ export class ChunkGenerator {
     return background;
   }
 
+  /**
+   * Fallback synchronous background generation using perlin noise
+   * Used when web workers are unavailable or fail
+   * @private
+   * @param chunkX - The chunk x coordinate
+   * @param chunkY - The chunk y coordinate
+   * @returns Container with synchronously generated background tiles
+   */
   private generateChunkBackgroundSync = (chunkX: number, chunkY: number): Container => {
     // Fallback synchronous generation (original method with actual perlin noise)
     const background = new Container()
@@ -196,7 +232,12 @@ export class ChunkGenerator {
     return background;
   }
 
-  // Helper method to convert string to number for seeding (same as in worker)
+  /**
+   * Converts a string to a numeric hash for seeding purposes
+   * @private
+   * @param str - The string to convert to a number
+   * @returns A numeric hash of the input string
+   */
   private stringToNumber(str: string): number {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -207,6 +248,12 @@ export class ChunkGenerator {
     return Math.abs(hash);
   }
 
+  /**
+   * Adds a debug border around the chunk for visual debugging
+   * Only adds border if DEBUG flag is enabled in metadata
+   * @private
+   * @param container - The chunk container to add the border to
+   */
   private addDebugBorder = (container: Container) => {
     const tileSize = this.game?.consts.tileSize ?? 64;
     const chunkSize = this.game?.consts.chunkSize ?? 16;
@@ -233,11 +280,21 @@ export class ChunkGenerator {
     }
   }
 
-  // Clean up worker pool when generator is destroyed
+  /**
+   * Cleans up resources and terminates all worker threads
+   */
   public destroy(): void {
     this.workerPool.terminate();
   }
 
+  /**
+   * Generates a shade value based on perlin noise at the given coordinates
+   * @private
+   * @static
+   * @param x - The x coordinate for noise generation
+   * @param y - The y coordinate for noise generation
+   * @returns Hex color string representing the shade
+   */
   private static seedShade = (x: number, y: number) => {
     // 0-1
     const _x: number = perlinNoise(x, y);
