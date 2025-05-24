@@ -60,7 +60,7 @@ const followMouse = (game: Game, entity: BaseEntity & HasGhostable & HasContaine
     }
 
     // Set Mouse cursor to cross if overlapping with another entity
-    for (const _entity of game.getEntities()) {
+    for (const _entity of game.entityManager.getEntities()) {
       // Check if entity can intersect using Rectangle utility
       if (!Rectangle.canIntersect(_entity)) continue;
 
@@ -109,7 +109,7 @@ const followMouse = (game: Game, entity: BaseEntity & HasGhostable & HasContaine
     }
 
     chunk.addChild(entity.container);
-    game.addEntity(entity);
+    game.entityManager.addEntity(entity);
 
     // Remove all event listeners
     cleanup();

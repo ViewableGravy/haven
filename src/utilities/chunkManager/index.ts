@@ -7,6 +7,7 @@ import { createChunkKey, type ChunkKey } from "../tagged";
 import type { ChunkGenerator } from "./generator";
 import type { ChunkLoader } from "./loader";
 import type { ChunkManagerMeta } from "./meta";
+import type { Chunk } from "./type";
 
 /***** CHUNK MANAGER *****/
 export class ChunkManager {
@@ -18,13 +19,45 @@ export class ChunkManager {
   public processingQueue: boolean = false;
   public lastChunkPosition: { x: number; y: number } | null = null;
 
+  // Chunk state - moved from Game class
+  private activeChunkKeys: Set<ChunkKey> = new Set();
+  private activeChunksByKey: Map<ChunkKey, Chunk> = new Map();
+
   constructor(
     private game: Game,
     private container: Container<ContainerChild>,
     private chunkLoaderMeta: ChunkManagerMeta,
     private chunkGenerator: ChunkGenerator,
     private chunkLoader: ChunkLoader
-  ) { };
+  ) {}
+
+  // Chunk state management methods
+  public addActiveChunk(chunkKey: ChunkKey, chunk: Chunk): void {
+    this.activeChunkKeys.add(chunkKey);
+    this.activeChunksByKey.set(chunkKey, chunk);
+  }
+
+  public removeActiveChunk(chunkKey: ChunkKey): void {
+    this.activeChunkKeys.delete(chunkKey);
+    this.activeChunksByKey.delete(chunkKey);
+  }
+
+  public getActiveChunk(chunkKey: ChunkKey): Chunk | undefined {
+    return this.activeChunksByKey.get(chunkKey);
+  }
+
+  public getActiveChunkKeys(): Set<ChunkKey> {
+    return this.activeChunkKeys;
+  }
+
+  // Cleanup method - moved from Game class
+  public destroy(): void {
+    if (this.chunkGenerator) {
+      this.chunkGenerator.destroy();
+    }
+    this.activeChunkKeys.clear();
+    this.activeChunksByKey.clear();
+  }
 
   public subscribe = (position: SubscribablePosition) => {
     position.subscribeImmediately(({ x, y }) => {
@@ -65,8 +98,8 @@ export class ChunkManager {
         }
       }
 
-      // Unload chunks outside the load radius
-      this.game.getActiveChunkKeys().forEach((chunkKey) => {
+      // Unload chunks outside the load radius - use own state instead of game
+      this.activeChunkKeys.forEach((chunkKey) => {
         const [existingChunkX, existingChunkY] = chunkKey.split(',').map(Number);
         if (Math.abs(existingChunkX - chunkX) > loadRadiusX || Math.abs(chunkY - existingChunkY) > loadRadiusY) {
           this.unloadChunk(existingChunkX, existingChunkY);
@@ -85,7 +118,7 @@ export class ChunkManager {
     const chunkY = Math.floor(y / this.game.consts.chunkAbsolute);
 
     const chunkKey = createChunkKey(chunkX, chunkY);
-    const chunk = this.game.getActiveChunk(chunkKey);
+    const chunk = this.getActiveChunk(chunkKey);
 
     invariant(chunk, `Chunk not found: ${chunkKey}`);
 
@@ -98,11 +131,13 @@ export class ChunkManager {
 
   private unloadChunk = (chunkX: number, chunkY: number) => {
     const chunkKey = createChunkKey(chunkX, chunkY);
-    const chunk = this.game.getActiveChunk(chunkKey);
+    const chunk = this.getActiveChunk(chunkKey);
     if (chunk) {
       chunk.destroy();
       this.container.removeChild(chunk);
-      this.game.removeActiveChunk(chunkKey);
+      this.removeActiveChunk(chunkKey);
+      // Also remove entities for this chunk
+      this.game.entityManager.removeEntitiesForChunk(chunkKey);
     }
 
     this.generationQueue.splice(this.generationQueue.indexOf(chunkKey), 1);
@@ -135,12 +170,12 @@ export class ChunkManager {
               chunk.addChild(entity.container);
             }
           }
-          entities.forEach((e) => this.game.addEntity(e));
+          entities.forEach((e) => this.game.entityManager.addEntity(e));
         }
         
-        // Register chunk and entities in the game state
-        this.game.setEntitiesForChunk(chunkKey, new Set(entities));
-        this.game.addActiveChunk(chunkKey, chunk);
+        // Register chunk and entities in the respective managers
+        this.game.entityManager.setEntitiesForChunk(chunkKey, new Set(entities));
+        this.addActiveChunk(chunkKey, chunk);
 
         // Add the chunk to the display container
         this.container.addChild(chunk);
@@ -153,7 +188,7 @@ export class ChunkManager {
   }
 
   private isChunkLoaded = (chunkX: number, chunkY: number) => {
-    return this.game.getActiveChunk(createChunkKey(chunkX, chunkY)) !== undefined;
+    return this.getActiveChunk(createChunkKey(chunkX, chunkY)) !== undefined;
   }
 
   private isChunkLoading = (chunkX: number, chunkY: number) => {
