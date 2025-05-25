@@ -159,11 +159,8 @@ export class Game {
     // Initialize controllers
     this.controllers.keyboard = new KeyboardController();
     
-    // Create player
-    const player = new Player({
-      position: new Position(100, 100),
-      controller: this.controllers.keyboard
-    });
+    // Create and setup player
+    const player = this.setupPlayer();
 
     // Initialize chunk system
     const chunkMeta = new ChunkManagerMeta({
@@ -188,17 +185,20 @@ export class Game {
     // Subscribe chunk manager to player position
     this.controllers.chunkManager.subscribe(player.position);
 
-    // Setup playground for testing
-    this.setupPlayground(player);
-
     // Start the game loop with this player
     this.startGameLoop(player);
 
     return player;
   }
 
-  /***** PLAYGROUND SECTION *****/
-  private setupPlayground(player: Player) {
+  /***** PLAYER SETUP SECTION *****/
+  private setupPlayer(): Player {
+    // Create player
+    const player = new Player({
+      position: new Position(100, 100),
+      controller: this.controllers.keyboard
+    });
+
     // Initialize the player's animated sprite
     const playerSprite = player.initializeSprite();
     
@@ -221,17 +221,19 @@ export class Game {
       playerSprite.y = y;
     });
     
-    // Add directly to world container for testing
+    // Add to world container
     this.world.addChild(playerSprite);
     
     // Ensure world container sorts children by z-index
     this.world.sortableChildren = true;
     
-    // Optional: Add some interactive behavior for testing
+    // Add interactive behavior
     playerSprite.eventMode = 'static';
     playerSprite.on('pointerdown', () => {
       console.log('Character clicked!');
     });
+
+    return player;
   }
 
   private setupCamera(player: Player) {
