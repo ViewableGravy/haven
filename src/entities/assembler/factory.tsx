@@ -1,6 +1,5 @@
 /***** TYPE DEFINITIONS *****/
 import { Sprite, Texture } from "pixi.js";
-import invariant from "tiny-invariant";
 import Selection from "../../assets/selection.png";
 import { infographicStore } from "../../components/infographic/store";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
@@ -10,24 +9,19 @@ import { entitySyncRegistry } from "../../utilities/multiplayer/entitySyncRegist
 import type { Position } from "../../utilities/position";
 import { Transform } from "../../utilities/transform";
 import { BaseEntity } from "../base";
-import { EntityBuilder } from "../builder";
-import { ContainerProvider, type ContainerTrait } from "../traits/container";
-import { Ghostable, type GhostableTrait } from "../traits/ghostable";
-import { Placeable, type PlaceableTrait } from "../traits/placeable";
+import { ContainerTrait } from "../traits/container";
+import { GhostableTrait } from "../traits/ghostable";
+import { PlaceableTrait } from "../traits/placeable";
 import { createTestEntityInfographicNode } from "./info";
-
-type AssemblerEntity = BaseEntity & ContainerTrait & GhostableTrait & PlaceableTrait & {
-  transform: Transform;
-  assemblerSprite: Sprite;
-  selectionSprite: Sprite;
-  setupInteractivity(): void;
-};
 
 /***** BASE ASSEMBLER *****/
 export class BaseAssembler extends BaseEntity {
   public transform: Transform;
   public assemblerSprite: Sprite;
   public selectionSprite: Sprite;
+  public containerTrait: ContainerTrait;
+  public ghostableTrait: GhostableTrait;
+  public placeableTrait: PlaceableTrait;
 
   constructor(game: Game, position: Position) {
     super({ name: "assembler" });
@@ -35,6 +29,13 @@ export class BaseAssembler extends BaseEntity {
     this.transform = Transform.createLarge(game, position.x, position.y, position.type);
     this.assemblerSprite = BaseAssembler.createAssemblerSprite(this.transform);
     this.selectionSprite = BaseAssembler.createSelectionSprite(this.transform);
+    
+    // Initialize traits
+    this.containerTrait = new ContainerTrait(this, this.transform);
+    this.ghostableTrait = new GhostableTrait(this, false);
+    this.placeableTrait = new PlaceableTrait(this, false, () => {
+      this.ghostableTrait.ghostMode = false;
+    });
   }
 
   private static createAssemblerSprite(transform: Transform): Sprite {
@@ -60,7 +61,7 @@ export class BaseAssembler extends BaseEntity {
   public setupInteractivity(): void {
     this.assemblerSprite.addEventListener("mouseover", () => {
       // Only show selection if not in ghost mode
-      if (Ghostable.is(this) && this.ghostMode) return;
+      if (this.ghostableTrait.ghostMode) return;
 
       this.selectionSprite.renderable = true;
 
@@ -86,39 +87,48 @@ export class BaseAssembler extends BaseEntity {
       infographicStore.setState(() => ({ active: false }));
     });
   }
+
+  /***** COMPATIBILITY PROPERTIES *****/
+  // These provide compatibility with the EntityManager's PlaceableEntity interface
+  get container() {
+    return this.containerTrait.container;
+  }
+  
+  get ghostMode(): boolean {
+    return this.ghostableTrait.ghostMode;
+  }
+  
+  set ghostMode(value: boolean) {
+    this.ghostableTrait.ghostMode = value;
+  }
+  
+  get isPlaced(): boolean {
+    return this.placeableTrait.isPlaced;
+  }
+  
+  place(): void {
+    this.placeableTrait.place();
+  }
+  
+  unplace(): void {
+    this.placeableTrait.unplace();
+  }
 }
 
 /***** FACTORY FUNCTION *****/
-export type Assembler = ReturnType<typeof createStandardAssembler>;
-export function createStandardAssembler(game: Game, position: Position): AssemblerEntity {
-  const baseAssembler = new BaseAssembler(game, position);
-  
-  return EntityBuilder
-    .create(baseAssembler)
-    .apply(ContainerProvider, { transform: baseAssembler.transform })
-    .apply(Ghostable, { initialGhostMode: false })
-    .apply(Placeable, { 
-      initiallyPlaced: false,
-      onPlace: () => {
-        if (Ghostable.is(baseAssembler)) {
-          baseAssembler.ghostMode = false;
-        }
-      }
-    })
-    .buildWith((assembler) => {
-      invariant(assembler instanceof BaseAssembler, "Assembler must be an instance of BaseAssembler");
+export type Assembler = BaseAssembler;
 
-      // Add sprites to container after all traits are applied
-      if (ContainerProvider.is(assembler)) {
-        assembler.container.addChild(assembler.assemblerSprite);
-        assembler.container.addChild(assembler.selectionSprite);
-      }
-      
-      // Setup interactivity
-      assembler.setupInteractivity();
-      
-      return assembler as AssemblerEntity;
-    });
+export function createStandardAssembler(game: Game, position: Position): Assembler {
+  const assembler = new BaseAssembler(game, position);
+  
+  // Add sprites to container
+  assembler.containerTrait.container.addChild(assembler.assemblerSprite);
+  assembler.containerTrait.container.addChild(assembler.selectionSprite);
+  
+  // Setup interactivity
+  assembler.setupInteractivity();
+  
+  return assembler;
 }
 
 /***** INFOGRAPHIC REGISTRATION *****/

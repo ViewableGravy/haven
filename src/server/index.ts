@@ -147,7 +147,7 @@ export class MultiplayerServer {
       ws.on('close', () => {
         console.log(`Player ${playerId} disconnected`);
         this.players.delete(playerId);
-        
+
         // Notify other players about player leaving
         this.broadcastToOthers(playerId, {
           type: 'player_leave',
@@ -199,12 +199,12 @@ export class MultiplayerServer {
   }
 
   /***** ENTITY MANAGEMENT *****/
-  private handleEntityPlace(playerId: string, data: { 
-    type: string; 
-    x: number; 
-    y: number; 
-    chunkX: number; 
-    chunkY: number; 
+  private handleEntityPlace(playerId: string, data: {
+    type: string;
+    x: number;
+    y: number;
+    chunkX: number;
+    chunkY: number;
   }): void {
     const entityId = uuidv4();
     const entityData: EntityData = {
@@ -279,9 +279,11 @@ export class MultiplayerServer {
 }
 
 /***** SERVER STARTUP *****/
-if (import.meta.main) {
-  const server = new MultiplayerServer(8080);
-  
+// Check if this file is being run directly
+if (process.argv[1] === __filename || process.argv[1] === import.meta.url) {
+  new MultiplayerServer(8080);
+  console.log('Server created and listening on port 8080');
+
   // Graceful shutdown
   process.on('SIGINT', () => {
     console.log('Shutting down server...');

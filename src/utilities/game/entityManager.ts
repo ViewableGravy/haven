@@ -1,11 +1,11 @@
 /***** TYPE DEFINITIONS *****/
 import type { BaseEntity } from "../../entities/base";
 import type { HasContainer, HasGhostable, HasTransform } from "../../entities/interfaces";
-import type { PlaceableTrait } from "../../entities/traits/placeable";
+import type { IPlaceableTrait } from "../../entities/traits/placeable";
 import type { ChunkKey } from "../tagged";
 import type { Game } from "./game";
 
-type PlaceableEntity = BaseEntity & HasContainer & HasTransform & HasGhostable & PlaceableTrait;
+type PlaceableEntity = BaseEntity & HasContainer & HasTransform & HasGhostable & IPlaceableTrait;
 
 interface EntityPlacementEvent {
   entity: PlaceableEntity;

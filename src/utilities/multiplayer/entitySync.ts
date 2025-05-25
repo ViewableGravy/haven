@@ -1,11 +1,16 @@
-/***** TYPE DEFINITIONS *****/
+  /***** TYPE DEFINITIONS *****/
 import type { BaseEntity } from "../../entities/base";
 import type { HasGhostable, HasTransform } from "../../entities/interfaces";
-import type { PlaceableTrait } from "../../entities/traits/placeable";
+import type { IPlaceableTrait } from "../../entities/traits/placeable";
 import type { EntityData } from '../../server';
 import type { Game } from "../game/game";
 import { Position } from "../position";
 import { entitySyncRegistry } from "./entitySyncRegistry";
+import type { Container } from "pixi.js";
+
+interface HasContainer {
+  container: Container;
+}
 
 /***** ENTITY SYNC MANAGER *****/
 export class EntitySyncManager {
@@ -52,7 +57,7 @@ export class EntitySyncManager {
     }
 
     // Add to chunk and mark as placed
-    if (entity.hasContainer()) {
+    if (this.hasContainer(entity)) {
       chunk.addChild(entity.container);
       
       // Mark entity as placed if it has the placeable trait
@@ -77,7 +82,11 @@ export class EntitySyncManager {
     return 'transform' in entity;
   }
 
-  private hasPlaceable(entity: BaseEntity): entity is BaseEntity & PlaceableTrait {
+  private hasContainer(entity: BaseEntity): entity is BaseEntity & HasContainer {
+    return 'container' in entity;
+  }
+
+  private hasPlaceable(entity: BaseEntity): entity is BaseEntity & IPlaceableTrait {
     return 'place' in entity && typeof (entity as any).place === 'function';
   }
 
@@ -87,7 +96,7 @@ export class EntitySyncManager {
     if (!entity) return;
 
     // Remove from chunk and game
-    if (entity.hasContainer()) {
+    if (this.hasContainer(entity)) {
       entity.container.parent?.removeChild(entity.container);
     }
     
