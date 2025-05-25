@@ -1,10 +1,10 @@
 /***** TYPE DEFINITIONS *****/
+import type { EntityData } from "../../server";
 import type { Game } from "../game/game";
 import type { Player } from "../player";
 import { MultiplayerClient, type RemotePlayer as RemotePlayerData } from "./client";
-import { RemotePlayer } from "./remotePlayer";
 import { EntitySyncManager } from "./entitySync";
-import type { EntityData } from "../../server";
+import { RemotePlayer } from "./remotePlayer";
 
 /***** MULTIPLAYER MANAGER *****/
 export class MultiplayerManager {

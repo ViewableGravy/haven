@@ -1,8 +1,8 @@
 /***** TYPE DEFINITIONS *****/
 import type { BaseEntity } from "../../entities/base";
+import type { EntityData } from "../../server";
 import type { Game } from "../game/game";
 import type { Position } from "../position";
-import type { EntityData } from "../../server";
 
 export interface EntitySyncCreator {
   name: string;
