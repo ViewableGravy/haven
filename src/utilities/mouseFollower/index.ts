@@ -42,10 +42,6 @@ export class MouseFollower {
     const entityWidth = this.entity.transform.size.width;
     const entityHeight = this.entity.transform.size.height;
     
-    // Calculate entity size in tiles
-    const entityWidthInTiles = Math.round(entityWidth / tileSize);
-    const entityHeightInTiles = Math.round(entityHeight / tileSize);
-    
     // Get the tile coordinates under the mouse
     const tileX = Math.floor(this.game.state.worldPointer.x / tileSize) * tileSize;
     const tileY = Math.floor(this.game.state.worldPointer.y / tileSize) * tileSize;

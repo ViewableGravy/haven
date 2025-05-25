@@ -5,6 +5,7 @@ import Selection from "../../assets/selection.png";
 import { infographicStore } from "../../components/infographic/store";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
 import type { Game } from "../../utilities/game/game";
+import { infographicsRegistry } from "../../utilities/infographics";
 import type { Position } from "../../utilities/position";
 import { Transform } from "../../utilities/transform";
 import { BaseEntity } from "../base";
@@ -61,14 +62,26 @@ export class BaseAssembler extends BaseEntity {
       if (Ghostable.is(this) && this.ghostMode) return;
 
       this.selectionSprite.renderable = true;
-      infographicStore.setState(() => ({
-        active: true,
-        component: createTestEntityInfographicNode(this as any)
-      }));
+
+      // Get assembler infographic from the registry, passing this entity instance
+      const assemblerInfographic = infographicsRegistry.get("assembler", this);
+
+      if (assemblerInfographic) {
+        infographicStore.setState(() => ({
+          active: true,
+          component: assemblerInfographic.component,
+          item: assemblerInfographic.creatorFunction ? {
+            name: assemblerInfographic.name,
+            node: assemblerInfographic.name,
+            creatorFunction: assemblerInfographic.creatorFunction
+          } : undefined
+        }));
+      }
     });
 
     this.assemblerSprite.addEventListener("mouseout", () => {
       this.selectionSprite.renderable = false;
+      
       infographicStore.setState(() => ({ active: false }));
     });
   }
@@ -106,3 +119,11 @@ export function createStandardAssembler(game: Game, position: Position): Assembl
       return assembler as AssemblerEntity;
     });
 }
+
+/***** INFOGRAPHIC REGISTRATION *****/
+// Register the assembler infographic when this module loads
+infographicsRegistry.register("assembler", (entity: Assembler) => ({
+  name: "Assembler",
+  component: createTestEntityInfographicNode(entity),
+  creatorFunction: createStandardAssembler
+}));

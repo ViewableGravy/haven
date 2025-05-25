@@ -1,8 +1,11 @@
 import { Application, Assets, Container, type ContainerChild } from "pixi.js";
 import Selection from "../../assets/selection.png";
+import { refreshHotbarItems } from "../../components/hotbar/store";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
 import { CharacterSprite } from "../../spriteSheets/character";
 import { RunningSprite } from "../../spriteSheets/running";
+// Import assembler factory to ensure infographic registration happens
+import "../../entities/assembler/factory";
 import { ChunkManager } from "../chunkManager";
 import { ChunkGenerator } from "../chunkManager/generator";
 import { ChunkLoader } from "../chunkManager/loader";
@@ -184,6 +187,9 @@ export class Game {
     
     // Subscribe chunk manager to player position
     this.controllers.chunkManager.subscribe(player.position);
+
+    // Refresh hotbar items after all entity types are registered
+    refreshHotbarItems();
 
     // Start the game loop with this player
     this.startGameLoop(player);
