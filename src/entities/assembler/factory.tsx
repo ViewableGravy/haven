@@ -30,7 +30,7 @@ export class BaseAssembler extends BaseEntity {
   constructor(game: Game, position: Position) {
     super(`assembler-${Date.now()}-${Math.random()}`);
     
-    this.transform = Transform.createMedium(game, position.x, position.y, position.type);
+    this.transform = Transform.createLarge(game, position.x, position.y, position.type);
     this.assemblerSprite = BaseAssembler.createAssemblerSprite(this.transform);
     this.selectionSprite = BaseAssembler.createSelectionSprite(this.transform);
   }

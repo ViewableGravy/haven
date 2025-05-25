@@ -1,6 +1,7 @@
 import { Application, Assets, Container, type ContainerChild } from "pixi.js";
 import Selection from "../../assets/selection.png";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
+import { CharacterSprite } from "../../spriteSheets/character";
 import { ChunkManager } from "../chunkManager";
 import { ChunkGenerator } from "../chunkManager/generator";
 import { ChunkLoader } from "../chunkManager/loader";
@@ -126,13 +127,13 @@ export class Game {
     this.state.app.stage.addEventListener("wheel", (event) => {
       event.preventDefault();
       
-      // Get mouse position before zoom
-      const mouseX = event.x;
-      const mouseY = event.y;
+      // Get center of screen
+      const centerX = this.state.app.screen.width / 2;
+      const centerY = this.state.app.screen.height / 2;
       
-      // Calculate world position at mouse cursor
-      const worldX = (mouseX - this.state.worldOffset.x) / this.state.zoom;
-      const worldY = (mouseY - this.state.worldOffset.y) / this.state.zoom;
+      // Calculate world position at screen center
+      const worldX = (centerX - this.state.worldOffset.x) / this.state.zoom;
+      const worldY = (centerY - this.state.worldOffset.y) / this.state.zoom;
       
       // Calculate zoom delta
       const zoomDelta = event.deltaY > 0 ? 0.9 : 1.1;
@@ -142,10 +143,10 @@ export class Game {
       this.state.zoom = newZoom;
       this.world.scale.set(this.state.zoom);
       
-      // Adjust world offset to keep mouse position stable
+      // Adjust world offset to keep center position stable
       this.state.worldOffset.position = {
-        x: mouseX - worldX * this.state.zoom,
-        y: mouseY - worldY * this.state.zoom
+        x: centerX - worldX * this.state.zoom,
+        y: centerY - worldY * this.state.zoom
       };
     });
   }
@@ -186,10 +187,50 @@ export class Game {
     // Subscribe chunk manager to player position
     this.controllers.chunkManager.subscribe(player.position);
 
+    // Setup playground for testing
+    this.setupPlayground(player);
+
     // Start the game loop with this player
     this.startGameLoop(player);
 
     return player;
+  }
+
+  /***** PLAYGROUND SECTION *****/
+  private setupPlayground(player: Player) {
+    // Create character sprite in the middle of the screen
+    const characterSprite = CharacterSprite.createSprite("character-idle");
+    
+    // Center the sprite's anchor point
+    characterSprite.anchor.set(0.5);
+    
+    // Set height to 2 tiles, maintain original aspect ratio
+    const targetHeight = this.consts.tileSize * 2;
+    const originalAspectRatio = characterSprite.texture.width / characterSprite.texture.height;
+    
+    characterSprite.height = targetHeight;
+    characterSprite.width = targetHeight * originalAspectRatio;
+    
+    // Set high z-index to render on top of everything
+    characterSprite.zIndex = 1000;
+    
+    // Subscribe to player position to update character sprite position
+    player.position.subscribeImmediately(({ x, y }) => {
+      characterSprite.x = x;
+      characterSprite.y = y;
+    });
+    
+    // Add directly to world container for testing
+    this.world.addChild(characterSprite);
+    
+    // Ensure world container sorts children by z-index
+    this.world.sortableChildren = true;
+    
+    // Optional: Add some interactive behavior for testing
+    characterSprite.eventMode = 'static';
+    characterSprite.on('pointerdown', () => {
+      console.log('Character clicked!');
+    });
   }
 
   private setupCamera(player: Player) {
@@ -211,6 +252,7 @@ export class Game {
 
   private async loadAssets() {
     await AssemblerSprite.load();
+    await CharacterSprite.load();
     await Assets.load(Selection);
   }
 
