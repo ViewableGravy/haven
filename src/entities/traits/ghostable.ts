@@ -1,6 +1,10 @@
 /***** TYPE DEFINITIONS *****/
 import type { BaseEntity } from "../base";
 
+interface HasGhostableTrait {
+  ghostableTrait: GhostableTrait;
+}
+
 /***** GHOSTABLE TRAIT *****/
 export class GhostableTrait {
   private _ghostMode: boolean;
@@ -25,5 +29,23 @@ export class GhostableTrait {
     if ('containerTrait' in this.entity && (this.entity as any).containerTrait) {
       (this.entity as any).containerTrait.container.alpha = value ? this.ghostAlpha : this.normalAlpha;
     }
+  }
+
+  /***** STATIC METHODS *****/
+  static is(entity: BaseEntity): entity is BaseEntity & HasGhostableTrait {
+    return 'ghostableTrait' in entity && entity.ghostableTrait instanceof GhostableTrait;
+  }
+
+  static setGhostMode(entity: BaseEntity, ghostMode: boolean): void {
+    if (GhostableTrait.is(entity)) {
+      entity.ghostableTrait.ghostMode = ghostMode;
+    }
+  }
+
+  static getGhostMode(entity: BaseEntity): boolean {
+    if (GhostableTrait.is(entity)) {
+      return entity.ghostableTrait.ghostMode;
+    }
+    return false;
   }
 }

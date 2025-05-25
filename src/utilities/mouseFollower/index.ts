@@ -1,12 +1,26 @@
 import type { BaseEntity } from "../../entities/base";
-import type { HasContainer, HasGhostable, HasTransform } from "../../entities/interfaces";
+import type { HasTransform } from "../../entities/interfaces";
 import { hasTransform } from "../../entities/interfaces";
-import type { IPlaceableTrait } from "../../entities/traits/placeable";
+import { ContainerTrait } from "../../entities/traits/container";
+import { GhostableTrait } from "../../entities/traits/ghostable";
+import { PlaceableTrait } from "../../entities/traits/placeable";
 import type { Game } from "../game/game";
 import { Rectangle } from "../rectangle";
 
 /***** TYPE DEFINITIONS *****/
-type FollowableEntity = BaseEntity & HasGhostable & HasContainer & HasTransform & IPlaceableTrait;
+interface HasContainerTrait {
+  containerTrait: ContainerTrait;
+}
+
+interface HasGhostableTrait {
+  ghostableTrait: GhostableTrait;
+}
+
+interface HasPlaceableTrait {
+  placeableTrait: PlaceableTrait;
+}
+
+type FollowableEntity = BaseEntity & HasGhostableTrait & HasContainerTrait & HasTransform & HasPlaceableTrait;
 
 /***** MOUSE FOLLOWER CLASS *****/
 export class MouseFollower {
@@ -21,7 +35,7 @@ export class MouseFollower {
 
   public start(): () => void {
     this.bindEvents();
-    this.game.world.addChild(this.entity.container);
+    this.game.world.addChild(this.entity.containerTrait.container);
     return this.cleanup.bind(this);
   }
 
@@ -41,7 +55,7 @@ export class MouseFollower {
     const tileSize = this.game.consts.tileSize;
     const entityWidth = this.entity.transform.size.width;
     const entityHeight = this.entity.transform.size.height;
-    
+
     // Get the tile coordinates under the mouse
     const tileX = Math.floor(this.game.state.worldPointer.x / tileSize) * tileSize;
     const tileY = Math.floor(this.game.state.worldPointer.y / tileSize) * tileSize;
@@ -49,7 +63,7 @@ export class MouseFollower {
     // Handle different entity sizes
     if (entityWidth % tileSize * 2 && entityHeight % tileSize * 2) {
       this.position2x2Entity(tileX, tileY, tileSize);
-    } 
+    }
     if (entityWidth % tileSize === 0 && entityHeight % tileSize === 0) {
       this.centerEntityOnTile(tileX, tileY, entityWidth, entityHeight);
     }
@@ -165,6 +179,6 @@ export class MouseFollower {
     window.removeEventListener("mousemove", this.handleMouseMove);
     window.removeEventListener("keydown", this.handleKeydown);
     window.removeEventListener("mousedown", this.handleMouseDown);
-    this.game.world.removeChild(this.entity.container);
+    this.game.world.removeChild(this.entity.containerTrait.container);
   }
 }

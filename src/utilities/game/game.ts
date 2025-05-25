@@ -188,7 +188,7 @@ export class Game {
     this.setupCamera(player);
     
     // Subscribe chunk manager to player position
-    this.controllers.chunkManager.subscribe(player.position);
+    this.controllers.chunkManager.subscribeToPosition(player.position);
 
     // Initialize multiplayer system
     await this.setupMultiplayer(player);

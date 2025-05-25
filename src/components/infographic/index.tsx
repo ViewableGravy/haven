@@ -1,5 +1,6 @@
 import { useStore } from "@tanstack/react-store";
 import React, { createElement, useEffect, type CSSProperties } from "react";
+import { GhostableTrait } from "../../entities/traits/ghostable";
 import { useCleanupCallback } from "../../utilities/hooks";
 import { MouseFollower } from "../../utilities/mouseFollower";
 import { Position } from "../../utilities/position";
@@ -38,8 +39,8 @@ export const Infographic: InfographicProps = ({ bottom, right }) => {
     // Create entity using the item's creator function
     const followEntity = infographicState.item.creatorFunction(game, new Position(0, 0));
 
-    // Set ghost mode directly on the entity
-    followEntity.ghostMode = true;
+    // Set ghost mode using the trait
+    GhostableTrait.setGhostMode(followEntity, true);
 
     // Create mouse follower and assign cleanup function to ref
     const mouseFollower = new MouseFollower(game, followEntity);

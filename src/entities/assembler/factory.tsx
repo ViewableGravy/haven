@@ -25,11 +25,11 @@ export class BaseAssembler extends BaseEntity {
 
   constructor(game: Game, position: Position) {
     super({ name: "assembler" });
-    
+
     this.transform = Transform.createLarge(game, position.x, position.y, position.type);
     this.assemblerSprite = BaseAssembler.createAssemblerSprite(this.transform);
     this.selectionSprite = BaseAssembler.createSelectionSprite(this.transform);
-    
+
     // Initialize traits
     this.containerTrait = new ContainerTrait(this, this.transform);
     this.ghostableTrait = new GhostableTrait(this, false);
@@ -83,36 +83,11 @@ export class BaseAssembler extends BaseEntity {
 
     this.assemblerSprite.addEventListener("mouseout", () => {
       this.selectionSprite.renderable = false;
-      
+
       infographicStore.setState(() => ({ active: false }));
     });
   }
 
-  /***** COMPATIBILITY PROPERTIES *****/
-  // These provide compatibility with the EntityManager's PlaceableEntity interface
-  get container() {
-    return this.containerTrait.container;
-  }
-  
-  get ghostMode(): boolean {
-    return this.ghostableTrait.ghostMode;
-  }
-  
-  set ghostMode(value: boolean) {
-    this.ghostableTrait.ghostMode = value;
-  }
-  
-  get isPlaced(): boolean {
-    return this.placeableTrait.isPlaced;
-  }
-  
-  place(): void {
-    this.placeableTrait.place();
-  }
-  
-  unplace(): void {
-    this.placeableTrait.unplace();
-  }
 }
 
 /***** FACTORY FUNCTION *****/
@@ -120,14 +95,14 @@ export type Assembler = BaseAssembler;
 
 export function createStandardAssembler(game: Game, position: Position): Assembler {
   const assembler = new BaseAssembler(game, position);
-  
+
   // Add sprites to container
   assembler.containerTrait.container.addChild(assembler.assemblerSprite);
   assembler.containerTrait.container.addChild(assembler.selectionSprite);
-  
+
   // Setup interactivity
   assembler.setupInteractivity();
-  
+
   return assembler;
 }
 

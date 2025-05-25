@@ -16,7 +16,7 @@ export class ChunkLoadManager {
   constructor(
     private chunkSize: number,
     private meta: ChunkManagerMeta
-  ) {}
+  ) { }
 
   /**
    * Subscribes to position changes and manages chunk loading/unloading
@@ -48,10 +48,13 @@ export class ChunkLoadManager {
       }
 
       this.lastChunkPosition = { x: chunkX, y: chunkY };
+      console.log(`ChunkLoadManager: Moving to new chunk (${chunkX}, ${chunkY})`);
 
       const loadRadius = this.meta.LOAD_RADIUS;
       const loadRadiusX = typeof loadRadius === 'number' ? loadRadius : loadRadius.x;
       const loadRadiusY = typeof loadRadius === 'number' ? loadRadius : loadRadius.y;
+
+      console.log(`ChunkLoadManager: Load radius: x=${loadRadiusX}, y=${loadRadiusY}`);
 
       // Queue chunks within load radius
       this.queueChunksInRadius(chunkX, chunkY, loadRadiusX, loadRadiusY, callbacks);
@@ -81,13 +84,18 @@ export class ChunkLoadManager {
       isChunkQueued: (chunkX: number, chunkY: number) => boolean;
     }
   ): void {
+    console.log(`ChunkLoadManager: Queueing chunks in radius (${centerX}, ${centerY}) with radius x=${radiusX}, y=${radiusY}`);
+
     for (let i = -radiusX; i <= radiusX; i++) {
       for (let j = -radiusY; j <= radiusY; j++) {
         const chunkX = centerX + i;
         const chunkY = centerY + j;
 
         if (!callbacks.isChunkLoaded(chunkX, chunkY) && !callbacks.isChunkQueued(chunkX, chunkY)) {
+          console.log(`ChunkLoadManager: Queueing chunk (${chunkX}, ${chunkY})`);
           callbacks.onChunkNeeded(chunkX, chunkY);
+        } else {
+          console.log(`ChunkLoadManager: Chunk (${chunkX}, ${chunkY}) already loaded or queued`);
         }
       }
     }
