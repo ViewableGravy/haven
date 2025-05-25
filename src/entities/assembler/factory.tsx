@@ -6,6 +6,7 @@ import { infographicStore } from "../../components/infographic/store";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
 import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
+import { entitySyncRegistry } from "../../utilities/multiplayer/entitySyncRegistry";
 import type { Position } from "../../utilities/position";
 import { Transform } from "../../utilities/transform";
 import { BaseEntity } from "../base";
@@ -29,7 +30,7 @@ export class BaseAssembler extends BaseEntity {
   public selectionSprite: Sprite;
 
   constructor(game: Game, position: Position) {
-    super(`assembler-${Date.now()}-${Math.random()}`);
+    super({ name: "assembler" });
     
     this.transform = Transform.createLarge(game, position.x, position.y, position.type);
     this.assemblerSprite = BaseAssembler.createAssemblerSprite(this.transform);
@@ -127,3 +128,10 @@ infographicsRegistry.register("assembler", (entity: Assembler) => ({
   component: createTestEntityInfographicNode(entity),
   creatorFunction: createStandardAssembler
 }));
+
+/***** ENTITY SYNC REGISTRATION *****/
+// Register the assembler entity sync creator
+entitySyncRegistry.register("assembler", {
+  name: "Assembler",
+  creatorFunction: createStandardAssembler
+});

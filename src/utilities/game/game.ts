@@ -11,6 +11,7 @@ import { ChunkGenerator } from "../chunkManager/generator";
 import { ChunkLoader } from "../chunkManager/loader";
 import { ChunkManagerMeta } from "../chunkManager/meta";
 import { KeyboardController } from "../keyboardController";
+import { MultiplayerManager } from "../multiplayer/manager";
 import { Player } from "../player";
 import { Position } from "../position";
 import { SubscribablePosition } from "../position/subscribable";
@@ -20,6 +21,7 @@ import { EntityManager } from "./entityManager";
 type GlobalControllers = {
   keyboard: KeyboardController;
   chunkManager: ChunkManager;
+  multiplayer?: MultiplayerManager;
 }
 
 type GameConstants = {
@@ -74,7 +76,7 @@ export class Game {
       maxZoom: 3.0,
     };
     
-    this.entityManager = new EntityManager();
+    this.entityManager = new EntityManager(this);
   }
 
   public initialize = async (el: HTMLElement) => {
@@ -188,6 +190,9 @@ export class Game {
     // Subscribe chunk manager to player position
     this.controllers.chunkManager.subscribe(player.position);
 
+    // Initialize multiplayer system
+    await this.setupMultiplayer(player);
+
     // Refresh hotbar items after all entity types are registered
     refreshHotbarItems();
 
@@ -259,6 +264,18 @@ export class Game {
     });
   }
 
+  /***** MULTIPLAYER SETUP *****/
+  private async setupMultiplayer(player: Player): Promise<void> {
+    try {
+      this.controllers.multiplayer = new MultiplayerManager(this, player);
+      await this.controllers.multiplayer.initialize();
+      console.log('Multiplayer enabled');
+    } catch (error) {
+      console.warn('Failed to initialize multiplayer, continuing in single-player mode:', error);
+      // Don't throw error - game should work without multiplayer
+    }
+  }
+
   private async loadAssets() {
     await AssemblerSprite.load();
     await CharacterSprite.load();
@@ -273,6 +290,9 @@ export class Game {
   }
 
   public destroy = () => {
+    // Clean up multiplayer system
+    this.controllers.multiplayer?.destroy();
+
     // Clean up chunk manager and its dependencies
     this.controllers.chunkManager?.destroy();
 

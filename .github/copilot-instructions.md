@@ -3,3 +3,7 @@
 - Attempt to utilise single responsibility principle at all times
 - use `/***** {{SECTION TITLE}} *****/` for all visually identifiable sections of the code
 - Define comments under a `/***** TYPE DEFINITIONS *****/` code heading, below imports and before all other code in the file
+
+## Software
+- use bun for all package management and running of commands
+- use bun for the backend server

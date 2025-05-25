@@ -1,19 +1,47 @@
-import { createEntityId, type EntityId } from "../utilities/tagged";
+/***** TYPE DEFINITIONS *****/
+import { v4 as uuidv4 } from 'uuid';
 import { hasContainer, hasPosition, hasRectangle, hasSize, type HasContainer, type HasPosition, type HasRectangle } from "./interfaces";
 
-/**
- * Provides absolute basic information such as uid and logging as well as global utilities for identifying traits
- * on a particular entity.
- */
-export class BaseEntity {
-  public readonly uid: EntityId;
+export interface EntityMeta {
+  name: string;
+  meta?: { [key: string]: string };
+}
 
-  constructor(uid: string | number) {
-    this.uid = createEntityId(uid);
+/***** BASE ENTITY CLASS *****/
+export class BaseEntity {
+  public readonly uid: string;
+  public readonly entityMeta: EntityMeta;
+  
+  constructor(entityMeta: EntityMeta) {
+    this.entityMeta = entityMeta;
+    this.uid = this.generateUID(entityMeta);
   }
 
-  public hasPosition = (): this is HasPosition => hasPosition(this);
+  /***** UID GENERATION *****/
+  private generateUID(entityMeta: EntityMeta): string {
+    const uuid = uuidv4();
+    const baseName = `${entityMeta.name}-${uuid}`;
+    
+    if (!entityMeta.meta || Object.keys(entityMeta.meta).length === 0) {
+      return baseName;
+    }
+    
+    // Append meta properties as key-value pairs
+    const metaPairs = Object.entries(entityMeta.meta)
+      .map(([key, value]) => `${key}-${value}`)
+      .join('-');
+    
+    return `${baseName}-${metaPairs}`;
+  }
+
+  /***** TYPE IDENTIFICATION *****/
+  public getEntityType(): string {
+    return this.entityMeta.name;
+  }
+
+  /***** INTERFACE CHECKS *****/
   public hasContainer = (): this is HasContainer => hasContainer(this);
+  public hasPosition = (): this is HasPosition => hasPosition(this);
   public hasSize = (): this is hasSize => hasSize(this);
   public hasRectangle = (): this is HasRectangle => hasRectangle(this);
 }

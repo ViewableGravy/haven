@@ -136,26 +136,23 @@ export class MouseFollower {
   private handleMouseDown = (): void => {
     if (!this.isPlaceable) return;
 
-    const chunk = this.game.controllers.chunkManager.getChunk(
-      this.entity.transform.position.x, 
-      this.entity.transform.position.y
+    // Get current global position from the entity's transform
+    const globalX = this.entity.transform.position.x;
+    const globalY = this.entity.transform.position.y;
+
+    // Use EntityManager to handle placement
+    const placementSuccess = this.game.entityManager.placeEntity(
+      this.entity,
+      globalX,
+      globalY
     );
 
-    // Use the new toLocalPosition method to convert world coordinates to chunk-local coordinates
-    const localPosition = chunk.toLocalPosition(this.entity.transform.position);
-
-    this.entity.ghostMode = false;
-    this.entity.transform.position.position = {
-      x: localPosition.x,
-      y: localPosition.y,
-      type: "local"
+    if (placementSuccess) {
+      // Remove all event listeners
+      this.cleanup();
+    } else {
+      console.warn('Failed to place entity');
     }
-
-    chunk.addChild(this.entity.container);
-    this.game.entityManager.addEntity(this.entity);
-
-    // Remove all event listeners
-    this.cleanup();
   }
 
   private handleKeydown = (event: KeyboardEvent): void => {
