@@ -1,19 +1,27 @@
-import type { Ticker } from "pixi.js";
+import { AnimatedSprite, type Ticker } from "pixi.js";
 import type { SetOptional } from "type-fest";
+import { CharacterSprite } from "../../spriteSheets/character";
+import { RunningSprite } from "../../spriteSheets/running";
 import type { Game } from "../game/game";
 import type { KeyboardController } from "../keyboardController";
 import type { Position } from "../position";
 import { SubscribablePosition } from "../position/subscribable";
 
 
+/***** TYPE DEFINITIONS *****/
+type MovementDirection = 'north' | 'northeast' | 'east' | 'southeast' | 'south' | 'southwest' | 'west' | 'northwest' | 'idle';
+
 type PlayerOptions = {
   position: SetOptional<Position, "type">;
   controller: KeyboardController;
 }
 
+/***** PLAYER CLASS *****/
 export class Player {
   private controller: KeyboardController;
   public position: SubscribablePosition;
+  private currentSprite: AnimatedSprite | null = null;
+  private currentDirection: MovementDirection = 'idle';
 
   constructor(opts: PlayerOptions) {
     this.controller = opts.controller;
@@ -24,20 +32,112 @@ export class Player {
     );
   }
 
+  /***** SPRITE MANAGEMENT *****/
+  /**
+   * Initialize the player sprite with idle animation
+   */
+  public initializeSprite = (): AnimatedSprite => {
+    if (this.currentSprite) {
+      return this.currentSprite;
+    }
+
+    const idleFrames = CharacterSprite.getSpriteSheet().animations['idle'];
+    this.currentSprite = new AnimatedSprite(idleFrames);
+    this.currentSprite.animationSpeed = 1.0;
+    this.currentSprite.play();
+    this.currentDirection = 'idle';
+
+    return this.currentSprite;
+  }
+
+  /**
+   * Get the current sprite for rendering
+   */
+  public getSprite = (): AnimatedSprite | null => {
+    return this.currentSprite;
+  }
+
+  /***** MOVEMENT AND ANIMATION *****/
+  /**
+   * Determine movement direction based on keyboard input
+   */
+  private getMovementDirection = (): MovementDirection => {
+    const { up, down, left, right } = this.controller.keys;
+
+    // Check for diagonal movements first
+    if (up.pressed && right.pressed) return 'northeast';
+    if (down.pressed && right.pressed) return 'southeast';
+    if (down.pressed && left.pressed) return 'southwest';
+    if (up.pressed && left.pressed) return 'northwest';
+
+    // Check for cardinal directions
+    if (up.pressed) return 'north';
+    if (down.pressed) return 'south';
+    if (left.pressed) return 'west';
+    if (right.pressed) return 'east';
+
+    return 'idle';
+  }
+
+  /**
+   * Update sprite animation based on movement direction
+   */
+  private updateAnimation = (direction: MovementDirection) => {
+    if (!this.currentSprite || this.currentDirection === direction) {
+      return;
+    }
+
+    this.currentDirection = direction;
+
+    if (direction === 'idle') {
+      // Switch to idle animation
+      const idleFrames = CharacterSprite.getSpriteSheet().animations['idle'];
+      this.currentSprite.textures = idleFrames;
+    } else {
+      // Switch to running animation for the specific direction
+      const runningFrames = RunningSprite.getSpriteSheet().animations[`running-${direction}`];
+      if (runningFrames) {
+        this.currentSprite.textures = runningFrames;
+      }
+    }
+
+    this.currentSprite.play();
+  }
+
   public handleMovement = (game: Game, ticker: Ticker) => {
-    const speed = 10 * ticker.deltaTime / game.state.zoom;
+    const baseSpeed = 10 * ticker.deltaTime / game.state.zoom;
+    const direction = this.getMovementDirection();
+
+    // Update animation based on movement direction
+    this.updateAnimation(direction);
+
+    // Calculate movement deltas
+    let deltaX = 0;
+    let deltaY = 0;
 
     if (this.controller.keys.right.pressed) {
-      this.position.x += speed;
+      deltaX += 1;
     }
     if (this.controller.keys.left.pressed) {
-      this.position.x -= speed;
+      deltaX -= 1;
     }
     if (this.controller.keys.up.pressed) {
-      this.position.y -= speed;
+      deltaY -= 1;
     }
     if (this.controller.keys.down.pressed) {
-      this.position.y += speed;
+      deltaY += 1;
     }
+
+    // Normalize diagonal movement to prevent faster speed
+    if (deltaX !== 0 && deltaY !== 0) {
+      // Apply diagonal normalization factor (1/√2 ≈ 0.707)
+      const diagonalFactor = Math.sqrt(2) / 2;
+      deltaX *= diagonalFactor;
+      deltaY *= diagonalFactor;
+    }
+
+    // Apply movement
+    this.position.x += deltaX * baseSpeed;
+    this.position.y += deltaY * baseSpeed;
   }
 }

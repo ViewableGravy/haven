@@ -2,6 +2,7 @@ import { Application, Assets, Container, type ContainerChild } from "pixi.js";
 import Selection from "../../assets/selection.png";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
 import { CharacterSprite } from "../../spriteSheets/character";
+import { RunningSprite } from "../../spriteSheets/running";
 import { ChunkManager } from "../chunkManager";
 import { ChunkGenerator } from "../chunkManager/generator";
 import { ChunkLoader } from "../chunkManager/loader";
@@ -198,37 +199,37 @@ export class Game {
 
   /***** PLAYGROUND SECTION *****/
   private setupPlayground(player: Player) {
-    // Create character sprite in the middle of the screen
-    const characterSprite = CharacterSprite.createSprite("character-idle");
+    // Initialize the player's animated sprite
+    const playerSprite = player.initializeSprite();
     
     // Center the sprite's anchor point
-    characterSprite.anchor.set(0.5);
+    playerSprite.anchor.set(0.5);
     
     // Set height to 2 tiles, maintain original aspect ratio
     const targetHeight = this.consts.tileSize * 2;
-    const originalAspectRatio = characterSprite.texture.width / characterSprite.texture.height;
+    const originalAspectRatio = playerSprite.texture.width / playerSprite.texture.height;
     
-    characterSprite.height = targetHeight;
-    characterSprite.width = targetHeight * originalAspectRatio;
+    playerSprite.height = targetHeight;
+    playerSprite.width = targetHeight * originalAspectRatio;
     
     // Set high z-index to render on top of everything
-    characterSprite.zIndex = 1000;
+    playerSprite.zIndex = 1000;
     
-    // Subscribe to player position to update character sprite position
+    // Subscribe to player position to update sprite position
     player.position.subscribeImmediately(({ x, y }) => {
-      characterSprite.x = x;
-      characterSprite.y = y;
+      playerSprite.x = x;
+      playerSprite.y = y;
     });
     
     // Add directly to world container for testing
-    this.world.addChild(characterSprite);
+    this.world.addChild(playerSprite);
     
     // Ensure world container sorts children by z-index
     this.world.sortableChildren = true;
     
     // Optional: Add some interactive behavior for testing
-    characterSprite.eventMode = 'static';
-    characterSprite.on('pointerdown', () => {
+    playerSprite.eventMode = 'static';
+    playerSprite.on('pointerdown', () => {
       console.log('Character clicked!');
     });
   }
@@ -253,6 +254,7 @@ export class Game {
   private async loadAssets() {
     await AssemblerSprite.load();
     await CharacterSprite.load();
+    await RunningSprite.load();
     await Assets.load(Selection);
   }
 
