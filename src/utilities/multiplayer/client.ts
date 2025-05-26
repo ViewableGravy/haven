@@ -1,5 +1,5 @@
 /***** TYPE DEFINITIONS *****/
-import type { EntityData, ServerMessage } from '../../server';
+import type { EntityData, ServerMessage, ServerMessageType } from "../../server/types";
 
 export interface RemotePlayer {
   id: string;
@@ -7,7 +7,8 @@ export interface RemotePlayer {
   y: number;
 }
 
-export interface MultiplayerEvents {
+export type CreateMultiplayerEvents<T extends Record<ServerMessageType, (data: any) => void>> = T
+export type MultiplayerEvents = CreateMultiplayerEvents<{
   player_join: (data: RemotePlayer) => void;
   player_leave: (data: { id: string }) => void;
   player_update: (data: RemotePlayer) => void;
@@ -15,7 +16,7 @@ export interface MultiplayerEvents {
   entity_placed: (data: EntityData) => void;
   entity_removed: (data: { id: string }) => void;
   entities_list: (data: { entities: EntityData[] }) => void;
-}
+}>
 
 /***** MULTIPLAYER CLIENT *****/
 export class MultiplayerClient {

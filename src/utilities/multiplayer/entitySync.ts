@@ -4,7 +4,7 @@ import type { HasTransform } from "../../entities/interfaces";
 import { ContainerTrait } from "../../entities/traits/container";
 import { GhostableTrait } from "../../entities/traits/ghostable";
 import { PlaceableTrait } from "../../entities/traits/placeable";
-import type { EntityData } from '../../server';
+import type { EntityData } from "../../server/types";
 import type { Game } from "../game/game";
 import { Position } from "../position";
 import { entitySyncRegistry } from "./entitySyncRegistry";

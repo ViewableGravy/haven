@@ -1,0 +1,101 @@
+/***** TYPE DEFINITIONS *****/
+import type { WebSocket } from 'ws';
+
+export interface Player {
+  id: string;
+  x: number;
+  y: number;
+  ws: WebSocket;
+}
+
+export interface EntityData {
+  id: string;
+  type: string;
+  x: number;
+  y: number;
+  chunkX: number;
+  chunkY: number;
+  placedBy: string;
+}
+
+export interface PlayerUpdateMessage {
+  type: 'player_update';
+  data: {
+    id: string;
+    x: number;
+    y: number;
+  };
+}
+
+export interface PlayerJoinMessage {
+  type: 'player_join';
+  data: {
+    id: string;
+    x: number;
+    y: number;
+  };
+}
+
+export interface PlayerLeaveMessage {
+  type: 'player_leave';
+  data: {
+    id: string;
+  };
+}
+
+export interface PlayersListMessage {
+  type: 'players_list';
+  data: {
+    players: Array<{
+      id: string;
+      x: number;
+      y: number;
+    }>;
+  };
+}
+
+export interface EntityPlacedMessage {
+  type: 'entity_placed';
+  data: EntityData;
+}
+
+export interface EntityRemovedMessage {
+  type: 'entity_removed';
+  data: {
+    id: string;
+  };
+}
+
+export interface EntitiesListMessage {
+  type: 'entities_list';
+  data: {
+    entities: EntityData[];
+  };
+}
+
+export type ServerMessage = PlayerUpdateMessage | PlayerJoinMessage | PlayerLeaveMessage | PlayersListMessage | EntityPlacedMessage | EntityRemovedMessage | EntitiesListMessage;
+
+export type ServerMessageType = ServerMessage['type'];
+
+/***** MULTIPLAYER CLIENT NAMESPACE *****/
+export namespace MultiplayerClient {
+  export namespace Data {
+    export type PlayerJoin = PlayerJoinMessage['data'];
+    export type PlayerLeave = PlayerLeaveMessage['data'];
+    export type PlayerUpdate = PlayerUpdateMessage['data'];
+    export type PlayersList = PlayersListMessage['data'];
+    export type EntityPlaced = EntityPlacedMessage['data'];
+    export type EntityRemoved = EntityRemovedMessage['data'];
+    export type EntitiesList = EntitiesListMessage['data'];
+  }
+
+  export type MultiplayerEvents = {
+    player_join: Data.PlayerJoin;
+    player_leave: Data.PlayerLeave;
+    player_update: Data.PlayerUpdate;
+    players_list: Data.PlayersList;
+    entity_placed: Data.EntityPlaced;
+    entity_removed: Data.EntityRemoved;
+    entities_list: Data.EntitiesList;
+  };
+}
