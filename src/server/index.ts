@@ -1,80 +1,7 @@
 /***** TYPE DEFINITIONS *****/
 import { v4 as uuidv4 } from 'uuid';
 import { WebSocketServer, type WebSocket } from 'ws';
-
-export interface Player {
-  id: string;
-  x: number;
-  y: number;
-  ws: WebSocket;
-}
-
-export interface EntityData {
-  id: string;
-  type: string;
-  x: number;
-  y: number;
-  chunkX: number;
-  chunkY: number;
-  placedBy: string;
-}
-
-export interface PlayerUpdateMessage {
-  type: 'player_update';
-  data: {
-    id: string;
-    x: number;
-    y: number;
-  };
-}
-
-export interface PlayerJoinMessage {
-  type: 'player_join';
-  data: {
-    id: string;
-    x: number;
-    y: number;
-  };
-}
-
-export interface PlayerLeaveMessage {
-  type: 'player_leave';
-  data: {
-    id: string;
-  };
-}
-
-export interface PlayersListMessage {
-  type: 'players_list';
-  data: {
-    players: Array<{
-      id: string;
-      x: number;
-      y: number;
-    }>;
-  };
-}
-
-export interface EntityPlacedMessage {
-  type: 'entity_placed';
-  data: EntityData;
-}
-
-export interface EntityRemovedMessage {
-  type: 'entity_removed';
-  data: {
-    id: string;
-  };
-}
-
-export interface EntitiesListMessage {
-  type: 'entities_list';
-  data: {
-    entities: EntityData[];
-  };
-}
-
-export type ServerMessage = PlayerUpdateMessage | PlayerJoinMessage | PlayerLeaveMessage | PlayersListMessage | EntityPlacedMessage | EntityRemovedMessage | EntitiesListMessage;
+import type { EntityData, Player, ServerMessage } from './types';
 
 /***** MULTIPLAYER SERVER *****/
 export class MultiplayerServer {
@@ -93,7 +20,6 @@ export class MultiplayerServer {
   private setupEventHandlers(): void {
     this.wss.on('connection', (ws: WebSocket) => {
       const playerId = uuidv4();
-      console.log(`Player ${playerId} connected`);
 
       // Create new player with default position
       const player: Player = {
@@ -145,9 +71,8 @@ export class MultiplayerServer {
 
       // Handle disconnection
       ws.on('close', () => {
-        console.log(`Player ${playerId} disconnected`);
         this.players.delete(playerId);
-        
+
         // Notify other players about player leaving
         this.broadcastToOthers(playerId, {
           type: 'player_leave',
@@ -199,12 +124,12 @@ export class MultiplayerServer {
   }
 
   /***** ENTITY MANAGEMENT *****/
-  private handleEntityPlace(playerId: string, data: { 
-    type: string; 
-    x: number; 
-    y: number; 
-    chunkX: number; 
-    chunkY: number; 
+  private handleEntityPlace(playerId: string, data: {
+    type: string;
+    x: number;
+    y: number;
+    chunkX: number;
+    chunkY: number;
   }): void {
     const entityId = uuidv4();
     const entityData: EntityData = {
@@ -279,9 +204,11 @@ export class MultiplayerServer {
 }
 
 /***** SERVER STARTUP *****/
-if (import.meta.main) {
-  const server = new MultiplayerServer(8080);
-  
+// Check if this file is being run directly
+if (process.argv[1] === __filename || process.argv[1] === import.meta.url) {
+  new MultiplayerServer(8080);
+  console.log('Server created and listening on port 8080');
+
   // Graceful shutdown
   process.on('SIGINT', () => {
     console.log('Shutting down server...');

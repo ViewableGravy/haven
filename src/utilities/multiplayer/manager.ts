@@ -1,5 +1,5 @@
 /***** TYPE DEFINITIONS *****/
-import type { EntityData } from "../../server";
+import type { EntityData } from "../../server/types";
 import type { Game } from "../game/game";
 import type { Player } from "../player";
 import { MultiplayerClient, type RemotePlayer as RemotePlayerData } from "./client";
@@ -28,9 +28,12 @@ export class MultiplayerManager {
   public async initialize(): Promise<void> {
     try {
       await this.client.connect();
+      
+      // Initialize entity sync after connection is established
+      this.entitySync.initialize();
+      
       this.startPositionUpdates();
       this.setupEntityPlacementListener();
-      console.log('Multiplayer initialized successfully');
     } catch (error) {
       console.error('Failed to initialize multiplayer:', error);
       throw error;
@@ -39,36 +42,33 @@ export class MultiplayerManager {
 
   /***** EVENT HANDLING *****/
   private setupEventHandlers(): void {
-    this.client.on('playerJoin', (playerData: RemotePlayerData) => {
-      console.log(`Player ${playerData.id} joined`);
-      this.addRemotePlayer(playerData);
+    this.client.on('player_join', (data: RemotePlayerData) => {
+      this.addRemotePlayer(data);
     });
 
-    this.client.on('playerLeave', (playerId: string) => {
-      console.log(`Player ${playerId} left`);
-      this.removeRemotePlayer(playerId);
+    this.client.on('player_leave', (data: { id: string }) => {
+      this.removeRemotePlayer(data.id);
     });
 
-    this.client.on('playerUpdate', (playerData: RemotePlayerData) => {
-      this.updateRemotePlayer(playerData);
+    this.client.on('player_update', (data: RemotePlayerData) => {
+      this.updateRemotePlayer(data);
     });
 
-    this.client.on('playersUpdate', (players: RemotePlayerData[]) => {
-      console.log(`Received ${players.length} existing players`);
-      players.forEach(playerData => this.addRemotePlayer(playerData));
+    this.client.on('players_list', (data: { players: RemotePlayerData[] }) => {
+      data.players.forEach(playerData => this.addRemotePlayer(playerData));
     });
 
     // Entity synchronization events
-    this.client.on('entityPlaced', (entityData: EntityData) => {
-      this.entitySync.handleRemoteEntityPlaced(entityData);
+    this.client.on('entity_placed', (data: EntityData) => {
+      this.entitySync.handleRemoteEntityPlaced(data);
     });
 
-    this.client.on('entityRemoved', (entityId: string) => {
-      this.entitySync.handleRemoteEntityRemoved(entityId);
+    this.client.on('entity_removed', (data: { id: string }) => {
+      this.entitySync.handleRemoteEntityRemoved(data.id);
     });
 
-    this.client.on('entitiesUpdate', (entities: EntityData[]) => {
-      this.entitySync.syncExistingEntities(entities);
+    this.client.on('entities_list', (data: { entities: EntityData[] }) => {
+      this.entitySync.syncExistingEntities(data.entities);
     });
   }
 
@@ -85,8 +85,6 @@ export class MultiplayerManager {
           event.chunkX,
           event.chunkY
         );
-        
-        console.log(`Synced local entity placement: ${event.entityType} at (${event.globalPosition.x}, ${event.globalPosition.y})`);
       }
     });
   }

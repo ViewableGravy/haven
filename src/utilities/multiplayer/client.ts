@@ -1,5 +1,5 @@
 /***** TYPE DEFINITIONS *****/
-import type { EntityData, ServerMessage } from '../../server';
+import type { EntityData, ServerMessage, ServerMessageType } from "../../server/types";
 
 export interface RemotePlayer {
   id: string;
@@ -7,15 +7,16 @@ export interface RemotePlayer {
   y: number;
 }
 
-export interface MultiplayerEvents {
-  playerJoin: (player: RemotePlayer) => void;
-  playerLeave: (playerId: string) => void;
-  playerUpdate: (player: RemotePlayer) => void;
-  playersUpdate: (players: RemotePlayer[]) => void;
-  entityPlaced: (entity: EntityData) => void;
-  entityRemoved: (entityId: string) => void;
-  entitiesUpdate: (entities: EntityData[]) => void;
-}
+export type CreateMultiplayerEvents<T extends Record<ServerMessageType, (data: any) => void>> = T
+export type MultiplayerEvents = CreateMultiplayerEvents<{
+  player_join: (data: RemotePlayer) => void;
+  player_leave: (data: { id: string }) => void;
+  player_update: (data: RemotePlayer) => void;
+  players_list: (data: { players: RemotePlayer[] }) => void;
+  entity_placed: (data: EntityData) => void;
+  entity_removed: (data: { id: string }) => void;
+  entities_list: (data: { entities: EntityData[] }) => void;
+}>
 
 /***** MULTIPLAYER CLIENT *****/
 export class MultiplayerClient {
@@ -38,7 +39,6 @@ export class MultiplayerClient {
         this.ws = new WebSocket(this.serverUrl);
         
         this.ws.onopen = () => {
-          console.log('Connected to multiplayer server');
           this.isConnected = true;
           this.reconnectAttempts = 0;
           resolve();
@@ -54,7 +54,6 @@ export class MultiplayerClient {
         };
 
         this.ws.onclose = () => {
-          console.log('Disconnected from multiplayer server');
           this.isConnected = false;
           this.attemptReconnect();
         };
@@ -79,30 +78,11 @@ export class MultiplayerClient {
 
   /***** MESSAGE HANDLING *****/
   private handleServerMessage(message: ServerMessage): void {
-    switch (message.type) {
-      case 'player_join':
-        this.events.playerJoin?.(message.data);
-        break;
-      case 'player_leave':
-        this.events.playerLeave?.(message.data.id);
-        break;
-      case 'player_update':
-        this.events.playerUpdate?.(message.data);
-        break;
-      case 'players_list':
-        this.events.playersUpdate?.(message.data.players);
-        break;
-      case 'entity_placed':
-        this.events.entityPlaced?.(message.data);
-        break;
-      case 'entity_removed':
-        this.events.entityRemoved?.(message.data.id);
-        break;
-      case 'entities_list':
-        this.events.entitiesUpdate?.(message.data.entities);
-        break;
-      default:
-        console.warn('Unknown server message type:', (message as any).type);
+    const handler = this.events[message.type as keyof MultiplayerEvents];
+    if (handler) {
+      handler(message.data as any);
+    } else {
+      console.warn('Unknown server message type:', message.type);
     }
   }
 

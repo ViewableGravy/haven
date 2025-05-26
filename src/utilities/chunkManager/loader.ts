@@ -21,8 +21,8 @@ export class ChunkLoader {
    * @returns Promise resolving to an array of entities for the chunk
    */
   public retrieveEntities = async (chunkX: number, chunkY: number): Promise<Array<BaseEntity>> => {
+    // For now, only add entities to chunk (0,0) for testing
     if (chunkX === 0 && chunkY === 0) {
-      // Using the new factory pattern
       const assembler1 = createStandardAssembler(
         this.game,
         new Position(0, 0, "local")

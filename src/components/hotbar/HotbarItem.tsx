@@ -1,5 +1,5 @@
 import type React from "react";
-import { Ghostable } from "../../entities/traits/ghostable";
+import { GhostableTrait } from "../../entities/traits/ghostable";
 import { useCleanupCallback } from "../../utilities/hooks";
 import { MouseFollower } from "../../utilities/mouseFollower/index";
 import { Position } from "../../utilities/position";
@@ -24,12 +24,10 @@ export const HotbarItem: React.FC<HotbarItemProps> = ({ index, item, children })
   const handleClick = useCleanupCallback((ref) => {
     // Create entity using the item's creator function
     const followEntity = item.creatorFunction(game, new Position(0, 0));
-    
-    // Set ghost mode using the trait system
-    if (Ghostable.is(followEntity)) {
-      followEntity.ghostMode = true;
-    }
-  
+
+    // Set ghost mode using the trait
+    GhostableTrait.setGhostMode(followEntity, true);
+
     // Create mouse follower and assign cleanup function to ref
     const mouseFollower = new MouseFollower(game, followEntity);
     ref.current = mouseFollower.start();

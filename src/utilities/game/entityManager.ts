@@ -1,11 +1,25 @@
 /***** TYPE DEFINITIONS *****/
 import type { BaseEntity } from "../../entities/base";
-import type { HasContainer, HasGhostable, HasTransform } from "../../entities/interfaces";
-import type { PlaceableTrait } from "../../entities/traits/placeable";
+import type { HasTransform } from "../../entities/interfaces";
+import { ContainerTrait } from "../../entities/traits/container";
+import { GhostableTrait } from "../../entities/traits/ghostable";
+import { PlaceableTrait } from "../../entities/traits/placeable";
 import type { ChunkKey } from "../tagged";
 import type { Game } from "./game";
 
-type PlaceableEntity = BaseEntity & HasContainer & HasTransform & HasGhostable & PlaceableTrait;
+interface HasContainerTrait {
+  containerTrait: ContainerTrait;
+}
+
+interface HasGhostableTrait {
+  ghostableTrait: GhostableTrait;
+}
+
+interface HasPlaceableTrait {
+  placeableTrait: PlaceableTrait;
+}
+
+type PlaceableEntity = BaseEntity & HasContainerTrait & HasTransform & HasGhostableTrait & HasPlaceableTrait;
 
 interface EntityPlacementEvent {
   entity: PlaceableEntity;
@@ -62,12 +76,12 @@ export class EntityManager {
 
       // Get appropriate chunk
       const chunk = this.game.controllers.chunkManager.getChunk(globalX, globalY);
-      
+
       // Convert to local chunk coordinates
       const localPosition = chunk.toLocalPosition({ x: globalX, y: globalY, type: "global" });
 
       // Update entity state
-      entity.ghostMode = false;
+      GhostableTrait.setGhostMode(entity, false);
       entity.transform.position.position = {
         x: localPosition.x,
         y: localPosition.y,
@@ -75,13 +89,11 @@ export class EntityManager {
       };
 
       // Place entity in chunk and add to tracking
-      chunk.addChild(entity.container);
+      chunk.addChild(entity.containerTrait.container);
       this.addEntity(entity);
 
       // Mark as placed
-      if (entity.place) {
-        entity.place();
-      }
+      PlaceableTrait.place(entity);
 
       // Calculate chunk coordinates for multiplayer
       const chunkSize = this.game.consts.chunkAbsolute;
@@ -120,7 +132,7 @@ export class EntityManager {
       try {
         listener(event);
       } catch (error) {
-      console.error('Error in placement listener:', error);
+        console.error('Error in placement listener:', error);
       }
     });
   }
@@ -131,7 +143,7 @@ export class EntityManager {
     if (entity.getEntityType && typeof entity.getEntityType === 'function') {
       return entity.getEntityType();
     }
-    
+
     // Fallback for entities that don't implement getEntityType
     console.warn('Entity does not implement getEntityType method, using fallback detection');
     return 'unknown';
