@@ -63,7 +63,6 @@ export class ChunkGenerator {
   private async initializeWorkerSeed(): Promise<void> {
     try {
       await this.workerPool.setSeed(this.chunkLoaderMeta.SEED);
-      console.log(`Worker pool seeded with: ${this.chunkLoaderMeta.SEED}`);
     } catch (error) {
       console.error('Failed to seed worker pool:', error);
     }

@@ -93,7 +93,6 @@ export class MultiplayerServer {
   private setupEventHandlers(): void {
     this.wss.on('connection', (ws: WebSocket) => {
       const playerId = uuidv4();
-      console.log(`Player ${playerId} connected`);
 
       // Create new player with default position
       const player: Player = {
@@ -145,7 +144,6 @@ export class MultiplayerServer {
 
       // Handle disconnection
       ws.on('close', () => {
-        console.log(`Player ${playerId} disconnected`);
         this.players.delete(playerId);
 
         // Notify other players about player leaving

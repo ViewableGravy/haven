@@ -16,7 +16,6 @@ export class EntitySyncRegistry {
   /***** REGISTRATION *****/
   public register(entityType: string, creator: EntitySyncCreator): void {
     this.creators.set(entityType, creator);
-    console.log(`Registered entity sync creator for type: ${entityType}`);
   }
 
   /***** ENTITY CREATION *****/

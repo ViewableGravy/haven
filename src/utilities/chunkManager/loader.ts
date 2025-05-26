@@ -21,12 +21,8 @@ export class ChunkLoader {
    * @returns Promise resolving to an array of entities for the chunk
    */
   public retrieveEntities = async (chunkX: number, chunkY: number): Promise<Array<BaseEntity>> => {
-    console.log(`ChunkLoader.retrieveEntities called for chunk (${chunkX}, ${chunkY})`);
-
+    // For now, only add entities to chunk (0,0) for testing
     if (chunkX === 0 && chunkY === 0) {
-      console.log('Creating initial assemblers for chunk (0,0)');
-
-      // Using the new factory pattern
       const assembler1 = createStandardAssembler(
         this.game,
         new Position(0, 0, "local")
@@ -42,11 +38,9 @@ export class ChunkLoader {
         new Position(this.game.consts.tileSize * 6, this.game.consts.tileSize * 1, "local")
       );
 
-      console.log('Created 3 initial assemblers:', { assembler1, assembler2, assembler3 });
       return [assembler1, assembler2, assembler3];
     }
 
-    console.log(`No entities for chunk (${chunkX}, ${chunkY})`);
     return [];
   }
 }

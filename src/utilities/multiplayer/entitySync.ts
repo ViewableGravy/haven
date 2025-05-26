@@ -14,53 +14,53 @@ export class EntitySyncManager {
   private game: Game;
   private remoteEntities: Map<string, BaseEntity> = new Map();
   private queuedEntities: EntityData[] = [];
+  private isReady: boolean = false;
+  private chunkLoadSubscription: (() => void) | null = null;
 
   constructor(game: Game) {
     this.game = game;
+  }
+
+  /***** INITIALIZATION *****/
+  public initialize(): void {
+    if (this.isReady) return;
     
-    // Subscribe to chunk loading events to process queued entities
     this.setupChunkLoadListener();
+    this.isReady = true;
+    
+    // Process any entities that were queued before initialization
+    if (this.queuedEntities.length > 0) {
+      this.processQueuedEntities();
+    }
   }
 
   /**
    * Set up listener for chunk loading to process queued entities
    */
   private setupChunkLoadListener(): void {
-    // Check if chunk manager is available (it might not be during early initialization)
-    if (this.game.controllers.chunkManager) {
-      // Subscribe to chunk loaded events from the chunk manager
-      this.game.controllers.chunkManager.subscribe((chunkLoadedEvent) => {
-        console.log(`EntitySyncManager: Chunk ${chunkLoadedEvent.chunkKey} loaded, processing queued entities`);
-        this.processQueuedEntities();
-      });
-      console.log('EntitySyncManager: Subscribed to chunk loading events');
-    } else {
-      // If chunk manager isn't ready yet, set up a delayed subscription
-      console.log('EntitySyncManager: ChunkManager not ready, will subscribe later');
-      const checkForChunkManager = () => {
-        if (this.game.controllers.chunkManager) {
-          this.game.controllers.chunkManager.subscribe((chunkLoadedEvent) => {
-            console.log(`EntitySyncManager: Chunk ${chunkLoadedEvent.chunkKey} loaded, processing queued entities`);
-            this.processQueuedEntities();
-          });
-          console.log('EntitySyncManager: Subscribed to chunk loading events (delayed)');
-        } else {
-          // Keep checking until chunk manager is available
-          setTimeout(checkForChunkManager, 100);
-        }
-      };
-      checkForChunkManager();
+    // Ensure chunk manager is available
+    if (!this.game.controllers.chunkManager) {
+      return;
     }
+
+    // Subscribe to chunk loaded events from the chunk manager
+    this.chunkLoadSubscription = this.game.controllers.chunkManager.subscribe((chunkLoadedEvent) => {
+      this.processQueuedEntities();
+    });
   }
 
   /***** ENTITY PLACEMENT *****/
   public handleRemoteEntityPlaced(entityData: EntityData): void {
+    // If not ready yet, queue the entity
+    if (!this.isReady) {
+      this.queueEntityForLaterPlacement(entityData);
+      return;
+    }
+
     // Don't create if already exists
     if (this.remoteEntities.has(entityData.id)) {
       return;
     }
-
-    console.log(`Attempting to place remote entity: ${entityData.type} at global (${entityData.x}, ${entityData.y})`);
 
     // Use registry to create entity
     const entity = entitySyncRegistry.createEntity(entityData, this.game);
@@ -72,7 +72,6 @@ export class EntitySyncManager {
       const chunk = this.game.controllers.chunkManager.getChunk(entityData.x, entityData.y);
       this.placeEntityInChunk(entity, entityData, chunk);
     } catch {
-      console.log(`Chunk not loaded yet for entity ${entityData.type} at (${entityData.x}, ${entityData.y}), queueing for later`);
       this.queueEntityForLaterPlacement(entityData);
       return;
     }
@@ -86,7 +85,6 @@ export class EntitySyncManager {
     // Convert global position to local chunk coordinates
     const globalPosition = new Position(entityData.x, entityData.y, "global");
     const localPosition = chunk.toLocalPosition(globalPosition);
-    console.log(`Converted to local position: (${localPosition.x}, ${localPosition.y}) in chunk at (${chunk.getChunkPosition().x}, ${chunk.getChunkPosition().y})`);
 
     // Ensure entity is not in ghost mode (if it supports ghosting)
     GhostableTrait.setGhostMode(entity, false);
@@ -111,8 +109,6 @@ export class EntitySyncManager {
     // Add to entity manager and track as remote entity
     this.game.entityManager.addEntity(entity);
     this.remoteEntities.set(entityData.id, entity);
-
-    console.log(`Successfully placed remote entity ${entityData.type} at local (${localPosition.x}, ${localPosition.y})`);
   }
 
   /**
@@ -130,7 +126,6 @@ export class EntitySyncManager {
       return;
     }
 
-    console.log(`EntitySyncManager: Processing ${this.queuedEntities.length} queued entities`);
     const remainingQueue: EntityData[] = [];
     
     this.queuedEntities.forEach(entityData => {
@@ -144,12 +139,6 @@ export class EntitySyncManager {
     });
     
     this.queuedEntities = remainingQueue;
-    
-    if (remainingQueue.length > 0) {
-      console.log(`EntitySyncManager: ${remainingQueue.length} entities still queued for placement`);
-    } else {
-      console.log('EntitySyncManager: All queued entities have been placed successfully');
-    }
   }
 
   /***** TYPE GUARDS *****/
@@ -169,8 +158,6 @@ export class EntitySyncManager {
 
     this.game.entityManager.removeEntity(entity);
     this.remoteEntities.delete(entityId);
-
-    console.log(`Remote entity ${entityId} removed`);
   }
 
   /***** ENTITY SYNC *****/
@@ -178,12 +165,16 @@ export class EntitySyncManager {
     // Clear existing remote entities
     this.clearRemoteEntities();
 
+    // If not ready yet, queue all entities
+    if (!this.isReady) {
+      this.queuedEntities.push(...entities);
+      return;
+    }
+
     // Add all entities from server
     entities.forEach(entityData => {
       this.handleRemoteEntityPlaced(entityData);
     });
-
-    console.log(`Synced ${entities.length} entities from server`);
   }
 
   /***** CLEANUP *****/
@@ -195,6 +186,14 @@ export class EntitySyncManager {
 
   public destroy(): void {
     this.clearRemoteEntities();
+    
+    // Unsubscribe from chunk loading events
+    if (this.chunkLoadSubscription) {
+      this.chunkLoadSubscription();
+      this.chunkLoadSubscription = null;
+    }
+    
+    this.isReady = false;
   }
 
   /***** GETTERS *****/
