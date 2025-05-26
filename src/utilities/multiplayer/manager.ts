@@ -1,5 +1,5 @@
 /***** TYPE DEFINITIONS *****/
-import type { EntityData } from "../../server";
+import type { EntityData } from "../../server/types";
 import type { Game } from "../game/game";
 import type { Player } from "../player";
 import { MultiplayerClient, type RemotePlayer as RemotePlayerData } from "./client";

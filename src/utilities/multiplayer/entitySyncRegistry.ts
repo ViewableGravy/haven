@@ -1,6 +1,6 @@
 /***** TYPE DEFINITIONS *****/
 import type { BaseEntity } from "../../entities/base";
-import type { EntityData } from "../../server";
+import type { EntityData } from "../../server/types";
 import type { Game } from "../game/game";
 import type { Position } from "../position";
 
