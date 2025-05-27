@@ -4,6 +4,7 @@ import { CharacterSprite } from "../../spriteSheets/character";
 import { RunningSprite } from "../../spriteSheets/running";
 import type { Game } from "../game/game";
 import type { KeyboardController } from "../keyboardController";
+import type { MultiplayerClient } from "../multiplayer/client";
 import type { Position } from "../position";
 import { SubscribablePosition } from "../position/subscribable";
 
@@ -22,6 +23,14 @@ export class Player {
   public position: SubscribablePosition;
   private currentSprite: AnimatedSprite | null = null;
   private currentDirection: MovementDirection = 'idle';
+  
+  // Multiplayer position update tracking
+  private multiplayerClient: MultiplayerClient | null = null;
+  private lastPositionUpdate: number = 0;
+  private positionUpdateThrottle: number = 50; // ms
+  private wasMovingLastTick: boolean = false;
+  private idleTicksSinceStop: number = 0;
+  private maxIdleUpdates: number = 1; // Send one additional update after entering idle
 
   constructor(opts: PlayerOptions) {
     this.controller = opts.controller;
@@ -58,6 +67,14 @@ export class Player {
   }
 
   /***** MOVEMENT AND ANIMATION *****/
+  /**
+   * Check if any movement keys are currently pressed
+   */
+  public isMoving = (): boolean => {
+    const { up, down, left, right } = this.controller.keys;
+    return up.pressed || down.pressed || left.pressed || right.pressed;
+  }
+
   /**
    * Determine movement direction based on keyboard input
    */
@@ -104,12 +121,50 @@ export class Player {
     this.currentSprite.play();
   }
 
+  /***** MULTIPLAYER INTEGRATION *****/
+  /**
+   * Set the multiplayer client for position updates
+   */
+  public setMultiplayerClient = (client: MultiplayerClient | null): void => {
+    this.multiplayerClient = client;
+  }
+
+  /**
+   * Send position update to multiplayer server if client is connected
+   */
+  private sendPositionUpdate = (): void => {
+    if (!this.multiplayerClient) return;
+    
+    const now = Date.now();
+    if (now - this.lastPositionUpdate >= this.positionUpdateThrottle) {
+      const { x, y } = this.position.position;
+      if (x && y) {
+        this.multiplayerClient.sendPositionUpdate(x, y);
+        this.lastPositionUpdate = now;
+      }
+    }
+  }
+
   public handleMovement = (game: Game, ticker: Ticker) => {
     const baseSpeed = 10 * ticker.deltaTime / game.state.zoom;
     const direction = this.getMovementDirection();
+    const isCurrentlyMoving = this.isMoving();
 
     // Update animation based on movement direction
     this.updateAnimation(direction);
+
+    // Handle multiplayer position updates
+    this.sendPositionUpdate();
+    if (isCurrentlyMoving) {
+      this.idleTicksSinceStop = 0;
+    } else if (this.wasMovingLastTick && !isCurrentlyMoving) {
+      this.idleTicksSinceStop = 1;
+    } else if (!isCurrentlyMoving && this.idleTicksSinceStop > 0 && this.idleTicksSinceStop <= this.maxIdleUpdates) {
+      this.idleTicksSinceStop++;
+    }
+    
+    // Track movement state for next tick
+    this.wasMovingLastTick = isCurrentlyMoving;
 
     // Calculate movement deltas
     let deltaX = 0;

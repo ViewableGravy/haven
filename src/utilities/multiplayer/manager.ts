@@ -21,8 +21,6 @@ export class MultiplayerManager {
   public localPlayer: Player;
   public remotePlayers: Map<string, RemotePlayer> = new Map();
   public entitySync: EntitySyncManager;
-  public positionUpdateThrottle: number = 50; // ms
-  public lastPositionUpdate: number = 0;
 
   // Event Handlers
   private remoteChunkLoadHandler: RemoteChunkLoadHandler;
@@ -58,11 +56,10 @@ export class MultiplayerManager {
       await this.client.connect();
       
       // Initialize entity sync after connection is established
-      // This will set up the entity placement listener
       this.entitySync.initialize();
       
-      this.startPositionUpdates();
-      // Remove setupEntityPlacementListener() call - now handled by EntitySyncManager
+      // Set the multiplayer client on the player for position updates
+      this.localPlayer.setMultiplayerClient(this.client);
     } catch (error) {
       console.error('Failed to initialize multiplayer:', error);
       throw error;
@@ -105,22 +102,6 @@ export class MultiplayerManager {
     });
   }
 
-  /***** POSITION UPDATES *****/
-  private startPositionUpdates(): void {
-    // Subscribe to local player position changes
-    this.localPlayer.position.subscribe(({ x, y }) => {
-      this.throttledPositionUpdate(x, y);
-    });
-  }
-
-  private throttledPositionUpdate(x: number, y: number): void {
-    const now = Date.now();
-    if (now - this.lastPositionUpdate >= this.positionUpdateThrottle) {
-      this.client.sendPositionUpdate(x, y);
-      this.lastPositionUpdate = now;
-    }
-  }
-
   /***** STATUS AND CLEANUP *****/
   public isConnected(): boolean {
     return this.client.getConnectionStatus();
@@ -135,8 +116,11 @@ export class MultiplayerManager {
   }
 
   public disconnect(): void {
+    // Remove multiplayer client from player
+    this.localPlayer.setMultiplayerClient(null);
+    
     // Clean up all remote players
-    this.remotePlayers.forEach(player => player.destroy());
+    this.remotePlayers.forEach((player) => player.destroy());
     this.remotePlayers.clear();
     
     // Clean up entity sync
@@ -147,8 +131,11 @@ export class MultiplayerManager {
   }
 
   public destroy(): void {
+    // Remove multiplayer client from player
+    this.localPlayer.setMultiplayerClient(null);
+    
     // Clean up all remote players
-    this.remotePlayers.forEach(player => player.destroy());
+    this.remotePlayers.forEach((player) => player.destroy());
     this.remotePlayers.clear();
     
     // Clean up entity sync
