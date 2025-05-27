@@ -29,8 +29,7 @@ export class Player {
   private lastPositionUpdate: number = 0;
   private positionUpdateThrottle: number = 50; // ms
   private wasMovingLastTick: boolean = false;
-  private idleTicksSinceStop: number = 0;
-  private maxIdleUpdates: number = 1; // Send one additional update after entering idle
+  private idleUpdateTimeout: NodeJS.Timeout | null = null;
 
   constructor(opts: PlayerOptions) {
     this.controller = opts.controller;
@@ -154,13 +153,35 @@ export class Player {
     this.updateAnimation(direction);
 
     // Handle multiplayer position updates
-    this.sendPositionUpdate();
     if (isCurrentlyMoving) {
-      this.idleTicksSinceStop = 0;
+      // Clear any pending idle update when moving
+      if (this.idleUpdateTimeout) {
+        clearTimeout(this.idleUpdateTimeout);
+        this.idleUpdateTimeout = null;
+      }
+      // Send position updates while moving
+      this.sendPositionUpdate();
     } else if (this.wasMovingLastTick && !isCurrentlyMoving) {
-      this.idleTicksSinceStop = 1;
-    } else if (!isCurrentlyMoving && this.idleTicksSinceStop > 0 && this.idleTicksSinceStop <= this.maxIdleUpdates) {
-      this.idleTicksSinceStop++;
+      // Just stopped moving - send immediate final position update
+      if (this.multiplayerClient) {
+        const { x, y } = this.position.position;
+        if (x !== undefined && y !== undefined) {
+          this.multiplayerClient.sendPositionUpdate(x, y);
+          this.lastPositionUpdate = Date.now();
+        }
+      }
+      
+      // Schedule one additional position update after 100ms to ensure sync
+      this.idleUpdateTimeout = setTimeout(() => {
+        if (this.multiplayerClient && !this.isMoving()) {
+          const { x, y } = this.position.position;
+          if (x !== undefined && y !== undefined) {
+            this.multiplayerClient.sendPositionUpdate(x, y);
+            this.lastPositionUpdate = Date.now();
+          }
+        }
+        this.idleUpdateTimeout = null;
+      }, 100);
     }
     
     // Track movement state for next tick
