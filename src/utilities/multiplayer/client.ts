@@ -1,5 +1,6 @@
 /***** TYPE DEFINITIONS *****/
-import type { EntityData, ServerMessage, ServerMessageType } from "../../server/types";
+import type { EntityData, ServerEvents } from "../../server/types";
+import type { LoadChunkEvent } from "../../server/types/events/load_chunk";
 
 export interface RemotePlayer {
   id: string;
@@ -7,7 +8,7 @@ export interface RemotePlayer {
   y: number;
 }
 
-export type CreateMultiplayerEvents<T extends Record<ServerMessageType, (data: any) => void>> = T
+export type CreateMultiplayerEvents<T extends Record<ServerEvents.ServerMessageType, (data: any) => void>> = T
 export type MultiplayerEvents = CreateMultiplayerEvents<{
   player_join: (data: RemotePlayer) => void;
   player_leave: (data: { id: string }) => void;
@@ -16,6 +17,7 @@ export type MultiplayerEvents = CreateMultiplayerEvents<{
   entity_placed: (data: EntityData) => void;
   entity_removed: (data: { id: string }) => void;
   entities_list: (data: { entities: EntityData[] }) => void;
+  load_chunk: (data: LoadChunkEvent.LoadChunkData) => void;
 }>
 
 /***** MULTIPLAYER CLIENT *****/
@@ -46,7 +48,7 @@ export class MultiplayerClient {
 
         this.ws.onmessage = (event) => {
           try {
-            const message: ServerMessage = JSON.parse(event.data);
+            const message: ServerEvents.ServerMessage = JSON.parse(event.data);
             this.handleServerMessage(message);
           } catch (error) {
             console.error('Error parsing server message:', error);
@@ -77,7 +79,7 @@ export class MultiplayerClient {
   }
 
   /***** MESSAGE HANDLING *****/
-  private handleServerMessage(message: ServerMessage): void {
+  private handleServerMessage(message: ServerEvents.ServerMessage): void {
     const handler = this.events[message.type as keyof MultiplayerEvents];
     if (handler) {
       handler(message.data as any);

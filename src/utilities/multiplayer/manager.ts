@@ -4,6 +4,7 @@ import type { Game } from "../game/game";
 import type { Player } from "../player";
 import { MultiplayerClient, type RemotePlayer as RemotePlayerData } from "./client";
 import { EntitySyncManager } from "./entitySync";
+import { RemoteChunkLoadHandler } from "./events/load_chunk";
 import { RemotePlayer } from "./remotePlayer";
 
 /***** MULTIPLAYER MANAGER *****/
@@ -16,12 +17,18 @@ export class MultiplayerManager {
   private positionUpdateThrottle: number = 50; // ms
   private lastPositionUpdate: number = 0;
 
+  // Handlers
+  private remoteChunkLoadHandler: RemoteChunkLoadHandler
+
   constructor(game: Game, localPlayer: Player, serverUrl?: string) {
     this.game = game;
     this.localPlayer = localPlayer;
     this.client = new MultiplayerClient(serverUrl);
     this.entitySync = new EntitySyncManager(game);
     this.setupEventHandlers();
+
+    // Handlers
+    this.remoteChunkLoadHandler = new RemoteChunkLoadHandler(this);
   }
 
   /***** INITIALIZATION *****/
@@ -70,6 +77,8 @@ export class MultiplayerManager {
     this.client.on('entities_list', (data: { entities: EntityData[] }) => {
       this.entitySync.syncExistingEntities(data.entities);
     });
+
+    this.client.on('load_chunk', this.remoteChunkLoadHandler.handleEvent)
   }
 
   /***** ENTITY PLACEMENT LISTENER *****/

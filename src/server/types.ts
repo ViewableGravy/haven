@@ -1,30 +1,36 @@
 /***** TYPE DEFINITIONS *****/
 import type { WebSocket } from 'ws';
+import type { LoadChunkEvent } from './types/events/load_chunk';
+
+export interface ServerEvent {
+    type: string;
+    data: unknown;
+}
 
 export interface Player {
-  id: string;
-  x: number;
-  y: number;
-  ws: WebSocket;
-}
-
-export interface EntityData {
-  id: string;
-  type: string;
-  x: number;
-  y: number;
-  chunkX: number;
-  chunkY: number;
-  placedBy: string;
-}
-
-export interface PlayerUpdateMessage {
-  type: 'player_update';
-  data: {
     id: string;
     x: number;
     y: number;
-  };
+    ws: WebSocket;
+}
+
+export interface EntityData {
+    id: string;
+    type: string;
+    x: number;
+    y: number;
+    chunkX: number;
+    chunkY: number;
+    placedBy: string;
+}
+
+export interface PlayerUpdateMessage extends ServerEvent {
+    type: "player_update";
+    data: {
+        id: string;
+        x: number;
+        y: number;
+    };
 }
 
 export interface PlayerJoinMessage {
@@ -73,9 +79,25 @@ export interface EntitiesListMessage {
   };
 }
 
-export type ServerMessage = PlayerUpdateMessage | PlayerJoinMessage | PlayerLeaveMessage | PlayersListMessage | EntityPlacedMessage | EntityRemovedMessage | EntitiesListMessage;
+export namespace ServerEvents {
+  export type LoadChunkMessage = {
+    type: LoadChunkEvent.LoadChunkType;
+    data: LoadChunkEvent.LoadChunkData;
+  }
 
-export type ServerMessageType = ServerMessage['type'];
+  export type ServerMessage = 
+    | PlayerUpdateMessage 
+    | PlayerJoinMessage 
+    | PlayerLeaveMessage 
+    | PlayersListMessage 
+    | EntityPlacedMessage 
+    | EntityRemovedMessage 
+    | EntitiesListMessage
+    | LoadChunkMessage
+
+  export type ServerMessageType = ServerMessage['type'];
+  export type ServerMessageData = ServerMessage['data'];
+}
 
 /***** MULTIPLAYER CLIENT NAMESPACE *****/
 export namespace MultiplayerClient {

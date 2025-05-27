@@ -1,7 +1,7 @@
 /***** TYPE DEFINITIONS *****/
 import { v4 as uuidv4 } from 'uuid';
 import { WebSocketServer, type WebSocket } from 'ws';
-import type { EntityData, Player, ServerMessage } from './types';
+import type { EntityData, Player, ServerEvents } from './types';
 
 /***** MULTIPLAYER SERVER *****/
 export class MultiplayerServer {
@@ -171,14 +171,14 @@ export class MultiplayerServer {
   }
 
   /***** UTILITY METHODS *****/
-  private sendToPlayer(playerId: string, message: ServerMessage): void {
+  private sendToPlayer(playerId: string, message: ServerEvents.ServerMessage): void {
     const player = this.players.get(playerId);
     if (player && player.ws.readyState === player.ws.OPEN) {
       player.ws.send(JSON.stringify(message));
     }
   }
 
-  private broadcastToOthers(excludePlayerId: string, message: ServerMessage): void {
+  private broadcastToOthers(excludePlayerId: string, message: ServerEvents.ServerMessage): void {
     this.players.forEach((player, id) => {
       if (id !== excludePlayerId && player.ws.readyState === player.ws.OPEN) {
         player.ws.send(JSON.stringify(message));
@@ -186,7 +186,7 @@ export class MultiplayerServer {
     });
   }
 
-  private broadcast(message: ServerMessage): void {
+  private broadcast(message: ServerEvents.ServerMessage): void {
     this.players.forEach((player) => {
       if (player.ws.readyState === player.ws.OPEN) {
         player.ws.send(JSON.stringify(message));

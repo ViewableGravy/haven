@@ -6,7 +6,7 @@ import { CharacterSprite } from "../../spriteSheets/character";
 import { RunningSprite } from "../../spriteSheets/running";
 // Import assembler factory to ensure infographic registration happens
 import "../../entities/assembler/factory";
-import { ChunkManager } from "../chunkManager";
+import { ChunkManager } from "../../systems/chunkManager";
 import { ChunkGenerator } from "../chunkManager/generator";
 import { ChunkLoader } from "../chunkManager/loader";
 import { ChunkManagerMeta } from "../chunkManager/meta";

@@ -2,17 +2,17 @@ import { Container, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
 import type { BaseEntity } from "../../entities/base";
 import { ContainerTrait } from "../../entities/traits/container";
-import { EventEmitter } from "../eventEmitter";
-import type { Game } from "../game/game";
-import type { SubscribablePosition } from "../position/subscribable";
-import { createChunkKey, type ChunkKey } from "../tagged";
-import { Chunk } from "./chunk";
-import type { ChunkGenerator } from "./generator";
-import type { ChunkLoader } from "./loader";
-import { ChunkLoadManager } from "./loadManager";
-import type { ChunkManagerMeta } from "./meta";
-import { ChunkProcessor } from "./processor";
-import { ChunkRegistry } from "./registry";
+import { Chunk } from "../../utilities/chunkManager/chunk";
+import type { ChunkGenerator } from "../../utilities/chunkManager/generator";
+import type { ChunkLoader } from "../../utilities/chunkManager/loader";
+import { ChunkLoadManager } from "../../utilities/chunkManager/loadManager";
+import type { ChunkManagerMeta } from "../../utilities/chunkManager/meta";
+import { ChunkProcessor } from "../../utilities/chunkManager/processor";
+import { ChunkRegistry } from "../../utilities/chunkManager/registry";
+import { EventEmitter } from "../../utilities/eventEmitter";
+import type { Game } from "../../utilities/game/game";
+import type { SubscribablePosition } from "../../utilities/position/subscribable";
+import { createChunkKey, type ChunkKey } from "../../utilities/tagged";
 
 /***** TYPE DEFINITIONS *****/
 export interface ChunkLoadedEvent {
@@ -50,12 +50,21 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     this.loadManager = new ChunkLoadManager(game.consts.chunkAbsolute, chunkLoaderMeta);
   }
 
+  public onServerChunkEvent = (event) => {
+    // event 
+  }
+
   /**
    * Subscribes a position to the chunk loading system
    * The position will be monitored and chunks will be loaded/unloaded based on proximity
    * @param position - The subscribable position that determines which chunks should be loaded
    */
   public subscribeToPosition = (position: SubscribablePosition) => {
+
+    /**
+     * We should no longer need to do this, instead the server can send events for the client to create.
+     */
+
     this.loadManager.subscribeToPosition(position, {
       onChunkNeeded: (chunkX, chunkY) => {
         this.chunkProcessor.queueChunk(chunkX, chunkY);
