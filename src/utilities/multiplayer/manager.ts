@@ -4,21 +4,35 @@ import type { Game } from "../game/game";
 import type { Player } from "../player";
 import { MultiplayerClient, type RemotePlayer as RemotePlayerData } from "./client";
 import { EntitySyncManager } from "./entitySync";
+import { EntitiesListHandler } from "./events/entities_list";
+import { EntityPlacedHandler } from "./events/entity_placed";
+import { EntityRemovedHandler } from "./events/entity_removed";
 import { RemoteChunkLoadHandler } from "./events/load_chunk";
+import { PlayerJoinHandler } from "./events/player_join";
+import { PlayerLeaveHandler } from "./events/player_leave";
+import { PlayerUpdateHandler } from "./events/player_update";
+import { PlayersListHandler } from "./events/players_list";
 import { RemotePlayer } from "./remotePlayer";
 
 /***** MULTIPLAYER MANAGER *****/
 export class MultiplayerManager {
   private client: MultiplayerClient;
-  private game: Game;
+  public game: Game;
   private localPlayer: Player;
-  private remotePlayers: Map<string, RemotePlayer> = new Map();
-  private entitySync: EntitySyncManager;
+  public remotePlayers: Map<string, RemotePlayer> = new Map();
+  public entitySync: EntitySyncManager;
   private positionUpdateThrottle: number = 50; // ms
   private lastPositionUpdate: number = 0;
 
-  // Handlers
-  private remoteChunkLoadHandler: RemoteChunkLoadHandler
+  // Event Handlers
+  private remoteChunkLoadHandler: RemoteChunkLoadHandler;
+  private playerJoinHandler: PlayerJoinHandler;
+  private playerLeaveHandler: PlayerLeaveHandler;
+  private playerUpdateHandler: PlayerUpdateHandler;
+  private playersListHandler: PlayersListHandler;
+  private entityPlacedHandler: EntityPlacedHandler;
+  private entityRemovedHandler: EntityRemovedHandler;
+  private entitiesListHandler: EntitiesListHandler;
 
   constructor(game: Game, localPlayer: Player, serverUrl?: string) {
     this.game = game;
@@ -27,8 +41,15 @@ export class MultiplayerManager {
     this.entitySync = new EntitySyncManager(game);
     this.setupEventHandlers();
 
-    // Handlers
+    // Initialize handlers
     this.remoteChunkLoadHandler = new RemoteChunkLoadHandler(this);
+    this.playerJoinHandler = new PlayerJoinHandler(this);
+    this.playerLeaveHandler = new PlayerLeaveHandler(this);
+    this.playerUpdateHandler = new PlayerUpdateHandler(this);
+    this.playersListHandler = new PlayersListHandler(this);
+    this.entityPlacedHandler = new EntityPlacedHandler(this);
+    this.entityRemovedHandler = new EntityRemovedHandler(this);
+    this.entitiesListHandler = new EntitiesListHandler(this);
   }
 
   /***** INITIALIZATION *****/
@@ -50,35 +71,37 @@ export class MultiplayerManager {
   /***** EVENT HANDLING *****/
   private setupEventHandlers(): void {
     this.client.on('player_join', (data: RemotePlayerData) => {
-      this.addRemotePlayer(data);
+      this.playerJoinHandler.handleEvent(data);
     });
 
     this.client.on('player_leave', (data: { id: string }) => {
-      this.removeRemotePlayer(data.id);
+      this.playerLeaveHandler.handleEvent(data);
     });
 
     this.client.on('player_update', (data: RemotePlayerData) => {
-      this.updateRemotePlayer(data);
+      this.playerUpdateHandler.handleEvent(data);
     });
 
     this.client.on('players_list', (data: { players: RemotePlayerData[] }) => {
-      data.players.forEach(playerData => this.addRemotePlayer(playerData));
+      this.playersListHandler.handleEvent(data);
     });
 
     // Entity synchronization events
     this.client.on('entity_placed', (data: EntityData) => {
-      this.entitySync.handleRemoteEntityPlaced(data);
+      this.entityPlacedHandler.handleEvent(data);
     });
 
     this.client.on('entity_removed', (data: { id: string }) => {
-      this.entitySync.handleRemoteEntityRemoved(data.id);
+      this.entityRemovedHandler.handleEvent(data);
     });
 
     this.client.on('entities_list', (data: { entities: EntityData[] }) => {
-      this.entitySync.syncExistingEntities(data.entities);
+      this.entitiesListHandler.handleEvent(data);
     });
 
-    this.client.on('load_chunk', this.remoteChunkLoadHandler.handleEvent)
+    this.client.on('load_chunk', (data) => {
+      this.remoteChunkLoadHandler.handleEvent(data);
+    });
   }
 
   /***** ENTITY PLACEMENT LISTENER *****/
@@ -96,37 +119,6 @@ export class MultiplayerManager {
         );
       }
     });
-  }
-
-  /***** REMOTE PLAYER MANAGEMENT *****/
-  private addRemotePlayer(playerData: RemotePlayerData): void {
-    if (this.remotePlayers.has(playerData.id)) {
-      return; // Player already exists
-    }
-
-    const remotePlayer = new RemotePlayer(
-      playerData.id,
-      playerData.x,
-      playerData.y,
-      this.game
-    );
-
-    this.remotePlayers.set(playerData.id, remotePlayer);
-  }
-
-  private removeRemotePlayer(playerId: string): void {
-    const remotePlayer = this.remotePlayers.get(playerId);
-    if (remotePlayer) {
-      remotePlayer.destroy();
-      this.remotePlayers.delete(playerId);
-    }
-  }
-
-  private updateRemotePlayer(playerData: RemotePlayerData): void {
-    const remotePlayer = this.remotePlayers.get(playerData.id);
-    if (remotePlayer) {
-      remotePlayer.updatePosition(playerData.x, playerData.y);
-    }
   }
 
   /***** POSITION UPDATES *****/

@@ -1,10 +1,6 @@
-import type { ServerEvents } from "../../../server/types";
 import type { LoadChunkEvent } from "../../../server/types/events/load_chunk";
 import type { MultiplayerManager } from "../manager";
-
-interface ServerEventHandler {
-    handleEvent(data: ServerEvents.ServerMessageData): void;
-}
+import type { ServerEventHandler } from "./types";
 
 export class RemoteChunkLoadHandler implements ServerEventHandler {
     constructor(private multiplayerManager: MultiplayerManager) {}
