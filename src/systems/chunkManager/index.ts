@@ -1,4 +1,4 @@
-import { Container, type ContainerChild } from "pixi.js";
+import { Container, Graphics, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
 import type { BaseEntity } from "../../entities/base";
 import { ContainerTrait } from "../../entities/traits/container";
@@ -9,6 +9,7 @@ import { ChunkLoadManager } from "../../utilities/chunkManager/loadManager";
 import type { ChunkManagerMeta } from "../../utilities/chunkManager/meta";
 import { ChunkProcessor } from "../../utilities/chunkManager/processor";
 import { ChunkRegistry } from "../../utilities/chunkManager/registry";
+import { TileFactory } from "../../utilities/chunkManager/tile";
 import { EventEmitter } from "../../utilities/eventEmitter";
 import type { Game } from "../../utilities/game/game";
 import type { SubscribablePosition } from "../../utilities/position/subscribable";
@@ -48,10 +49,6 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     super(); // Call EventEmitter constructor
     this.chunkProcessor = new ChunkProcessor(chunkGenerator, chunkLoader);
     this.loadManager = new ChunkLoadManager(game.consts.chunkAbsolute, chunkLoaderMeta);
-  }
-
-  public onServerChunkEvent = (event) => {
-    // event 
   }
 
   /**
@@ -189,5 +186,79 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
    */
   private isChunkQueued(chunkX: number, chunkY: number): boolean {
     return this.chunkProcessor.isChunkQueued(createChunkKey(chunkX, chunkY));
+  }
+
+  /***** SERVER CHUNK CREATION *****/
+  public registerChunkWithEntities(
+    chunkKey: ChunkKey, 
+    chunk: Chunk, 
+    entities: BaseEntity[]
+  ): void {
+    // Atomically register chunk and its entities
+    this.chunkRegistry.addChunk(chunkKey, chunk);
+    this.container.addChild(chunk.getContainer());
+    
+    // Add entities to the game
+    for (const entity of entities) {
+      if (ContainerTrait.is(entity)) {
+        chunk.addChild(entity.containerTrait.container);
+      }
+      this.game.entityManager.addEntity(entity);
+    }
+    
+    // TODO: consolidate .addEntitiy and .setEntitiesForchunk - these do the same thing, we should take the
+    // entities position, determine chunk and add it to chunk during the addEntity phase (or throw an error if chunk doesn't exist)
+
+    // Register entities for this chunk
+    this.game.entityManager.setEntitiesForChunk(chunkKey, new Set(entities));
+  }
+
+  public createChunkFromTiles(
+    chunkX: number,
+    chunkY: number,
+    tiles: Array<{ color: string, x: number, y: number }>
+  ): Chunk {
+    // Create chunk instance
+    const chunk = new Chunk(this.game, chunkX, chunkY);
+    
+    // Create background container for tiles
+    const background = new Container();
+    background.x = 0;
+    background.y = 0;
+    background.zIndex = -1;
+    background.sortableChildren = true;
+    
+    // Create tile factory
+    const tileTexture = this.game.state.app.renderer.generateTexture(
+      new Graphics().rect(0, 0, this.game.consts.tileSize, this.game.consts.tileSize).fill(0xFFFFFF)
+    );
+    const tileFactory = new TileFactory(tileTexture, this.game);
+    
+    // Create tiles from server data
+    tiles.forEach(tileData => {
+      const tile = tileFactory.createPrimitive({
+        x: tileData.x,
+        y: tileData.y,
+        tint: parseInt(tileData.color, 16)
+      });
+      background.addChild(tile);
+    });
+    
+    // Optimize background rendering
+    background.interactive = false;
+    background.interactiveChildren = false;
+    background.cacheAsTexture(true);
+    
+    // Add background to chunk
+    chunk.addChild(background);
+    
+    return chunk;
+  }
+
+  /***** SERVER INTEGRATION UTILITIES *****/
+  public shouldLoadChunk(chunkX: number, chunkY: number): boolean {
+    // Check if this chunk is currently needed based on player position
+    // This is a simplified implementation - could be enhanced with load radius checks
+    return !this.isChunkLoaded(chunkX, chunkY) && !this.isChunkQueued(chunkX, chunkY);
   }
 }

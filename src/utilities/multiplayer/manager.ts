@@ -16,13 +16,13 @@ import { RemotePlayer } from "./remotePlayer";
 
 /***** MULTIPLAYER MANAGER *****/
 export class MultiplayerManager {
-  private client: MultiplayerClient;
+  public client: MultiplayerClient;
   public game: Game;
-  private localPlayer: Player;
+  public localPlayer: Player;
   public remotePlayers: Map<string, RemotePlayer> = new Map();
   public entitySync: EntitySyncManager;
-  private positionUpdateThrottle: number = 50; // ms
-  private lastPositionUpdate: number = 0;
+  public positionUpdateThrottle: number = 50; // ms
+  public lastPositionUpdate: number = 0;
 
   // Event Handlers
   private remoteChunkLoadHandler: RemoteChunkLoadHandler;
@@ -58,10 +58,11 @@ export class MultiplayerManager {
       await this.client.connect();
       
       // Initialize entity sync after connection is established
+      // This will set up the entity placement listener
       this.entitySync.initialize();
       
       this.startPositionUpdates();
-      this.setupEntityPlacementListener();
+      // Remove setupEntityPlacementListener() call - now handled by EntitySyncManager
     } catch (error) {
       console.error('Failed to initialize multiplayer:', error);
       throw error;
@@ -101,23 +102,6 @@ export class MultiplayerManager {
 
     this.client.on('load_chunk', (data) => {
       this.remoteChunkLoadHandler.handleEvent(data);
-    });
-  }
-
-  /***** ENTITY PLACEMENT LISTENER *****/
-  private setupEntityPlacementListener(): void {
-    // Listen to entity placement events from EntityManager
-    this.game.entityManager.onEntityPlacement((event) => {
-      // Only sync locally placed entities (not remote ones)
-      if (!(event.entity as any).multiplayerId) {
-        this.client.sendEntityPlace(
-          event.entityType,
-          event.globalPosition.x,
-          event.globalPosition.y,
-          event.chunkX,
-          event.chunkY
-        );
-      }
     });
   }
 
@@ -163,6 +147,14 @@ export class MultiplayerManager {
   }
 
   public destroy(): void {
-    this.disconnect();
+    // Clean up all remote players
+    this.remotePlayers.forEach(player => player.destroy());
+    this.remotePlayers.clear();
+    
+    // Clean up entity sync
+    this.entitySync.destroy();
+    
+    // Disconnect from server
+    this.client.disconnect();
   }
 }

@@ -18,6 +18,7 @@ export type MultiplayerEvents = CreateMultiplayerEvents<{
   entity_removed: (data: { id: string }) => void;
   entities_list: (data: { entities: EntityData[] }) => void;
   load_chunk: (data: LoadChunkEvent.LoadChunkData) => void;
+  chunk_data: (data: any) => void; // Added for server chunk data
 }>
 
 /***** MULTIPLAYER CLIENT *****/

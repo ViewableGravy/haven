@@ -26,12 +26,57 @@ export class EntitySyncManager {
     if (this.isReady) return;
     
     this.setupChunkLoadListener();
+    this.setupEntityPlacementListener();
     this.isReady = true;
     
     // Process any entities that were queued before initialization
     if (this.queuedEntities.length > 0) {
       this.processQueuedEntities();
     }
+  }
+
+  /***** ENTITY PLACEMENT INTEGRATION *****/
+  private setupEntityPlacementListener(): void {
+    // Listen to local entity placements and notify server
+    this.game.entityManager.onEntityPlacement((event) => {
+      // Only notify server for locally placed entities (not remote ones)
+      if (!event.entity.isRemoteEntity) {
+        this.notifyServerEntityPlaced(
+          event.entity, 
+          event.globalPosition.x, 
+          event.globalPosition.y
+        );
+      }
+    });
+  }
+
+  /***** WORLD POSITION API *****/
+  // "I don't care about chunks" API
+  public placeEntityAtWorldPosition(
+    _entityType: string, 
+    _worldX: number, 
+    _worldY: number
+  ): BaseEntity | null {
+    // For now, use the existing entity placement through EntityManager
+    // This would need to be implemented in EntityManager as a future enhancement
+    console.warn('placeEntityAtWorldPosition not yet implemented in EntityManager');
+    return null;
+  }
+
+  /***** SERVER NOTIFICATION *****/
+  private notifyServerEntityPlaced(entity: BaseEntity, worldX: number, worldY: number): void {
+    // Calculate chunk coordinates for server
+    const chunkX = Math.floor(worldX / this.game.consts.chunkAbsolute);
+    const chunkY = Math.floor(worldY / this.game.consts.chunkAbsolute);
+    
+    // Send to server via multiplayer client
+    this.game.controllers.multiplayer?.client.sendEntityPlace?.(
+      entity.getEntityType(),
+      worldX,
+      worldY,
+      chunkX,
+      chunkY
+    );
   }
 
   /**
@@ -44,13 +89,16 @@ export class EntitySyncManager {
     }
 
     // Subscribe to chunk loaded events from the chunk manager
-    this.chunkLoadSubscription = this.game.controllers.chunkManager.subscribe((chunkLoadedEvent) => {
+    this.chunkLoadSubscription = this.game.controllers.chunkManager.subscribe((_chunkLoadedEvent) => {
       this.processQueuedEntities();
     });
   }
 
-  /***** ENTITY PLACEMENT *****/
+  /***** REMOTE ENTITY HANDLING *****/
   public handleRemoteEntityPlaced(entityData: EntityData): void {
+    // Server tells us about entity at world position
+    // EntityManager figures out which chunk it belongs to
+    
     // If not ready yet, queue the entity
     if (!this.isReady) {
       this.queueEntityForLaterPlacement(entityData);
@@ -147,17 +195,17 @@ export class EntitySyncManager {
   }
 
   /***** ENTITY REMOVAL *****/
-  public handleRemoteEntityRemoved(entityId: string): void {
-    const entity = this.remoteEntities.get(entityId);
-    if (!entity) return;
+  public handleRemoteEntityRemoved(data: { id: string }): void {
+    const entity = this.remoteEntities.get(data.id);
+    if (entity) {
+      // Remove from chunk and game
+      if (ContainerTrait.is(entity)) {
+        entity.containerTrait.container.parent?.removeChild(entity.containerTrait.container);
+      }
 
-    // Remove from chunk and game
-    if (ContainerTrait.is(entity)) {
-      entity.containerTrait.container.parent?.removeChild(entity.containerTrait.container);
+      this.game.entityManager.removeEntity(entity);
+      this.remoteEntities.delete(data.id);
     }
-
-    this.game.entityManager.removeEntity(entity);
-    this.remoteEntities.delete(entityId);
   }
 
   /***** ENTITY SYNC *****/
@@ -180,7 +228,7 @@ export class EntitySyncManager {
   /***** CLEANUP *****/
   private clearRemoteEntities(): void {
     this.remoteEntities.forEach((_, id) => {
-      this.handleRemoteEntityRemoved(id);
+      this.handleRemoteEntityRemoved({ id });
     });
   }
 

@@ -138,15 +138,9 @@ export class EntityManager {
   }
 
   /***** UTILITY METHODS *****/
-  private getEntityType(entity: any): string {
+  private getEntityType(entity: BaseEntity): string {
     // Use the entity's built-in type identification
-    if (entity.getEntityType && typeof entity.getEntityType === 'function') {
-      return entity.getEntityType();
-    }
-
-    // Fallback for entities that don't implement getEntityType
-    console.warn('Entity does not implement getEntityType method, using fallback detection');
-    return 'unknown';
+    return entity.getEntityType();
   }
 
   /***** CLEANUP *****/

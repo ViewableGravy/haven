@@ -31,9 +31,8 @@ export class EntitySyncRegistry {
       const tempPosition = { x: 0, y: 0, type: "local" as const };
       const entity = creator.creatorFunction(game, tempPosition);
       
-      // Add multiplayer tracking
-      (entity as any).multiplayerId = entityData.id;
-      (entity as any).placedBy = entityData.placedBy;
+      // Set multiplayer properties using BaseEntity methods
+      entity.setAsRemoteEntity(entityData.id, entityData.placedBy);
       
       return entity;
     } catch (error) {

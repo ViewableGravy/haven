@@ -12,6 +12,11 @@ export class BaseEntity {
   public readonly uid: string;
   public readonly entityMeta: EntityMeta;
   
+  // Multiplayer properties
+  public multiplayerId?: string; // Server-assigned ID for remote entities
+  public placedBy?: string; // Player ID who placed this entity
+  public isRemoteEntity: boolean = false; // True if entity came from server
+  
   constructor(entityMeta: EntityMeta) {
     this.entityMeta = entityMeta;
     this.uid = this.generateUID(entityMeta);
@@ -32,6 +37,18 @@ export class BaseEntity {
       .join('-');
     
     return `${baseName}-${metaPairs}`;
+  }
+
+  /***** MULTIPLAYER METHODS *****/
+  public setAsRemoteEntity(multiplayerId: string, placedBy?: string): void {
+    this.multiplayerId = multiplayerId;
+    this.placedBy = placedBy;
+    this.isRemoteEntity = true;
+  }
+
+  public getMultiplayerId(): string {
+    // Use multiplayer ID if available, otherwise use local UID
+    return this.multiplayerId || this.uid;
   }
 
   /***** TYPE IDENTIFICATION *****/

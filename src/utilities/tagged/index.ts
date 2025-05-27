@@ -1,5 +1,3 @@
-
-
 import type { Tagged } from "type-fest";
 import type { Position } from "../position";
 
@@ -22,6 +20,11 @@ export function createChunkKey(...args: PositionArgs | CoordinatesArgs): ChunkKe
 
 export function createEntityId(id: string | number): EntityId {
   return +id as EntityId;
+}
+
+export function parseChunkKey(chunkKey: ChunkKey): { chunkX: number; chunkY: number } {
+  const [x, y] = chunkKey.split(',').map(Number);
+  return { chunkX: x, chunkY: y };
 }
 
 /***** INTERNAL FUNCTIONS *****/
