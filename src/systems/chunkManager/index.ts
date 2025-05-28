@@ -196,9 +196,23 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     chunk: Chunk, 
     entities: BaseEntity[]
   ): void {
+    // Get chunk position for debugging
+    const chunkContainer = chunk.getContainer();
+    const worldPosition = chunk.getGlobalPosition();
+    
+    console.log(`ChunkManager: Registering chunk ${chunkKey}`);
+    console.log(`  - Container position: (${chunkContainer.x}, ${chunkContainer.y})`);
+    console.log(`  - World position: (${worldPosition.x}, ${worldPosition.y})`);
+    console.log(`  - Container size: ${chunkContainer.width}x${chunkContainer.height}`);
+    
     // Atomically register chunk and its entities
     this.chunkRegistry.addChunk(chunkKey, chunk);
-    this.container.addChild(chunk.getContainer());
+    this.container.addChild(chunkContainer);
+
+    console.log('container', this.container);
+    
+    console.log(`  - Added to world container (total children: ${this.container.children.length})`);
+    console.log(`  - World container bounds: x=${this.container.x}, y=${this.container.y}, w=${this.container.width}, h=${this.container.height}`);
     
     // Add entities to the game
     for (const entity of entities) {
@@ -208,11 +222,10 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
       this.game.entityManager.addEntity(entity);
     }
     
-    // TODO: consolidate .addEntitiy and .setEntitiesForchunk - these do the same thing, we should take the
-    // entities position, determine chunk and add it to chunk during the addEntity phase (or throw an error if chunk doesn't exist)
-
     // Register entities for this chunk
     this.game.entityManager.setEntitiesForChunk(chunkKey, new Set(entities));
+    
+    console.log(`ChunkManager: Successfully registered chunk ${chunkKey} with ${entities.length} entities`);
   }
 
   public createChunkFromTiles(
@@ -220,8 +233,13 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     chunkY: number,
     tiles: Array<{ color: string, x: number, y: number }>
   ): Chunk {
+    console.log(`ChunkManager: Creating chunk (${chunkX}, ${chunkY}) from ${tiles.length} tiles`);
+    
     // Create chunk instance
     const chunk = new Chunk(this.game, chunkX, chunkY);
+    
+    console.log(`ChunkManager: Chunk container created at position (${chunk.getContainer().x}, ${chunk.getContainer().y})`);
+    console.log(`ChunkManager: Chunk size should be ${this.game.consts.chunkAbsolute}x${this.game.consts.chunkAbsolute} pixels`);
     
     // Create background container for tiles
     const background = new Container();
@@ -246,6 +264,8 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
       background.addChild(tile);
     });
     
+    console.log(`ChunkManager: Created ${tiles.length} tiles for chunk background`);
+    
     // Optimize background rendering
     background.interactive = false;
     background.interactiveChildren = false;
@@ -253,6 +273,16 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     
     // Add background to chunk
     chunk.addChild(background);
+    
+    // Create debug border (inset by 1px to avoid overlap with adjacent chunks)
+    const debugBorder = new Graphics();
+    debugBorder.rect(3, 3, this.game.consts.chunkAbsolute - 6, this.game.consts.chunkAbsolute - 6);
+    debugBorder.stroke({ color: 0xFF0000, width: 6 });
+    debugBorder.zIndex = 100; // Above background (-1) but below entities
+    chunk.addChild(debugBorder);
+    
+    console.log(`ChunkManager: Added inset debug border to chunk (${chunkX}, ${chunkY})`);
+    console.log(`ChunkManager: Chunk (${chunkX}, ${chunkY}) creation complete`);
     
     return chunk;
   }

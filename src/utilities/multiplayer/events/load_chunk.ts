@@ -14,6 +14,8 @@ export class RemoteChunkLoadHandler implements ServerEventHandler {
         // Parse chunk coordinates from the chunkKey
         const { chunkX, chunkY } = parseChunkKey(data.chunkKey);
         
+        console.log(`RemoteChunkLoadHandler: Loading chunk (${chunkX}, ${chunkY}) with ${data.tiles.length} tiles and ${data.entities.length} entities`);
+        
         try {
             // Create chunk from server tile data using ChunkManager
             const chunk = this.multiplayerManager.game.controllers.chunkManager.createChunkFromTiles(
@@ -22,6 +24,8 @@ export class RemoteChunkLoadHandler implements ServerEventHandler {
                 data.tiles
             );
             
+            console.log(`RemoteChunkLoadHandler: Created chunk container at position (${chunk.getContainer().x}, ${chunk.getContainer().y})`);
+
             // Register chunk with entities atomically
             this.multiplayerManager.game.controllers.chunkManager.registerChunkWithEntities(
                 data.chunkKey,
@@ -29,10 +33,15 @@ export class RemoteChunkLoadHandler implements ServerEventHandler {
                 [] // No entities from chunk creation, they'll be added separately
             );
             
+            console.log(`RemoteChunkLoadHandler: Registered chunk ${data.chunkKey} successfully`);
+            
             // Process entities that came with the chunk data
             for (const entityData of data.entities) {
+                console.log(`RemoteChunkLoadHandler: Processing entity ${entityData.id} for chunk ${data.chunkKey}`);
                 this.multiplayerManager.entitySync.handleRemoteEntityPlaced(entityData);
             }
+            
+            console.log(`RemoteChunkLoadHandler: Finished loading chunk ${data.chunkKey}`);
         } catch (error) {
             console.error(`Failed to handle remote chunk load for ${data.chunkKey}:`, error);
         }

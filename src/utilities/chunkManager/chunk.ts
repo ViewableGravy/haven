@@ -17,19 +17,27 @@ export class Chunk {
 
   constructor(game: Game, chunkX: number, chunkY: number) {
     this.game = game;
-    this.chunkPosition = new Position(chunkX, chunkY, "local");
+    // Fix: Use "chunk" type instead of "local" for chunk coordinates
+    this.chunkPosition = new Position(chunkX, chunkY, "chunk" as any);
     
     // Create the underlying container
     this.container = new Container();
     
     // Set container properties
     const size = this.game.consts.chunkAbsolute;
-    this.container.x = chunkX * size;
-    this.container.y = chunkY * size;
+    
+    // Calculate world position for this chunk
+    const worldX = chunkX * size;
+    const worldY = chunkY * size;
+    
+    this.container.x = worldX;
+    this.container.y = worldY;
     this.container.width = size;
     this.container.height = size;
     this.container.zIndex = 0;
     this.container.sortableChildren = true;
+    
+    console.log(`Chunk (${chunkX}, ${chunkY}): Container positioned at world coordinates (${worldX}, ${worldY}), size: ${size}x${size}`);
   }
 
   /**

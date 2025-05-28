@@ -17,7 +17,7 @@ export namespace GameConstants {
 
   /***** CHUNK LOADING CONFIGURATION *****/
   /** Default radius for chunk loading around player (in chunks) */
-  export const DEFAULT_LOAD_RADIUS = 5;
+  export const DEFAULT_LOAD_RADIUS = 10;
   
   /** Half radius for chunk calculations */
   export const HALF_LOAD_RADIUS = Math.floor(DEFAULT_LOAD_RADIUS / 2);
