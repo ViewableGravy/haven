@@ -8,9 +8,6 @@ import { RunningSprite } from "../../spriteSheets/running";
 import "../../entities/assembler/factory";
 import { GameConstants } from "../../shared/constants";
 import { ChunkManager } from "../../systems/chunkManager";
-import { ChunkGenerator } from "../chunkManager/generator";
-import { ChunkLoader } from "../chunkManager/loader";
-import { ChunkManagerMeta } from "../chunkManager/meta";
 import { KeyboardController } from "../keyboardController";
 import { MultiplayerManager } from "../multiplayer/manager";
 import { Player } from "../player";
@@ -159,37 +156,16 @@ export class Game {
   }
 
   private async initializeSystems() {
-    const { width, height } = this.state.app.screen;
-    const chunkDimensions = this.consts.chunkSize * this.consts.tileSize;
-
     // Initialize controllers
     this.controllers.keyboard = new KeyboardController();
     
     // Create and setup player
     const player = this.setupPlayer();
 
-    // Initialize chunk system
-    const chunkMeta = new ChunkManagerMeta({
-      debug: true,
-      loadRadius: {
-        x: Math.floor(width / chunkDimensions / 2) + 4,
-        y: Math.floor(height / chunkDimensions / 2) + 4
-      }
-    });
-
-    this.controllers.chunkManager = new ChunkManager(
-      this,
-      this.world,
-      new ChunkGenerator(this.state.app, chunkMeta, this),
-      chunkMeta,
-      new ChunkLoader(this)
-    );
+    this.controllers.chunkManager = new ChunkManager(this, this.world);
 
     // Setup camera system
     this.setupCamera(player);
-    
-    // Subscribe chunk manager to player position
-    this.controllers.chunkManager.subscribeToPosition(player.position);
 
     // Initialize multiplayer system
     await this.setupMultiplayer(player);

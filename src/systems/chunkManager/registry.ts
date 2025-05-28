@@ -1,4 +1,4 @@
-import type { ChunkKey } from "../tagged";
+import type { ChunkKey } from "../../utilities/tagged";
 import type { Chunk } from "./chunk";
 
 /***** CHUNK REGISTRY *****/

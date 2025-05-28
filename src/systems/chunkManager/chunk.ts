@@ -1,7 +1,7 @@
 import { Container, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
-import type { Game } from "../game/game";
-import { Position } from "../position";
+import type { Game } from "../../utilities/game/game";
+import { Position } from "../../utilities/position";
 
 /***** TYPE DEFINITIONS *****/
 export interface ChunkPosition {

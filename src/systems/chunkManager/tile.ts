@@ -1,7 +1,7 @@
 /***** TYPE DEFINITIONS *****/
 import { Sprite, type Texture, type TextureSource } from "pixi.js";
 import { GameConstants } from "../../shared/constants";
-import type { Game } from "../game/game";
+import type { Game } from "../../utilities/game/game";
 
 type PrimitiveOptions = {
   width?: number;
