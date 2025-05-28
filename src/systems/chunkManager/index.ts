@@ -8,6 +8,7 @@ import { createChunkKey, type ChunkKey } from "../../utilities/tagged";
 import { Chunk } from "./chunk";
 import { ChunkRegistry } from "./registry";
 import { TileFactory } from "./tile";
+import { ChunkUnloadingManager } from "./unloadingManager";
 
 /***** TYPE DEFINITIONS *****/
 export interface ChunkLoadedEvent {
@@ -22,6 +23,7 @@ export interface ChunkLoadedEvent {
  */
 export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
   private chunkRegistry = new ChunkRegistry();
+  private unloadingManager: ChunkUnloadingManager;
 
   /**
    * Creates a new ChunkManager instance
@@ -33,6 +35,9 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     private container: Container<ContainerChild>
   ) {
     super(); // Call EventEmitter constructor
+    
+    // Initialize the chunk unloading manager
+    this.unloadingManager = new ChunkUnloadingManager(this.game, this);
   }
 
   /**
@@ -53,10 +58,19 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
   };
 
   /**
+   * Initialize the chunk unloading system
+   * This should be called after multiplayer is set up
+   */
+  public initializeUnloading(): void {
+    this.unloadingManager.initialize();
+  }
+
+  /**
    * Cleans up resources and destroys the chunk manager
    * This will clear all registered chunks
    */
   public destroy(): void {
+    this.unloadingManager.destroy();
     this.chunkRegistry.clear();
   }
 

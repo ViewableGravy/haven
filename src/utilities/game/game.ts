@@ -247,9 +247,17 @@ export class Game {
       this.controllers.multiplayer = new MultiplayerManager(this, player);
       await this.controllers.multiplayer.initialize();
       console.log('Multiplayer enabled');
+      
+      // Initialize chunk unloading after multiplayer is set up
+      this.controllers.chunkManager.initializeUnloading();
+      console.log('Chunk unloading system initialized');
     } catch (error) {
       console.warn('Failed to initialize multiplayer, continuing in single-player mode:', error);
       // Don't throw error - game should work without multiplayer
+      
+      // Still try to initialize chunk unloading in single-player mode
+      // (though it won't work without a local player reference)
+      this.controllers.chunkManager.initializeUnloading();
     }
   }
 
