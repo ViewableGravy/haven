@@ -12,6 +12,7 @@ export interface Player {
     x: number;
     y: number;
     ws: WebSocket;
+    visibleChunks: Set<string>;
 }
 
 export interface EntityData {

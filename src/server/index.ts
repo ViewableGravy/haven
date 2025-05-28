@@ -33,7 +33,8 @@ export class MultiplayerServer {
         id: playerId,
         x: 100,
         y: 100,
-        ws
+        ws,
+        visibleChunks: new Set<string>()
       };
 
       console.log(`Player ${playerId} connected at (${player.x}, ${player.y})`);
@@ -104,6 +105,9 @@ export class MultiplayerServer {
    * @param playerY - The player's y position
    */
   private generateAndSendChunksForPlayer(playerId: string, playerX: number, playerY: number): void {
+    const player = this.players.get(playerId);
+    if (!player) return;
+
     // Calculate which chunk the player is in
     const playerChunkX = Math.floor(playerX / this.chunkAbsolute);
     const playerChunkY = Math.floor(playerY / this.chunkAbsolute);
@@ -116,11 +120,56 @@ export class MultiplayerServer {
 
     for (let x = playerChunkX - halfRadius; x <= playerChunkX + halfRadius; x++) {
       for (let y = playerChunkY - halfRadius; y <= playerChunkY + halfRadius; y++) {
+        const chunkKey = createChunkKey(x, y);
         this.ensureChunkExistsAndSend(playerId, x, y);
+        player.visibleChunks.add(chunkKey);
       }
     }
 
     console.log(`Sent ${chunkRadius * chunkRadius} chunks to player ${playerId}`);
+  }
+
+  /**
+   * Send only newly visible chunks when player moves across chunk boundaries
+   * @param playerId - The ID of the player
+   * @param newChunkX - The new chunk x coordinate
+   * @param newChunkY - The new chunk y coordinate
+   */
+  private sendNewChunksForPlayer(playerId: string, newChunkX: number, newChunkY: number): void {
+    const player = this.players.get(playerId);
+    if (!player) return;
+
+    // Calculate new visible chunk set
+    const newVisibleChunks = new Set<string>();
+    const halfRadius = GameConstants.HALF_LOAD_RADIUS;
+
+    for (let x = newChunkX - halfRadius; x <= newChunkX + halfRadius; x++) {
+      for (let y = newChunkY - halfRadius; y <= newChunkY + halfRadius; y++) {
+        const chunkKey = createChunkKey(x, y);
+        newVisibleChunks.add(chunkKey);
+      }
+    }
+
+    // Find chunks that are newly visible (not in current visible set)
+    const chunksToLoad: Array<{x: number, y: number}> = [];
+    newVisibleChunks.forEach((chunkKey) => {
+      if (!player.visibleChunks.has(chunkKey)) {
+        const [x, y] = chunkKey.split(',').map(Number);
+        chunksToLoad.push({x, y});
+      }
+    });
+
+    // Send only the new chunks
+    chunksToLoad.forEach(({x, y}) => {
+      this.ensureChunkExistsAndSend(playerId, x, y);
+    });
+
+    // Update player's visible chunks set
+    player.visibleChunks = newVisibleChunks;
+
+    if (chunksToLoad.length > 0) {
+      console.log(`Sent ${chunksToLoad.length} new chunks to player ${playerId} at chunk (${newChunkX}, ${newChunkY})`);
+    }
   }
 
   /**
@@ -182,9 +231,21 @@ export class MultiplayerServer {
     const player = this.players.get(playerId);
     if (!player) return;
 
+    // Calculate old and new chunk positions
+    const oldChunkX = Math.floor(player.x / this.chunkAbsolute);
+    const oldChunkY = Math.floor(player.y / this.chunkAbsolute);
+    const newChunkX = Math.floor(data.x / this.chunkAbsolute);
+    const newChunkY = Math.floor(data.y / this.chunkAbsolute);
+
     // Update player position
     player.x = data.x;
     player.y = data.y;
+
+    // Check if player crossed chunk boundaries
+    if (oldChunkX !== newChunkX || oldChunkY !== newChunkY) {
+      // Send only newly visible chunks
+      this.sendNewChunksForPlayer(playerId, newChunkX, newChunkY);
+    }
 
     // Broadcast position update to other players
     this.broadcastToOthers(playerId, {
