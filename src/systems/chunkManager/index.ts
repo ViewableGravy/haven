@@ -1,4 +1,4 @@
-import { Container, Graphics, type ContainerChild } from "pixi.js";
+import { Container, Graphics, Sprite, Texture, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
 import type { BaseEntity } from "../../entities/base";
 import { ContainerTrait } from "../../entities/traits/container";
@@ -7,7 +7,6 @@ import type { Game } from "../../utilities/game/game";
 import { createChunkKey, type ChunkKey } from "../../utilities/tagged";
 import { Chunk } from "./chunk";
 import { ChunkRegistry } from "./registry";
-import { TileFactory } from "./tile";
 import { ChunkUnloadingManager } from "./unloadingManager";
 
 /***** TYPE DEFINITIONS *****/
@@ -99,6 +98,31 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     return this.chunkRegistry.hasChunk(createChunkKey(chunkX, chunkY));
   }
 
+  /***** EFFICIENT TILE RENDERING *****/
+  private createChunkBackgroundTexture(
+    tiles: Array<{ color: string, x: number, y: number }>
+  ): Texture {
+    const { tileSize } = this.game.consts;
+    
+    // Create a graphics object to draw directly to
+    const graphics = new Graphics();
+    
+    // Draw each tile as a filled rectangle
+    for (const tileData of tiles) {
+      graphics
+        .rect(tileData.x, tileData.y, tileSize, tileSize)
+        .fill(tileData.color);
+    }
+    
+    // Generate texture directly from graphics
+    const texture = this.game.state.app.renderer.generateTexture(graphics);
+    
+    // Clean up graphics object
+    graphics.destroy();
+    
+    return texture;
+  }
+
   /***** SERVER CHUNK CREATION *****/
   public registerChunkWithEntities(
     chunkKey: ChunkKey, 
@@ -150,38 +174,19 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     console.log(`ChunkManager: Chunk container created at position (${chunk.getContainer().x}, ${chunk.getContainer().y})`);
     console.log(`ChunkManager: Chunk size should be ${this.game.consts.chunkAbsolute}x${this.game.consts.chunkAbsolute} pixels`);
     
-    // Create background container for tiles
-    const background = new Container();
-    background.x = 0;
-    background.y = 0;
-    background.zIndex = -1;
-    background.sortableChildren = true;
+    // Generate background texture efficiently
+    const backgroundTexture = this.createChunkBackgroundTexture(tiles);
     
-    // Create tile factory
-    const tileTexture = this.game.state.app.renderer.generateTexture(
-      new Graphics().rect(0, 0, this.game.consts.tileSize, this.game.consts.tileSize).fill(0xFFFFFF)
-    );
-    const tileFactory = new TileFactory(tileTexture, this.game);
+    // Create single sprite from the generated texture
+    const backgroundSprite = new Sprite(backgroundTexture);
+    backgroundSprite.x = 0;
+    backgroundSprite.y = 0;
+    backgroundSprite.zIndex = -1;
     
-    // Create tiles from server data
-    tiles.forEach(tileData => {
-      const tile = tileFactory.createPrimitive({
-        x: tileData.x,
-        y: tileData.y,
-        tint: parseInt(tileData.color, 16)
-      });
-      background.addChild(tile);
-    });
+    // Add background sprite to chunk
+    chunk.addChild(backgroundSprite);
     
-    console.log(`ChunkManager: Created ${tiles.length} tiles for chunk background`);
-    
-    // Optimize background rendering
-    background.interactive = false;
-    background.interactiveChildren = false;
-    background.cacheAsTexture(true);
-    
-    // Add background to chunk
-    chunk.addChild(background);
+    console.log(`ChunkManager: Created optimized background texture for chunk (${chunkX}, ${chunkY})`);
     
     // Create debug border (inset by 1px to avoid overlap with adjacent chunks)
     const debugBorder = new Graphics();
