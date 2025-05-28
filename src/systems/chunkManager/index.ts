@@ -62,6 +62,8 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
      * We should no longer need to do this, instead the server can send events for the client to create.
      */
 
+    return;
+
     this.loadManager.subscribeToPosition(position, {
       onChunkNeeded: (chunkX, chunkY) => {
         this.chunkProcessor.queueChunk(chunkX, chunkY);

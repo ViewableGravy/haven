@@ -6,6 +6,7 @@ import { CharacterSprite } from "../../spriteSheets/character";
 import { RunningSprite } from "../../spriteSheets/running";
 // Import assembler factory to ensure infographic registration happens
 import "../../entities/assembler/factory";
+import { GameConstants } from "../../shared/constants";
 import { ChunkManager } from "../../systems/chunkManager";
 import { ChunkGenerator } from "../chunkManager/generator";
 import { ChunkLoader } from "../chunkManager/loader";
@@ -48,8 +49,8 @@ export class Game {
 
   // Game constants
   public readonly consts: GameConstants = {
-    tileSize: 32,
-    chunkSize: 32,
+    tileSize: GameConstants.TILE_SIZE,
+    chunkSize: GameConstants.CHUNK_SIZE,
     get chunkAbsolute() { return this.tileSize * this.chunkSize; }
   };
 

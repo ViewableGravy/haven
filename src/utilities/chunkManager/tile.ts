@@ -1,4 +1,6 @@
+/***** TYPE DEFINITIONS *****/
 import { Sprite, type Texture, type TextureSource } from "pixi.js";
+import { GameConstants } from "../../shared/constants";
 import type { Game } from "../game/game";
 
 type PrimitiveOptions = {
@@ -26,15 +28,16 @@ export class TileFactory {
   /**
    * Creates a tile sprite with the specified options
    * @param opts - Configuration options for the tile
-   * @param opts.width - Optional width override (defaults to game's tileSize or 64)
-   * @param opts.height - Optional height override (defaults to game's tileSize or 64)
+   * @param opts.width - Optional width override (defaults to shared constants TILE_SIZE)
+   * @param opts.height - Optional height override (defaults to shared constants TILE_SIZE)
    * @param opts.x - X position of the tile
    * @param opts.y - Y position of the tile
    * @param opts.tint - Color tint to apply to the tile
    * @returns A configured PIXI.js Sprite representing the tile
    */
   public createPrimitive = (opts: PrimitiveOptions) => {
-    const tileSize = this.game?.consts.tileSize ?? 64;
+    // Use shared constants as default, fallback to game constants if available
+    const tileSize = this.game?.consts.tileSize ?? GameConstants.TILE_SIZE;
     
     const tile = Sprite.from(this.texture);
     tile.width = opts.width ?? tileSize;

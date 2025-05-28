@@ -1,6 +1,10 @@
 /***** TYPE DEFINITIONS *****/
 import { v4 as uuidv4 } from 'uuid';
 import { WebSocketServer, type WebSocket } from 'ws';
+import { GameConstants } from '../shared/constants';
+import { createChunkKey } from '../utilities/tagged';
+import { chunkDatabase } from './chunkdb';
+import { ServerChunkGenerator } from './chunkGenerator';
 import type { EntityData, Player, ServerEvents } from './types';
 
 /***** MULTIPLAYER SERVER *****/
@@ -9,10 +13,13 @@ export class MultiplayerServer {
   private players: Map<string, Player> = new Map();
   private entities: Map<string, EntityData> = new Map();
   private port: number;
+  private chunkGenerator: ServerChunkGenerator;
+  private readonly chunkAbsolute: number = GameConstants.CHUNK_ABSOLUTE;
 
-  constructor(port: number = 8080) {
+  constructor(port: number = GameConstants.DEFAULT_SERVER_PORT) {
     this.port = port;
     this.wss = new WebSocketServer({ port });
+    this.chunkGenerator = new ServerChunkGenerator(GameConstants.DEFAULT_SEED);
     this.setupEventHandlers();
   }
 
@@ -29,6 +36,8 @@ export class MultiplayerServer {
         ws
       };
 
+      console.log(`Player ${playerId} connected at (${player.x}, ${player.y})`);
+
       this.players.set(playerId, player);
 
       // Send current players list to new player
@@ -36,8 +45,8 @@ export class MultiplayerServer {
         type: 'players_list',
         data: {
           players: Array.from(this.players.values())
-            .filter(p => p.id !== playerId)
-            .map(p => ({ id: p.id, x: p.x, y: p.y }))
+            .filter((p) => p.id !== playerId)
+            .map((p) => ({ id: p.id, x: p.x, y: p.y }))
         }
       });
 
@@ -48,6 +57,9 @@ export class MultiplayerServer {
           entities: Array.from(this.entities.values())
         }
       });
+
+      // Generate and send chunks around the player's spawn position
+      this.generateAndSendChunksForPlayer(playerId, player.x, player.y);
 
       // Notify other players about new player
       this.broadcastToOthers(playerId, {
@@ -82,6 +94,68 @@ export class MultiplayerServer {
     });
 
     console.log(`Multiplayer server listening on port ${this.port}`);
+  }
+
+  /***** CHUNK MANAGEMENT *****/
+  /**
+   * Generate and send chunks within a configurable radius around the player
+   * @param playerId - The ID of the player to send chunks to
+   * @param playerX - The player's x position
+   * @param playerY - The player's y position
+   */
+  private generateAndSendChunksForPlayer(playerId: string, playerX: number, playerY: number): void {
+    // Calculate which chunk the player is in
+    const playerChunkX = Math.floor(playerX / this.chunkAbsolute);
+    const playerChunkY = Math.floor(playerY / this.chunkAbsolute);
+
+    console.log(`Generating chunks for player ${playerId} at chunk (${playerChunkX}, ${playerChunkY})`);
+
+    // Generate chunks around the player using shared constants
+    const chunkRadius = GameConstants.DEFAULT_LOAD_RADIUS;
+    const halfRadius = GameConstants.HALF_LOAD_RADIUS;
+
+    for (let x = playerChunkX - halfRadius; x <= playerChunkX + halfRadius; x++) {
+      for (let y = playerChunkY - halfRadius; y <= playerChunkY + halfRadius; y++) {
+        this.ensureChunkExistsAndSend(playerId, x, y);
+      }
+    }
+
+    console.log(`Sent ${chunkRadius * chunkRadius} chunks to player ${playerId}`);
+  }
+
+  /**
+   * Ensure a chunk exists in the database and send it to the player
+   * @param playerId - The ID of the player to send the chunk to
+   * @param chunkX - The chunk x coordinate
+   * @param chunkY - The chunk y coordinate
+   */
+  private ensureChunkExistsAndSend(playerId: string, chunkX: number, chunkY: number): void {
+    const chunkKey = createChunkKey(chunkX, chunkY);
+    
+    // Check if chunk already exists in database
+    let chunkData = chunkDatabase.getChunk(chunkKey);
+    
+    if (!chunkData) {
+      // Generate new chunk if it doesn't exist
+      chunkData = this.chunkGenerator.generateChunk(chunkX, chunkY);
+      
+      // Store in database
+      chunkDatabase.storeChunk(chunkKey, chunkData);
+      
+      console.log(`Generated and stored new chunk ${chunkKey}`);
+    }
+
+    // Send load_chunk message to the player
+    const loadChunkMessage: ServerEvents.LoadChunkMessage = {
+      type: 'load_chunk',
+      data: {
+        chunkKey: chunkData.chunkKey,
+        tiles: chunkData.tiles,
+        entities: chunkData.entities
+      }
+    };
+
+    this.sendToPlayer(playerId, loadChunkMessage);
   }
 
   /***** MESSAGE HANDLING *****/
@@ -142,8 +216,21 @@ export class MultiplayerServer {
       placedBy: playerId
     };
 
-    // Store entity
+    // Store entity in server memory
     this.entities.set(entityId, entityData);
+
+    // Add entity to the appropriate chunk in the database
+    const chunkKey = createChunkKey(data.chunkX, data.chunkY);
+    const success = chunkDatabase.addEntityToChunk(chunkKey, entityData);
+    
+    if (!success) {
+      console.warn(`Failed to add entity ${entityId} to chunk ${chunkKey} - chunk doesn't exist`);
+      // Could generate the chunk here if needed
+      const chunkData = this.chunkGenerator.generateChunk(data.chunkX, data.chunkY);
+      chunkData.entities.push(entityData);
+      chunkDatabase.storeChunk(chunkKey, chunkData);
+      console.log(`Created new chunk ${chunkKey} for entity placement`);
+    }
 
     // Broadcast to all players (including the one who placed it for confirmation)
     this.broadcast({
@@ -151,15 +238,19 @@ export class MultiplayerServer {
       data: entityData
     });
 
-    console.log(`Entity ${data.type} placed by ${playerId} at (${data.x}, ${data.y})`);
+    console.log(`Entity ${data.type} placed by ${playerId} at (${data.x}, ${data.y}) in chunk (${data.chunkX}, ${data.chunkY})`);
   }
 
   private handleEntityRemove(playerId: string, data: { id: string }): void {
     const entity = this.entities.get(data.id);
     if (!entity) return;
 
-    // Remove entity
+    // Remove from server memory
     this.entities.delete(data.id);
+
+    // Remove from chunk database
+    const chunkKey = createChunkKey(entity.chunkX, entity.chunkY);
+    chunkDatabase.removeEntityFromChunk(chunkKey, data.id);
 
     // Broadcast removal to all players
     this.broadcast({
@@ -167,7 +258,7 @@ export class MultiplayerServer {
       data: { id: data.id }
     });
 
-    console.log(`Entity ${data.id} removed by ${playerId}`);
+    console.log(`Entity ${data.id} removed by ${playerId} from chunk (${entity.chunkX}, ${entity.chunkY})`);
   }
 
   /***** UTILITY METHODS *****/
@@ -194,6 +285,7 @@ export class MultiplayerServer {
     });
   }
 
+  /***** SERVER STATISTICS *****/
   public getPlayerCount(): number {
     return this.players.size;
   }
@@ -201,13 +293,24 @@ export class MultiplayerServer {
   public getEntityCount(): number {
     return this.entities.size;
   }
+
+  public getChunkStats(): { chunkCount: number; totalEntities: number } {
+    return chunkDatabase.getStats();
+  }
 }
 
 /***** SERVER STARTUP *****/
 // Check if this file is being run directly
 if (process.argv[1] === __filename || process.argv[1] === import.meta.url) {
-  new MultiplayerServer(8080);
+  const server = new MultiplayerServer(8080);
   console.log('Server created and listening on port 8080');
+  console.log('Chunk generation system initialized');
+
+  // Log server statistics periodically
+  setInterval(() => {
+    const chunkStats = server.getChunkStats();
+    console.log(`Server Stats - Players: ${server.getPlayerCount()}, Entities: ${server.getEntityCount()}, Chunks: ${chunkStats.chunkCount}, Chunk Entities: ${chunkStats.totalEntities}`);
+  }, 30000); // Every 30 seconds
 
   // Graceful shutdown
   process.on('SIGINT', () => {
