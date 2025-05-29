@@ -1,17 +1,67 @@
+```
 
-██╗      █████╗ ████████╗████████╗██╗ ██████╗██╗   ██╗███████╗
-██║     ██╔══██╗╚══██╔══╝╚══██╔══╝██║██╔════╝██║   ██║██╔════╝
-██║     ███████║   ██║      ██║   ██║██║     ██║   ██║███████╗
-██║     ██╔══██║   ██║      ██║   ██║██║     ██║   ██║╚════██║
-███████╗██║  ██║   ██║      ██║   ██║╚██████╗╚██████╔╝███████║
-╚══════╝╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝
-              ✦ ･ ﾟ✧ CODEBASE OVERVIEW ✧ﾟ ･ ✦
+
+__/\\\_______________________________________________________________________________________________________        
+ _\/\\\_______________________________________________________________________________________________________       
+  _\/\\\________________________________/\\\__________/\\\_______/\\\__________________________________________      
+   _\/\\\______________/\\\\\\\\\_____/\\\\\\\\\\\__/\\\\\\\\\\\_\///______/\\\\\\\\__/\\\____/\\\__/\\\\\\\\\\_     
+    _\/\\\_____________\////////\\\___\////\\\////__\////\\\////___/\\\___/\\\//////__\/\\\___\/\\\_\/\\\//////__    
+     _\/\\\_______________/\\\\\\\\\\_____\/\\\_________\/\\\______\/\\\__/\\\_________\/\\\___\/\\\_\/\\\\\\\\\\_   
+      _\/\\\______________/\\\/////\\\_____\/\\\_/\\_____\/\\\_/\\__\/\\\_\//\\\________\/\\\___\/\\\_\////////\\\_  
+       _\/\\\\\\\\\\\\\\\_\//\\\\\\\\/\\____\//\\\\\______\//\\\\\___\/\\\__\///\\\\\\\\_\//\\\\\\\\\___/\\\\\\\\\\_ 
+        _\///////////////___\////////\//______\/////________\/////____\///_____\////////___\/////////___\//////////__
+
+
+```
 
 ## High Level Overview
 
 Latticus is a sophisticated multiplayer 2D game built with React, TypeScript, and PIXI.js for rendering. The project implements a modern ECS (Entity Component System) architecture with a custom chunk-based world system for infinite terrain generation. The game features real-time multiplayer capabilities using WebSockets, with server-authoritative chunk generation and entity synchronization.
 
 The application utilizes a modular architecture with clear separation between client and server logic. The client handles rendering, user interaction, and visual effects through PIXI.js, while the server manages world state, chunk generation using Perlin noise, and multiplayer synchronization. The system is designed for scalability with worker pools, efficient chunk loading/unloading, and optimized entity management.
+
+## How to Run the Application
+
+### Prerequisites
+- **Bun**: Install from [bun.sh](https://bun.sh)
+- **Node.js**: v18+ (for compatibility)
+
+### Development Setup
+1. **Install Dependencies**:
+   ```bash
+   bun install
+   ```
+
+2. **Start Full Development Environment**:
+   ```bash
+   bun run dev:full
+   ```
+   This runs both the server and client concurrently.
+
+3. **Individual Services**:
+   ```bash
+   # Start only the server
+   bun run server
+   
+   # Start only the client
+   bun run dev
+   ```
+
+4. **Production Build**:
+   ```bash
+   bun run build
+   bun run preview
+   ```
+
+### Development URLs
+- **Client**: http://localhost:5173 (Vite dev server)
+- **Server**: WebSocket on port 8080 (configurable)
+
+## Additional Documentation
+
+- `SERVER_CHUNK_SYSTEM.md` - Detailed chunk generation system documentation
+- `agent-summaries/` - Historical code change documents (performed with agents instead of manual changes)
+- `instructions.md` - Project coding standards and conventions
 
 ## Files Modified (Key Components)
 
@@ -141,46 +191,3 @@ The application utilizes a modular architecture with clear separation between cl
 - **Bun Runtime**: Fast JavaScript runtime for server and package management
 - **Linting & Formatting**: ESLint configuration with React hooks support
 - **Debug Systems**: Comprehensive logging and infographic display components
-
-## How to Run the Application
-
-### Prerequisites
-- **Bun**: Install from [bun.sh](https://bun.sh)
-- **Node.js**: v18+ (for compatibility)
-
-### Development Setup
-1. **Install Dependencies**:
-   ```bash
-   bun install
-   ```
-
-2. **Start Full Development Environment**:
-   ```bash
-   bun run dev:full
-   ```
-   This runs both the server and client concurrently.
-
-3. **Individual Services**:
-   ```bash
-   # Start only the server
-   bun run server
-   
-   # Start only the client
-   bun run dev
-   ```
-
-4. **Production Build**:
-   ```bash
-   bun run build
-   bun run preview
-   ```
-
-### Development URLs
-- **Client**: http://localhost:5173 (Vite dev server)
-- **Server**: WebSocket on port 8080 (configurable)
-
-## Additional Documentation
-
-- `SERVER_CHUNK_SYSTEM.md` - Detailed chunk generation system documentation
-- `agent-summaries/` - Historical code change documents (performed with agents instead of manual changes)
-- `instructions.md` - Project coding standards and conventions
