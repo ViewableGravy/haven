@@ -23,7 +23,7 @@ export namespace ClientChunkNamespace {
 ### Complicated or requires many indepth changes
 _(typically more than one file or than a few line changes across many)_
 
-Create a `{task}-overview.md` file under a `agent-summaries` folder in the root directory. This should provide the following information:
+Create a `{branch}/{task}-overview.md` file under a `agent-summaries` folder in the root directory. This should provide the following information:
   1. Multi-line ASCII Title
   2. High level overview with 1-2 paragraphs.
   3. A list of files that will be modified
