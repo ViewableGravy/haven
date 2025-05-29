@@ -35,4 +35,8 @@ export namespace GameConstants {
   
   /** WebSocket reconnection attempts */
   export const MAX_RECONNECTION_ATTEMPTS = 5;
+
+  /***** DEBUG CONFIGURATION *****/
+  /** Enable debug logging throughout the application */
+  export const DEBUG = true;
 }

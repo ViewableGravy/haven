@@ -1,5 +1,6 @@
 import { GameConstants } from "../../shared/constants";
 import type { Game } from "../../utilities/game/game";
+import { logger } from "../../utilities/logger";
 import type { ChunkKey } from "../../utilities/tagged";
 import type { ChunkManager } from "./index";
 
@@ -50,7 +51,7 @@ export class ChunkUnloadingManager {
       this.handlePlayerPositionChange(initialPosition.x, initialPosition.y);
     }
 
-    console.log('ChunkUnloadingManager: Initialized and monitoring player position');
+    logger.log('ChunkUnloadingManager: Initialized and monitoring player position');
   }
 
   /***** POSITION MONITORING *****/
@@ -76,9 +77,9 @@ export class ChunkUnloadingManager {
       this.performChunkUnloading(chunkX, chunkY);
       
       if (previousChunk) {
-        console.log(`ChunkUnloadingManager: Player moved from chunk (${previousChunk.chunkX}, ${previousChunk.chunkY}) to (${chunkX}, ${chunkY})`);
+        logger.log(`ChunkUnloadingManager: Player moved from chunk (${previousChunk.chunkX}, ${previousChunk.chunkY}) to (${chunkX}, ${chunkY})`);
       } else {
-        console.log(`ChunkUnloadingManager: Initial player chunk position set to (${chunkX}, ${chunkY})`);
+        logger.log(`ChunkUnloadingManager: Initial player chunk position set to (${chunkX}, ${chunkY})`);
       }
     }
   }
@@ -103,11 +104,11 @@ export class ChunkUnloadingManager {
 
     // Unload chunks that are too far away
     if (chunksToUnload.length > 0) {
-      console.log(`ChunkUnloadingManager: Unloading ${chunksToUnload.length} chunks outside render distance`);
+      logger.log(`ChunkUnloadingManager: Unloading ${chunksToUnload.length} chunks outside render distance`);
       
       chunksToUnload.forEach((chunkKey) => {
         this.chunkManager.unloadChunk(chunkKey);
-        console.log(`ChunkUnloadingManager: Unloaded chunk ${chunkKey}`);
+        logger.log(`ChunkUnloadingManager: Unloaded chunk ${chunkKey}`);
       });
     }
   }
@@ -160,6 +161,6 @@ export class ChunkUnloadingManager {
     }
     
     this.currentPlayerChunk = null;
-    console.log('ChunkUnloadingManager: Destroyed');
+    logger.log('ChunkUnloadingManager: Destroyed');
   }
 }

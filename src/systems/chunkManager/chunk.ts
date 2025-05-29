@@ -1,6 +1,7 @@
 import { Container, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
 import type { Game } from "../../utilities/game/game";
+import { logger } from "../../utilities/logger";
 import { Position } from "../../utilities/position";
 
 /***** TYPE DEFINITIONS *****/
@@ -37,7 +38,7 @@ export class Chunk {
     this.container.zIndex = 0;
     this.container.sortableChildren = true;
     
-    console.log(`Chunk (${chunkX}, ${chunkY}): Container positioned at world coordinates (${worldX}, ${worldY}), size: ${size}x${size}`);
+    logger.log(`Chunk (${chunkX}, ${chunkY}): Container positioned at world coordinates (${worldX}, ${worldY}), size: ${size}x${size}`);
   }
 
   /**

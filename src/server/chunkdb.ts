@@ -1,4 +1,5 @@
 /***** TYPE DEFINITIONS *****/
+import { logger } from "../utilities/logger";
 import type { ChunkKey } from "../utilities/tagged";
 import type { EntityData } from "./types";
 import type { LoadChunkEvent } from "./types/events/load_chunk";
@@ -24,7 +25,7 @@ export class ChunkDatabase {
    */
   public storeChunk(chunkKey: ChunkKey, chunkData: ServerChunkObject): void {
     this.chunks.set(chunkKey, chunkData);
-    console.log(`ChunkDB: Stored chunk ${chunkKey} with ${chunkData.tiles.length} tiles and ${chunkData.entities.length} entities`);
+    logger.log(`ChunkDB: Stored chunk ${chunkKey} with ${chunkData.tiles.length} tiles and ${chunkData.entities.length} entities`);
   }
 
   /**
@@ -55,7 +56,7 @@ export class ChunkDatabase {
     const chunk = this.chunks.get(chunkKey);
     if (chunk) {
       chunk.entities.push(entity);
-      console.log(`ChunkDB: Added entity ${entity.id} to chunk ${chunkKey}`);
+      logger.log(`ChunkDB: Added entity ${entity.id} to chunk ${chunkKey}`);
       return true;
     }
     return false;
@@ -74,7 +75,7 @@ export class ChunkDatabase {
       chunk.entities = chunk.entities.filter((entity) => entity.id !== entityId);
       const removed = chunk.entities.length < initialLength;
       if (removed) {
-        console.log(`ChunkDB: Removed entity ${entityId} from chunk ${chunkKey}`);
+        logger.log(`ChunkDB: Removed entity ${entityId} from chunk ${chunkKey}`);
       }
       return removed;
     }

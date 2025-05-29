@@ -1,6 +1,7 @@
 /***** TYPE DEFINITIONS *****/
 import { noiseSeed, noise as perlinNoise } from "@chriscourses/perlin-noise";
 import { GameConstants } from "../shared/constants";
+import { logger } from "../utilities/logger";
 import { createChunkKey } from "../utilities/tagged";
 import type { ServerChunkObject } from "./chunkdb";
 import type { LoadChunkEvent } from "./types/events/load_chunk";
@@ -46,7 +47,7 @@ export class ServerChunkGenerator {
       generatedAt: Date.now()
     };
 
-    console.log(`ServerChunkGenerator: Generated chunk (${chunkX}, ${chunkY}) with ${tiles.length} tiles`);
+    logger.log(`ServerChunkGenerator: Generated chunk (${chunkX}, ${chunkY}) with ${tiles.length} tiles`);
     return chunkData;
   }
 
@@ -116,7 +117,7 @@ export class ServerChunkGenerator {
     const chunks: Array<ServerChunkObject> = [];
     const halfRadius = Math.floor(radius / 2);
 
-    console.log(`ServerChunkGenerator: Generating ${radius}x${radius} chunks around (${centerX}, ${centerY})`);
+    logger.log(`ServerChunkGenerator: Generating ${radius}x${radius} chunks around (${centerX}, ${centerY})`);
 
     for (let x = centerX - halfRadius; x <= centerX + halfRadius; x++) {
       for (let y = centerY - halfRadius; y <= centerY + halfRadius; y++) {
@@ -125,7 +126,7 @@ export class ServerChunkGenerator {
       }
     }
 
-    console.log(`ServerChunkGenerator: Generated ${chunks.length} chunks`);
+    logger.log(`ServerChunkGenerator: Generated ${chunks.length} chunks`);
     return chunks;
   }
 

@@ -20,4 +20,14 @@ export namespace ClientChunkNamespace {
 - use bun for the backend server
 
 ## Response to requests
-- If the request is complicated and requires many indepth changes (typically more than one file or than a few line changes across many), then create a `{task}-overview.md` file under a `agent-summaries` folder in the root directory
+### Complicated or requires many indepth changes
+_(typically more than one file or than a few line changes across many)_
+
+Create a `{task}-overview.md` file under a `agent-summaries` folder in the root directory. This should provide the following information:
+  1. Multi-line ASCII Title
+  2. High level overview with 1-2 paragraphs.
+  3. A list of files that will be modified
+  4. Diagram of the changes, if applicable (and where possible)
+  5. Any final information that will be useful
+
+*Note*: Please keep this document between 50-100 lines, and ensure it is clear and concise.

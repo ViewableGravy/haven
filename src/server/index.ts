@@ -2,6 +2,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { GameConstants } from '../shared/constants';
+import { logger } from "../utilities/logger";
 import { createChunkKey } from '../utilities/tagged';
 import { chunkDatabase } from './chunkdb';
 import { ServerChunkGenerator } from './chunkGenerator';
@@ -37,7 +38,7 @@ export class MultiplayerServer {
         visibleChunks: new Set<string>()
       };
 
-      console.log(`Player ${playerId} connected at (${player.x}, ${player.y})`);
+      logger.log(`Player ${playerId} connected at (${player.x}, ${player.y})`);
 
       this.players.set(playerId, player);
 
@@ -94,7 +95,7 @@ export class MultiplayerServer {
       });
     });
 
-    console.log(`Multiplayer server listening on port ${this.port}`);
+    logger.log(`Multiplayer server listening on port ${this.port}`);
   }
 
   /***** CHUNK MANAGEMENT *****/
@@ -112,7 +113,7 @@ export class MultiplayerServer {
     const playerChunkX = Math.floor(playerX / this.chunkAbsolute);
     const playerChunkY = Math.floor(playerY / this.chunkAbsolute);
 
-    console.log(`Generating chunks for player ${playerId} at chunk (${playerChunkX}, ${playerChunkY})`);
+    logger.log(`Generating chunks for player ${playerId} at chunk (${playerChunkX}, ${playerChunkY})`);
 
     // Generate chunks around the player using shared constants
     const chunkRadius = GameConstants.DEFAULT_LOAD_RADIUS;
@@ -126,7 +127,7 @@ export class MultiplayerServer {
       }
     }
 
-    console.log(`Sent ${chunkRadius * chunkRadius} chunks to player ${playerId}`);
+    logger.log(`Sent ${chunkRadius * chunkRadius} chunks to player ${playerId}`);
   }
 
   /**
@@ -168,7 +169,7 @@ export class MultiplayerServer {
     player.visibleChunks = newVisibleChunks;
 
     if (chunksToLoad.length > 0) {
-      console.log(`Sent ${chunksToLoad.length} new chunks to player ${playerId} at chunk (${newChunkX}, ${newChunkY})`);
+      logger.log(`Sent ${chunksToLoad.length} new chunks to player ${playerId} at chunk (${newChunkX}, ${newChunkY})`);
     }
   }
 
@@ -191,7 +192,7 @@ export class MultiplayerServer {
       // Store in database
       chunkDatabase.storeChunk(chunkKey, chunkData);
       
-      console.log(`Generated and stored new chunk ${chunkKey}`);
+      logger.log(`Generated and stored new chunk ${chunkKey}`);
     }
 
     // Send load_chunk message to the player
@@ -223,7 +224,7 @@ export class MultiplayerServer {
         this.handleEntityRemove(playerId, message.data);
         break;
       default:
-        console.log(`Unknown message type: ${message.type}`);
+        logger.log(`Unknown message type: ${message.type}`);
     }
   }
 
@@ -290,7 +291,7 @@ export class MultiplayerServer {
       const chunkData = this.chunkGenerator.generateChunk(data.chunkX, data.chunkY);
       chunkData.entities.push(entityData);
       chunkDatabase.storeChunk(chunkKey, chunkData);
-      console.log(`Created new chunk ${chunkKey} for entity placement`);
+      logger.log(`Created new chunk ${chunkKey} for entity placement`);
     }
 
     // Broadcast to all players (including the one who placed it for confirmation)
@@ -299,7 +300,7 @@ export class MultiplayerServer {
       data: entityData
     });
 
-    console.log(`Entity ${data.type} placed by ${playerId} at (${data.x}, ${data.y}) in chunk (${data.chunkX}, ${data.chunkY})`);
+    logger.log(`Entity ${data.type} placed by ${playerId} at (${data.x}, ${data.y}) in chunk (${data.chunkX}, ${data.chunkY})`);
   }
 
   private handleEntityRemove(playerId: string, data: { id: string }): void {
@@ -319,7 +320,7 @@ export class MultiplayerServer {
       data: { id: data.id }
     });
 
-    console.log(`Entity ${data.id} removed by ${playerId} from chunk (${entity.chunkX}, ${entity.chunkY})`);
+    logger.log(`Entity ${data.id} removed by ${playerId} from chunk (${entity.chunkX}, ${entity.chunkY})`);
   }
 
   /***** UTILITY METHODS *****/
@@ -364,18 +365,18 @@ export class MultiplayerServer {
 // Check if this file is being run directly
 if (process.argv[1] === __filename || process.argv[1] === import.meta.url) {
   const server = new MultiplayerServer(8080);
-  console.log('Server created and listening on port 8080');
-  console.log('Chunk generation system initialized');
+  logger.log('Server created and listening on port 8080');
+  logger.log('Chunk generation system initialized');
 
   // Log server statistics periodically
   setInterval(() => {
     const chunkStats = server.getChunkStats();
-    console.log(`Server Stats - Players: ${server.getPlayerCount()}, Entities: ${server.getEntityCount()}, Chunks: ${chunkStats.chunkCount}, Chunk Entities: ${chunkStats.totalEntities}`);
+    logger.log(`Server Stats - Players: ${server.getPlayerCount()}, Entities: ${server.getEntityCount()}, Chunks: ${chunkStats.chunkCount}, Chunk Entities: ${chunkStats.totalEntities}`);
   }, 30000); // Every 30 seconds
 
   // Graceful shutdown
   process.on('SIGINT', () => {
-    console.log('Shutting down server...');
+    logger.log('Shutting down server...');
     process.exit(0);
   });
 }

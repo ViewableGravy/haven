@@ -9,6 +9,7 @@ import "../../entities/assembler/factory";
 import { GameConstants } from "../../shared/constants";
 import { ChunkManager } from "../../systems/chunkManager";
 import { KeyboardController } from "../keyboardController";
+import { logger } from "../logger";
 import { MultiplayerManager } from "../multiplayer/manager";
 import { Player } from "../player";
 import { Position } from "../position";
@@ -218,7 +219,7 @@ export class Game {
     // Add interactive behavior
     playerSprite.eventMode = 'static';
     playerSprite.on('pointerdown', () => {
-      console.log('Character clicked!');
+      logger.log('Character clicked!');
     });
 
     return player;
@@ -246,11 +247,11 @@ export class Game {
     try {
       this.controllers.multiplayer = new MultiplayerManager(this, player);
       await this.controllers.multiplayer.initialize();
-      console.log('Multiplayer enabled');
+      logger.log('Multiplayer enabled');
       
       // Initialize chunk unloading after multiplayer is set up
       this.controllers.chunkManager.initializeUnloading();
-      console.log('Chunk unloading system initialized');
+      logger.log('Chunk unloading system initialized');
     } catch (error) {
       console.warn('Failed to initialize multiplayer, continuing in single-player mode:', error);
       // Don't throw error - game should work without multiplayer
