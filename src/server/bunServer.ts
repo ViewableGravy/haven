@@ -90,18 +90,20 @@ export class BunMultiplayerServer {
 
     logger.log(`Loading chunks for player ${player.id} at chunk (${playerChunkX}, ${playerChunkY})`);
 
-    const chunkRadius = GameConstants.DEFAULT_LOAD_RADIUS;
-    const halfRadius = GameConstants.HALF_LOAD_RADIUS;
+    const chunkWidth = GameConstants.CHUNK_RENDER_WIDTH;
+    const chunkHeight = GameConstants.CHUNK_RENDER_HEIGHT;
+    const halfWidth = GameConstants.HALF_CHUNK_RENDER_WIDTH;
+    const halfHeight = GameConstants.HALF_CHUNK_RENDER_HEIGHT;
 
-    for (let x = playerChunkX - halfRadius; x <= playerChunkX + halfRadius; x++) {
-      for (let y = playerChunkY - halfRadius; y <= playerChunkY + halfRadius; y++) {
+    for (let x = playerChunkX - halfWidth; x <= playerChunkX + halfWidth; x++) {
+      for (let y = playerChunkY - halfHeight; y <= playerChunkY + halfHeight; y++) {
         const chunkKey = createChunkKey(x, y);
         this.ensureChunkExistsAndSend(player.id, x, y);
         player.visibleChunks.add(chunkKey);
       }
     }
 
-    logger.log(`Sent ${chunkRadius * chunkRadius} chunks to player ${player.id}`);
+    logger.log(`Sent ${chunkWidth * chunkHeight} chunks to player ${player.id}`);
   };
 
   private sendNewChunksForPlayer = (playerId: string, newChunkX: number, newChunkY: number): void => {
@@ -109,10 +111,11 @@ export class BunMultiplayerServer {
     if (!player) return;
 
     const newVisibleChunks = new Set<string>();
-    const halfRadius = GameConstants.HALF_LOAD_RADIUS;
+    const halfWidth = GameConstants.HALF_CHUNK_RENDER_WIDTH;
+    const halfHeight = GameConstants.HALF_CHUNK_RENDER_HEIGHT;
 
-    for (let x = newChunkX - halfRadius; x <= newChunkX + halfRadius; x++) {
-      for (let y = newChunkY - halfRadius; y <= newChunkY + halfRadius; y++) {
+    for (let x = newChunkX - halfWidth; x <= newChunkX + halfWidth; x++) {
+      for (let y = newChunkY - halfHeight; y <= newChunkY + halfHeight; y++) {
         const chunkKey = createChunkKey(x, y);
         newVisibleChunks.add(chunkKey);
       }

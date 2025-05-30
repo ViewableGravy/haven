@@ -140,14 +140,12 @@ export class ChunkUnloadingManager {
     const deltaX = Math.abs(chunkX - playerChunkX);
     const deltaY = Math.abs(chunkY - playerChunkY);
 
-    // Use maximum distance (Chebyshev distance) to match server-side square loading pattern
-    const maxDistance = Math.max(deltaX, deltaY);
+    // Use rectangular loading pattern
+    const halfWidth = GameConstants.HALF_CHUNK_RENDER_WIDTH;
+    const halfHeight = GameConstants.HALF_CHUNK_RENDER_HEIGHT;
     
-    // Unload if distance exceeds the load radius
-    const loadRadius = GameConstants.DEFAULT_LOAD_RADIUS;
-    const halfRadius = Math.floor(loadRadius / 2);
-    
-    return maxDistance > halfRadius;
+    // Unload if chunk is outside the rectangular render area
+    return deltaX > halfWidth || deltaY > halfHeight;
   }
 
   /***** CLEANUP *****/

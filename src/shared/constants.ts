@@ -22,6 +22,14 @@ export namespace GameConstants {
   /** Half radius for chunk calculations */
   export const HALF_LOAD_RADIUS = Math.floor(DEFAULT_LOAD_RADIUS / 2);
 
+  /** Chunk render dimensions (rectangular pattern) */
+  export const CHUNK_RENDER_WIDTH = 15;  // 15 chunks wide
+  export const CHUNK_RENDER_HEIGHT = 10; // 10 chunks high
+  
+  /** Half dimensions for chunk calculations */
+  export const HALF_CHUNK_RENDER_WIDTH = Math.floor(CHUNK_RENDER_WIDTH / 2);
+  export const HALF_CHUNK_RENDER_HEIGHT = Math.floor(CHUNK_RENDER_HEIGHT / 2);
+
   /***** NOISE GENERATION CONFIGURATION *****/
   /** Divisor for noise generation to control terrain scale */
   export const NOISE_DIVISOR = 500;
