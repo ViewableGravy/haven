@@ -16,6 +16,15 @@ export class Logger {
       console.log(message);
     }
   };
+
+  /**
+   * Log an error message to the console
+   * @param message - The error message to log
+   * @param error - Optional error object
+   */
+  public error = (message: string, error?: any): void => {
+    console.error(message, error);
+  };
 }
 
 /***** GLOBAL LOGGER INSTANCE *****/

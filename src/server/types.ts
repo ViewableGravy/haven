@@ -1,6 +1,9 @@
 /***** TYPE DEFINITIONS *****/
-import type { WebSocket } from 'ws';
+import type { ServerWebSocket } from 'bun';
 import type { LoadChunkEvent } from './types/events/load_chunk';
+
+/***** BUN WEBSOCKET TYPES *****/
+export type BunWebSocket = ServerWebSocket<{ playerId: string }>;
 
 export interface ServerEvent {
     type: string;
@@ -11,7 +14,7 @@ export interface Player {
     id: string;
     x: number;
     y: number;
-    ws: WebSocket;
+    ws: BunWebSocket;
     visibleChunks: Set<string>;
 }
 

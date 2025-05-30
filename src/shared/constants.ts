@@ -31,7 +31,7 @@ export namespace GameConstants {
 
   /***** SERVER CONFIGURATION *****/
   /** Default server port */
-  export const DEFAULT_SERVER_PORT = 8080;
+  export const DEFAULT_SERVER_PORT = 8081; // Changed to avoid conflicts
   
   /** WebSocket reconnection attempts */
   export const MAX_RECONNECTION_ATTEMPTS = 5;

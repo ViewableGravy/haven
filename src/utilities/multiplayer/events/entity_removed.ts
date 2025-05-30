@@ -7,6 +7,6 @@ export class EntityRemovedHandler implements ServerEventHandler {
     constructor(private multiplayerManager: MultiplayerManager) {}
 
     public handleEvent(data: MultiplayerClient.Data.EntityRemoved): void {
-        this.multiplayerManager.entitySync.handleRemoteEntityRemoved(data.id);
+        this.multiplayerManager.entitySync.handleRemoteEntityRemoved(data);
     }
 }

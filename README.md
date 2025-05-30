@@ -32,16 +32,19 @@ The application utilizes a modular architecture with clear separation between cl
    bun install
    ```
 
-2. **Start Full Development Environment**:
+2. **Start Full Development Environment** (Recommended):
    ```bash
    bun run dev:full
    ```
-   This runs both the server and client concurrently.
+   This runs both the **Bun server with auto-restart** and client concurrently.
 
 3. **Individual Services**:
    ```bash
-   # Start only the server
+   # Start Bun server with auto-restart (recommended)
    bun run server
+   
+   # Start legacy Node.js server (fallback)
+   bun run server:legacy
    
    # Start only the client
    bun run dev
@@ -55,10 +58,19 @@ The application utilizes a modular architecture with clear separation between cl
 
 ### Development URLs
 - **Client**: http://localhost:5173 (Vite dev server)
-- **Server**: WebSocket on port 8080 (configurable)
+- **Server**: WebSocket on port 8081 (Bun server)
+- **Health Check**: http://localhost:8081/health
+
+### 🔄 Auto-Restart Feature
+The server now **automatically restarts** when you save changes to:
+- `src/server/**/*.ts` - Server-side code
+- `src/shared/**/*.ts` - Shared constants and types
+
+No more manual server restarts during development! 🎉
 
 ## Additional Documentation
 
+- `BUN_SERVER_MIGRATION.md` - **NEW**: Bun server migration details and auto-restart setup
 - `SERVER_CHUNK_SYSTEM.md` - Detailed chunk generation system documentation
 - `agent-summaries/` - Historical code change documents (performed with agents instead of manual changes)
 - `instructions.md` - Project coding standards and conventions
@@ -71,7 +83,7 @@ The application utilizes a modular architecture with clear separation between cl
 - `package.json` - Dependencies and build scripts
 
 ### Server Architecture
-- `src/server/index.ts` - Main multiplayer server with WebSocket handling
+- `src/server/bunServer.ts` - Bun-native multiplayer server with WebSocket handling
 - `src/server/chunkdb.ts` - In-memory chunk database system
 - `src/server/chunkGenerator.ts` - Server-side chunk generation with Perlin noise
 - `src/server/types.ts` - Server-specific type definitions

@@ -1,6 +1,5 @@
 /***** TYPE DEFINITIONS *****/
 import { v4 as uuidv4 } from 'uuid';
-import { WebSocketServer, type WebSocket } from 'ws';
 import { GameConstants } from '../shared/constants';
 import { logger } from "../utilities/logger";
 import { createChunkKey } from '../utilities/tagged';
@@ -10,7 +9,7 @@ import type { EntityData, Player, ServerEvents } from './types';
 
 /***** MULTIPLAYER SERVER *****/
 export class MultiplayerServer {
-  private wss: WebSocketServer;
+  private server: any;
   private players: Map<string, Player> = new Map();
   private entities: Map<string, EntityData> = new Map();
   private port: number;
@@ -19,9 +18,8 @@ export class MultiplayerServer {
 
   constructor(port: number = GameConstants.DEFAULT_SERVER_PORT) {
     this.port = port;
-    this.wss = new WebSocketServer({ port });
     this.chunkGenerator = new ServerChunkGenerator(GameConstants.DEFAULT_SEED);
-    this.setupEventHandlers();
+    this.setupServer();
   }
 
   /***** SERVER SETUP *****/

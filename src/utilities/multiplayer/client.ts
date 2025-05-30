@@ -32,7 +32,7 @@ export class MultiplayerClient {
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 10;
 
-  constructor(serverUrl: string = 'ws://localhost:8080') {
+  constructor(serverUrl: string = 'ws://localhost:8081') {
     this.serverUrl = serverUrl;
   }
 
