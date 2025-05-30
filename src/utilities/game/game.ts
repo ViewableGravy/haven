@@ -3,6 +3,7 @@ import Selection from "../../assets/selection.png";
 import { refreshHotbarItems } from "../../components/hotbar/store";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
 import { CharacterSprite } from "../../spriteSheets/character";
+import { MeadowSprite } from "../../spriteSheets/meadow";
 import { RunningSprite } from "../../spriteSheets/running";
 // Import assembler factory to ensure infographic registration happens
 import "../../entities/assembler/factory";
@@ -265,6 +266,7 @@ export class Game {
   private async loadAssets() {
     await AssemblerSprite.load();
     await CharacterSprite.load();
+    await MeadowSprite.load();
     await RunningSprite.load();
     await Assets.load(Selection);
   }

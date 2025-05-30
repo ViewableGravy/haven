@@ -2,6 +2,7 @@ import { Container, Graphics, Sprite, Texture, type ContainerChild } from "pixi.
 import invariant from "tiny-invariant";
 import type { BaseEntity } from "../../entities/base";
 import { ContainerTrait } from "../../entities/traits/container";
+import { MeadowSprite } from "../../spriteSheets/meadow";
 import { EventEmitter } from "../../utilities/eventEmitter";
 import type { Game } from "../../utilities/game/game";
 import { logger } from "../../utilities/logger";
@@ -101,11 +102,39 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
 
   /***** EFFICIENT TILE RENDERING *****/
   private createChunkBackgroundTexture(
-    tiles: Array<{ color: string, x: number, y: number }>
+    tiles: Array<{ color: string, x: number, y: number, spriteIndex?: number }>
   ): Texture {
-    const { tileSize } = this.game.consts;
+    const { tileSize, chunkAbsolute } = this.game.consts;
     
-    // Create a graphics object to draw directly to
+    // Check if we have sprite data and meadow sprites are available
+    
+    try {
+      const spriteData = new Array(tiles.length);
+      for (let i = 0; i < tiles.length; i++) {
+        const tile = tiles[i];
+        spriteData[i] = {
+          x: tile.x,
+          y: tile.y,
+          spriteIndex: tile.spriteIndex ?? 0,
+        };
+      }
+      
+      // Use meadow sprite texture creation
+      const renderTexture = MeadowSprite.createChunkTexture(
+        spriteData,
+        this.game.state.app.renderer,
+        chunkAbsolute,
+        tileSize
+      );
+      
+      logger.log(`ChunkManager: Created sprite-based background texture`);
+      return renderTexture;
+    } catch (error) {
+      logger.log(`ChunkManager: Failed to create sprite texture, falling back to graphics: ${error}`);
+      // Fall through to graphics-based rendering
+    }
+    
+    // Fallback to graphics-based rendering (for backward compatibility)
     const graphics = new Graphics();
     
     // Draw each tile as a filled rectangle
@@ -163,7 +192,7 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
   public createChunkFromTiles(
     chunkX: number,
     chunkY: number,
-    tiles: Array<{ color: string, x: number, y: number }>
+    tiles: Array<{ color: string, x: number, y: number, spriteIndex?: number }>
   ): Chunk {
     logger.log(`ChunkManager: Creating chunk (${chunkX}, ${chunkY}) from ${tiles.length} tiles`);
     

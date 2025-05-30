@@ -14,6 +14,7 @@ export namespace ClientChunkNamespace {
   export type ChunkKey = ...
 }
 ```
+- Avoid testing coding where possible (other than building the application to find type errors), while letting me run the code to test.
 
 ## Software
 - use bun for all package management and running of commands
@@ -23,7 +24,8 @@ export namespace ClientChunkNamespace {
 ### Complicated or requires many indepth changes
 _(typically more than one file or than a few line changes across many)_
 
-Create a `{branch}/{task}-overview.md` file under a `agent-summaries` folder in the root directory. This should provide the following information:
+Create a `{branch}/{task}-overview.md`, where the branch is the git branch, and the task is what I am requesting.
+This file should be under a `agent-summaries` folder in the root directory. This should provide the following information:
   1. Multi-line ASCII Title
   2. High level overview with 1-2 paragraphs.
   3. A list of files that will be modified
@@ -31,3 +33,6 @@ Create a `{branch}/{task}-overview.md` file under a `agent-summaries` folder in 
   5. Any final information that will be useful
 
 *Note*: Please keep this document between 50-100 lines, and ensure it is clear and concise.
+
+For example, if I ask you to implement a new tile system for a meadow, on a branch called `tile-sprites`, 
+you would create a file called `agent-summaries/tile-sprites/meadow-sprite-tile-system-overview.md` with the above information.

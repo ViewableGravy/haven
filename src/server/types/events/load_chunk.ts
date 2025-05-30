@@ -9,6 +9,7 @@ export namespace LoadChunkEvent {
         color: string,
         x: number,
         y: number,
+        spriteIndex?: number, // Optional for backward compatibility
     }
     
     export type LoadChunkType = "load_chunk";

@@ -73,13 +73,15 @@ export class ServerChunkGenerator {
         const xOffset = (chunkX * size) + x;
         const yOffset = (chunkY * size) + y;
         
-        // Generate color using perlin noise
+        // Generate color and sprite index using perlin noise
         const color = this.generateTileColor(xOffset / this.noiseDivisor, yOffset / this.noiseDivisor);
+        const spriteIndex = this.generateSpriteIndex(xOffset / this.noiseDivisor, yOffset / this.noiseDivisor);
 
         tiles.push({
           x,
           y,
-          color
+          color,
+          spriteIndex
         });
       }
     }
@@ -104,6 +106,20 @@ export class ServerChunkGenerator {
     const hex: string = colorValue.toString(16).padStart(2, '0').toUpperCase();
     
     return `0x${hex}${hex}${hex}`;
+  }
+
+  /**
+   * Generate a sprite index based on perlin noise at the given coordinates
+   * @param x - The x coordinate for noise generation
+   * @param y - The y coordinate for noise generation
+   * @returns Sprite index (0-5) for meadow sprites
+   */
+  private generateSpriteIndex(x: number, y: number): number {
+    // Generate noise value (0-1)
+    const noiseValue: number = perlinNoise(x, y);
+    
+    // Map to sprite index (0-5)
+    return Math.floor(noiseValue * 6);
   }
 
   /**
