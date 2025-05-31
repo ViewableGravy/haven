@@ -57,7 +57,7 @@ export class ServerChunkGenerator {
    * Generate tiles for a specific chunk
    * @param chunkX - The chunk x coordinate
    * @param chunkY - The chunk y coordinate
-   * @returns Array of tile objects with positions and colors
+   * @returns Array of tile objects with positions and sprite indices
    */
   private generateTiles(chunkX: number, chunkY: number): Array<LoadChunkEvent.Tile> {
     const tiles: Array<LoadChunkEvent.Tile> = [];
@@ -75,50 +75,18 @@ export class ServerChunkGenerator {
         const xOffset = (chunkX * size) + x;
         const yOffset = (chunkY * size) + y;
         
-        // Generate color and sprite index using perlin noise
-        const color = this.generateTileColor(xOffset / this.noiseDivisor, yOffset / this.noiseDivisor);
+        // Generate sprite index using perlin noise
         const spriteIndex = this.generateSpriteIndex(xOffset / this.noiseDivisor, yOffset / this.noiseDivisor);
 
         tiles.push({
           x,
           y,
-          color,
           spriteIndex
         });
       }
     }
 
     return tiles;
-  }
-
-  /**
-   * Generate a color based on perlin noise at the given coordinates
-   * @param x - The x coordinate for noise generation
-   * @param y - The y coordinate for noise generation
-   * @returns Hex color string
-   */
-  private generateTileColor(x: number, y: number): string {
-    // Generate primary noise value (0-1)
-    const baseNoise: number = perlinNoise(x, y);
-    
-    // Generate secondary noise layer with offset
-    const secondaryNoise: number = perlinNoise(x + 100, y + 100);
-    
-    // Combine noise layers (weighted average)
-    const combinedNoise: number = (baseNoise * 0.6) + (secondaryNoise * 0.4);
-    
-    // Add random variation (0.1-0.2)
-    const randomFactor: number = 0.05 + Math.random() * 0.05;
-    const variation: number = (Math.random() - 0.5) * randomFactor;
-    const noiseValue: number = Math.max(0, Math.min(1, combinedNoise + variation));
-    
-    // Convert to 0-255 range with some variation
-    const colorValue: number = Math.floor(noiseValue * 224);
-    
-    // Convert to hex string
-    const hex: string = colorValue.toString(16).padStart(2, '0').toUpperCase();
-    
-    return `0x${hex}${hex}${hex}`;
   }
 
   /**

@@ -95,6 +95,9 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
   public unloadChunk(chunkKey: ChunkKey): void {
     const chunk = this.chunkRegistry.getChunk(chunkKey);
     if (chunk) {
+      // Notify EntitySyncManager before cleanup so it can remove entity references
+      this.game.controllers.multiplayer?.entitySync?.handleChunkUnload?.(chunkKey);
+      
       this.container.removeChild(chunk.getContainer());
       chunk.destroy();
       this.chunkRegistry.removeChunk(chunkKey);
@@ -114,55 +117,31 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
 
   /***** EFFICIENT TILE RENDERING *****/
   private createChunkBackgroundTexture(
-    tiles: Array<{ color: string, x: number, y: number, spriteIndex?: number }>
+    tiles: Array<{ x: number, y: number, spriteIndex: number }>
   ): Texture {
     const { tileSize, chunkAbsolute } = this.game.consts;
     
-    // Check if we have sprite data and meadow sprites are available
-    
-    try {
-      const spriteData = new Array(tiles.length);
-      for (let i = 0; i < tiles.length; i++) {
-        const tile = tiles[i];
-        spriteData[i] = {
-          x: tile.x,
-          y: tile.y,
-          spriteIndex: tile.spriteIndex ?? 0,
-        };
-      }
-      
-      // Use meadow sprite texture creation
-      const renderTexture = MeadowSprite.createChunkTexture(
-        spriteData,
-        this.game.state.app.renderer,
-        chunkAbsolute,
-        tileSize
-      );
-      
-      logger.log(`ChunkManager: Created sprite-based background texture`);
-      return renderTexture;
-    } catch (error) {
-      logger.log(`ChunkManager: Failed to create sprite texture, falling back to graphics: ${error}`);
-      // Fall through to graphics-based rendering
+    // Create sprite data array for meadow sprite texture creation
+    const spriteData = new Array(tiles.length);
+    for (let i = 0; i < tiles.length; i++) {
+      const tile = tiles[i];
+      spriteData[i] = {
+        x: tile.x,
+        y: tile.y,
+        spriteIndex: tile.spriteIndex,
+      };
     }
     
-    // Fallback to graphics-based rendering (for backward compatibility)
-    const graphics = new Graphics();
+    // Use meadow sprite texture creation
+    const renderTexture = MeadowSprite.createChunkTexture(
+      spriteData,
+      this.game.state.app.renderer,
+      chunkAbsolute,
+      tileSize
+    );
     
-    // Draw each tile as a filled rectangle
-    for (const tileData of tiles) {
-      graphics
-        .rect(tileData.x, tileData.y, tileSize, tileSize)
-        .fill(tileData.color);
-    }
-    
-    // Generate texture directly from graphics
-    const texture = this.game.state.app.renderer.generateTexture(graphics);
-    
-    // Clean up graphics object
-    graphics.destroy();
-    
-    return texture;
+    logger.log(`ChunkManager: Created sprite-based background texture`);
+    return renderTexture;
   }
 
   /***** SERVER CHUNK CREATION *****/
@@ -204,7 +183,7 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
   public createChunkFromTiles(
     chunkX: number,
     chunkY: number,
-    tiles: Array<{ color: string, x: number, y: number, spriteIndex?: number }>
+    tiles: Array<{ x: number, y: number, spriteIndex: number }>
   ): Chunk {
     logger.log(`ChunkManager: Creating chunk (${chunkX}, ${chunkY}) from ${tiles.length} tiles`);
     

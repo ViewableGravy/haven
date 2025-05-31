@@ -6,10 +6,9 @@ import type { EntityData } from "../../types";
  **********************************************************************************************************/
 export namespace LoadChunkEvent {
     export type Tile = {
-        color: string,
         x: number,
         y: number,
-        spriteIndex?: number, // Optional for backward compatibility
+        spriteIndex: number,
     }
     
     export type LoadChunkType = "load_chunk";

@@ -233,6 +233,47 @@ export class EntitySyncManager {
     });
   }
 
+  /**
+   * Handle chunk unloading by cleaning up entity references for that chunk
+   * This prevents duplicate detection when chunks are reloaded
+   * @param chunkKey - The key of the chunk being unloaded
+   */
+  public handleChunkUnload(chunkKey: string): void {
+    const entitiesToRemove: Array<string> = [];
+    
+    // Parse chunk coordinates from the key
+    const [chunkX, chunkY] = chunkKey.split(',').map(Number);
+    
+    // Find all entities that belong to this chunk
+    this.remoteEntities.forEach((entity, entityId) => {
+      // Get entity's world position to determine which chunk it belongs to
+      if (this.hasTransform(entity)) {
+        const transform = entity.transform;
+        const worldX = transform.position.position.x;
+        const worldY = transform.position.position.y;
+        
+        // Skip if position is undefined
+        if (worldX === undefined || worldY === undefined) {
+          return;
+        }
+        
+        // Calculate which chunk this entity belongs to
+        const entityChunkX = Math.floor(worldX / this.game.consts.chunkAbsolute);
+        const entityChunkY = Math.floor(worldY / this.game.consts.chunkAbsolute);
+        
+        // If this entity belongs to the unloading chunk, mark it for removal
+        if (entityChunkX === chunkX && entityChunkY === chunkY) {
+          entitiesToRemove.push(entityId);
+        }
+      }
+    });
+    
+    // Remove the entity references from our tracking
+    entitiesToRemove.forEach((entityId) => {
+      this.remoteEntities.delete(entityId);
+    });
+  }
+
   public destroy(): void {
     this.clearRemoteEntities();
     
