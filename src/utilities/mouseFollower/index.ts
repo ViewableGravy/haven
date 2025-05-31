@@ -4,7 +4,7 @@ import { hasTransform } from "../../entities/interfaces";
 import { ContainerTrait } from "../../entities/traits/container";
 import { GhostableTrait } from "../../entities/traits/ghostable";
 import { PlaceableTrait } from "../../entities/traits/placeable";
-import type { Game } from "../game/game";
+import type { GameInterface } from "../game/gameInterface";
 import { Rectangle } from "../rectangle";
 
 /***** TYPE DEFINITIONS *****/
@@ -26,9 +26,9 @@ type FollowableEntity = BaseEntity & HasGhostableTrait & HasContainerTrait & Has
 export class MouseFollower {
   private isPlaceable = true;
   private entity: FollowableEntity;
-  private game: Game;
+  private game: GameInterface;
 
-  constructor(game: Game, entity: FollowableEntity) {
+  constructor(game: GameInterface, entity: FollowableEntity) {
     this.game = game;
     this.entity = entity;
   }

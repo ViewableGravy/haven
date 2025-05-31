@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite, Texture, type ContainerChild } from "pixi.js";
+import { Container, Graphics, Sprite, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
 import type { BaseEntity } from "../../entities/base";
 import { ContainerTrait } from "../../entities/traits/container";
@@ -10,6 +10,7 @@ import { createChunkKey, type ChunkKey } from "../../utilities/tagged";
 import { Chunk } from "./chunk";
 import { ChunkRegistry } from "./registry";
 import { ChunkUnloadingManager } from "./unloadingManager";
+import { WebGLRenderer, Framebuffer } from "../../webgl";
 
 /***** TYPE DEFINITIONS *****/
 export interface ChunkLoadedEvent {
@@ -30,10 +31,12 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
    * Creates a new ChunkManager instance
    * @param game - The game instance containing constants and entity management
    * @param container - The PIXI.js container that will hold all chunk display objects
+   * @param renderer - The WebGL renderer for rendering chunks
    */
   constructor(
     private game: Game,
-    private container: Container<ContainerChild>
+    private container: Container<ContainerChild>,
+    private renderer: WebGLRenderer
   ) {
     super(); // Call EventEmitter constructor
     
@@ -101,56 +104,34 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
   }
 
   /***** EFFICIENT TILE RENDERING *****/
-  private createChunkBackgroundTexture(
+  private async createChunkBackgroundTexture(
     tiles: Array<{ color: string, x: number, y: number, spriteIndex?: number }>
-  ): Texture {
+  ): Promise<Framebuffer> {
     const { tileSize, chunkAbsolute } = this.game.consts;
-    
-    // Check if we have sprite data and meadow sprites are available
-    
+
     try {
-      const spriteData = new Array(tiles.length);
-      for (let i = 0; i < tiles.length; i++) {
-        const tile = tiles[i];
-        spriteData[i] = {
-          x: tile.x,
-          y: tile.y,
-          spriteIndex: tile.spriteIndex ?? 0,
-        };
-      }
-      
-      // Use meadow sprite texture creation
-      const renderTexture = MeadowSprite.createChunkTexture(
+      const spriteData = tiles.map(tile => ({
+        x: tile.x,
+        y: tile.y,
+        spriteIndex: tile.spriteIndex ?? 0,
+      }));
+
+      // Use the `toTexture` method to convert Framebuffer to Texture
+      // Await the promise before calling `toTexture`
+      const framebuffer = await MeadowSprite.createChunkTexture(
         spriteData,
-        this.game.state.app.renderer,
+        this.game.state.renderer,
         chunkAbsolute,
         tileSize
       );
-      
-      logger.log(`ChunkManager: Created sprite-based background texture`);
-      return renderTexture;
+
+      const texture = framebuffer.toTexture();
+      logger.log(`ChunkManager: Converted framebuffer to texture`);
+      return texture;
     } catch (error) {
       logger.log(`ChunkManager: Failed to create sprite texture, falling back to graphics: ${error}`);
-      // Fall through to graphics-based rendering
+      throw error; // Ensure fallback logic is handled elsewhere
     }
-    
-    // Fallback to graphics-based rendering (for backward compatibility)
-    const graphics = new Graphics();
-    
-    // Draw each tile as a filled rectangle
-    for (const tileData of tiles) {
-      graphics
-        .rect(tileData.x, tileData.y, tileSize, tileSize)
-        .fill(tileData.color);
-    }
-    
-    // Generate texture directly from graphics
-    const texture = this.game.state.app.renderer.generateTexture(graphics);
-    
-    // Clean up graphics object
-    graphics.destroy();
-    
-    return texture;
   }
 
   /***** SERVER CHUNK CREATION *****/
@@ -228,4 +209,25 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     
     return chunk;
   }
+
+  /**
+   * Render a chunk using WebGL
+   * @param chunkKey - The unique identifier for the chunk to render
+   * @returns A WebGL framebuffer containing the rendered chunk
+   */
+  public renderChunk = async (chunkKey: ChunkKey): Promise<Framebuffer> => {
+    const chunk = this.chunkRegistry.getChunk(chunkKey);
+    invariant(chunk, `Chunk not found: ${chunkKey}`);
+
+    const framebuffer = new Framebuffer(this.renderer.getContext(), {
+      width: this.game.consts.chunkWidth,
+      height: this.game.consts.chunkHeight
+    });
+
+    // Bind framebuffer and render chunk
+    this.renderer.bindFramebuffer(framebuffer);
+    chunk.render(this.renderer);
+
+    return framebuffer;
+  };
 }

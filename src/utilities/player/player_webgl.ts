@@ -1,14 +1,12 @@
-import { Ticker } from "pixi.js";
 import type { SetOptional } from "type-fest";
 import { CharacterSprite } from "../../spriteSheets/character";
-
-import type { Game } from "../game/game";
+import { RunningSprite } from "../../spriteSheets/running";
+import { SceneNode } from "../../sprites/SceneGraph";
+import type { Game } from "../game/game_webgl";
 import type { KeyboardController } from "../keyboardController";
 import type { MultiplayerClient } from "../multiplayer/client";
 import type { Position } from "../position";
 import { SubscribablePosition } from "../position/subscribable";
-import { WebGLSprite } from "../../webgl/sprite";
-
 
 /***** TYPE DEFINITIONS *****/
 type MovementDirection = 'north' | 'northeast' | 'east' | 'southeast' | 'south' | 'southwest' | 'west' | 'northwest' | 'idle';
@@ -18,12 +16,24 @@ type PlayerOptions = {
   controller: KeyboardController;
 }
 
+type TickerLike = {
+  deltaTime: number;
+  elapsedMS: number;
+  lastTime: number;
+  speed: number;
+  started: boolean;
+}
+
 /***** PLAYER CLASS *****/
 export class Player {
   private controller: KeyboardController;
   public position: SubscribablePosition;
-  private currentSprite: WebGLSprite | null = null;
+  private currentSprite: SceneNode | null = null;
   private currentDirection: MovementDirection = 'idle';
+  private currentAnimationName: string = 'idle';
+  private animationFrameIndex: number = 0;
+  private animationSpeed: number = 8.0; // frames per second
+  private lastAnimationUpdate: number = 0;
   
   // Multiplayer position update tracking
   private multiplayerClient: MultiplayerClient | null = null;
@@ -45,16 +55,25 @@ export class Player {
   /**
    * Initialize the player sprite with idle animation
    */
-  public initializeSprite = (): WebGLSprite => {
+  public initializeSprite = (): SceneNode => {
     if (this.currentSprite) {
       return this.currentSprite;
     }
 
-    const idleFrames = CharacterSprite.getSpriteSheet().animations['idle'];
-    this.currentSprite = new WebGLSprite(idleFrames);
-    this.currentSprite.setAnimationSpeed(1.0);
-    this.currentSprite.play();
+    // Create a scene node for the player sprite
+    this.currentSprite = new SceneNode();
+    
+    // Get initial texture from idle animation
+    const atlas = CharacterSprite.getAtlas();
+    const idleFrames = CharacterSprite.animations.idle;
+    if (idleFrames && idleFrames.length > 0) {
+      this.currentSprite.setTexture(atlas, idleFrames[0], 92, 116);
+    }
+    
     this.currentDirection = 'idle';
+    this.currentAnimationName = 'idle';
+    this.animationFrameIndex = 0;
+    this.lastAnimationUpdate = performance.now();
 
     return this.currentSprite;
   }
@@ -62,8 +81,38 @@ export class Player {
   /**
    * Get the current sprite for rendering
    */
-  public getSprite = (): WebGLSprite | null => {
+  public getSprite = (): SceneNode | null => {
     return this.currentSprite;
+  }
+
+  /***** ANIMATION SYSTEM *****/
+  /**
+   * Update animation frame based on time
+   */
+  private updateAnimationFrame = (currentTime: number): void => {
+    if (!this.currentSprite) return;
+
+    const frameTime = 1000 / this.animationSpeed; // ms per frame
+    if (currentTime - this.lastAnimationUpdate >= frameTime) {
+      let atlas, frames;
+      
+      if (this.currentAnimationName === 'idle') {
+        atlas = CharacterSprite.getAtlas();
+        frames = CharacterSprite.animations.idle;
+      } else {
+        atlas = RunningSprite.getAtlas();
+        frames = RunningSprite.animations[this.currentAnimationName];
+      }
+      
+      if (frames && frames.length > 0) {
+        this.animationFrameIndex = (this.animationFrameIndex + 1) % frames.length;
+        this.currentSprite.setTexture(atlas, frames[this.animationFrameIndex], 
+          this.currentAnimationName === 'idle' ? 92 : 88, 
+          this.currentAnimationName === 'idle' ? 116 : 132);
+      }
+      
+      this.lastAnimationUpdate = currentTime;
+    }
   }
 
   /***** MOVEMENT AND ANIMATION *****/
@@ -100,15 +149,30 @@ export class Player {
    * Update sprite animation based on movement direction
    */
   private updateAnimation = (direction: MovementDirection) => {
-    if (!this.currentSprite) return;
+    if (!this.currentSprite || this.currentDirection === direction) {
+      return;
+    }
 
-    const animations = CharacterSprite.getSpriteSheet().animations;
-    const newFrames = animations[direction];
+    this.currentDirection = direction;
 
-    if (newFrames && this.currentDirection !== direction) {
-      this.currentSprite.setFrames(newFrames);
-      this.currentSprite.play();
-      this.currentDirection = direction;
+    if (direction === 'idle') {
+      // Switch to idle animation
+      this.currentAnimationName = 'idle';
+      const atlas = CharacterSprite.getAtlas();
+      const idleFrames = CharacterSprite.animations.idle;
+      if (idleFrames && idleFrames.length > 0) {
+        this.animationFrameIndex = 0;
+        this.currentSprite.setTexture(atlas, idleFrames[0], 92, 116);
+      }
+    } else {
+      // Switch to running animation for the specific direction
+      this.currentAnimationName = `running-${direction}`;
+      const atlas = RunningSprite.getAtlas();
+      const runningFrames = RunningSprite.animations[`running-${direction}`];
+      if (runningFrames && runningFrames.length > 0) {
+        this.animationFrameIndex = 0;
+        this.currentSprite.setTexture(atlas, runningFrames[0], 88, 132);
+      }
     }
   }
 
@@ -136,10 +200,14 @@ export class Player {
     }
   }
 
-  public handleMovement = (game: Game, ticker: Ticker) => {
+  /***** MAIN UPDATE LOOP *****/
+  public handleMovement = (game: Game, ticker: TickerLike) => {
     const baseSpeed = 10 * ticker.deltaTime / game.state.zoom;
     const direction = this.getMovementDirection();
     const isCurrentlyMoving = this.isMoving();
+
+    // Update animation frame
+    this.updateAnimationFrame(performance.now());
 
     // Update animation based on movement direction
     this.updateAnimation(direction);
@@ -207,5 +275,16 @@ export class Player {
     // Apply movement
     this.position.x += deltaX * baseSpeed;
     this.position.y += deltaY * baseSpeed;
+  }
+
+  /***** CLEANUP *****/
+  public destroy = (): void => {
+    if (this.idleUpdateTimeout) {
+      clearTimeout(this.idleUpdateTimeout);
+      this.idleUpdateTimeout = null;
+    }
+    
+    this.multiplayerClient = null;
+    this.currentSprite = null;
   }
 }

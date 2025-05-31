@@ -5,7 +5,7 @@ import type { HasTransform } from "../../entities/interfaces";
 import { ContainerTrait } from "../../entities/traits/container";
 import { GhostableTrait } from "../../entities/traits/ghostable";
 import { PlaceableTrait } from "../../entities/traits/placeable";
-import type { Game } from "../../utilities/game/game";
+import type { GameInterface } from "../../utilities/game/gameInterface";
 import { infographicsRegistry } from "../../utilities/infographics";
 import type { Position } from "../../utilities/position";
 
@@ -27,7 +27,7 @@ export type FollowableEntity = BaseEntity & HasGhostableTrait & HasContainerTrai
 export type HotbarItem = {
   name: string;
   node: React.ReactNode;
-  creatorFunction: (game: Game, position: Position) => FollowableEntity;
+  creatorFunction: (game: GameInterface, position: Position) => FollowableEntity;
 };
 
 type HotbarStore = {

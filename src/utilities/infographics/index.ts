@@ -1,13 +1,13 @@
 /***** TYPE DEFINITIONS *****/
 import type React from "react";
 import invariant from "tiny-invariant";
-import type { Game } from "../game/game";
+import type { GameInterface } from "../game/gameInterface";
 import type { Position } from "../position";
 
 export type InfographicDefinition = {
   name: string;
   component: React.FC;
-  creatorFunction?: (game: Game, position: Position) => any;
+  creatorFunction?: (game: GameInterface, position: Position) => any;
 };
 
 type InfographicFactory<TEntity = any> = (entity: TEntity) => InfographicDefinition;

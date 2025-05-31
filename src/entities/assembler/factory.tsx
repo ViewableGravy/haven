@@ -3,7 +3,7 @@ import { Sprite, Texture } from "pixi.js";
 import Selection from "../../assets/selection.png";
 import { infographicStore } from "../../components/infographic/store";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
-import type { Game } from "../../utilities/game/game";
+import type { GameInterface } from "../../utilities/game/gameInterface";
 import { infographicsRegistry } from "../../utilities/infographics";
 import { entitySyncRegistry } from "../../utilities/multiplayer/entitySyncRegistry";
 import type { Position } from "../../utilities/position";
@@ -23,7 +23,7 @@ export class BaseAssembler extends BaseEntity {
   public ghostableTrait: GhostableTrait;
   public placeableTrait: PlaceableTrait;
 
-  constructor(game: Game, position: Position) {
+  constructor(game: GameInterface, position: Position) {
     super({ name: "assembler" });
 
     this.transform = Transform.createLarge(game, position.x, position.y, position.type);

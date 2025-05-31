@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Game } from "../../utilities/game/game";
+import { Game } from "../../utilities/game/game_webgl";
 import { PixiContext } from "./context";
 
 /***** TYPE DEFINITIONS *****/

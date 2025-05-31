@@ -1,57 +1,65 @@
-import { Assets, Sprite, Spritesheet, Texture } from "pixi.js";
+/***** TYPE DEFINITIONS *****/
 import invariant from "tiny-invariant";
+import { SpriteAtlas } from '../sprites/SpriteAtlas';
+import type { SpriteAtlasData } from '../sprites/SpriteAtlas';
+import { SceneNode } from '../sprites/SceneGraph';
 import RunningSheet from '../assets/level1_running.png';
 
-/***** TYPE DEFINITIONS *****/
 type RunningDirection = 'north' | 'northeast' | 'east' | 'southeast' | 'south' | 'southwest' | 'west' | 'northwest';
 
 /***** RUNNING SPRITE CLASS *****/
 export class RunningSprite {
-  private static __spriteSheet: Spritesheet | null = null;
+  private static __spriteAtlas: SpriteAtlas | null = null;
 
   /**
-   * Load the running sprite sheet assets
+   * Load the running sprite atlas
    */
-  public static load = async () => {
-    // Load the asset sheet
-    await Assets.load(RunningSprite.atlas.meta.image);
-
-    // Create a spritesheet
-    const runningSpriteSheet = new Spritesheet(
-      Texture.from(RunningSprite.atlas.meta.image),
-      RunningSprite.atlas
-    );
-
-    // Parse the spritesheet
-    await runningSpriteSheet.parse();
-
-    // Set the sprite sheet
-    RunningSprite.__spriteSheet = runningSpriteSheet;
-  }
+  public static load = async (): Promise<void> => {
+    throw new Error("Use loadWithGL method for WebGL rendering");
+  };
 
   /**
-   * Get the loaded sprite sheet
+   * Load the running sprite atlas with WebGL context
    */
-  public static getSpriteSheet = () => {
-    invariant(RunningSprite.__spriteSheet, "Running sprite sheet not loaded");
-    return RunningSprite.__spriteSheet;
-  }
+  public static loadWithGL = async (gl: WebGLRenderingContext): Promise<void> => {
+    // Create sprite atlas with WebGL context
+    const runningSpriteAtlas = new SpriteAtlas(gl);
+
+    // Load using our atlas data
+    await runningSpriteAtlas.loadFromData(RunningSprite.atlas);
+
+    // Set the sprite atlas
+    RunningSprite.__spriteAtlas = runningSpriteAtlas;
+  };
 
   /**
-   * Create a sprite from the running sheet
+   * Get the loaded sprite atlas
    */
-  public static createSprite = (name: keyof typeof RunningSprite.atlas['frames']) => {
-    invariant(RunningSprite.__spriteSheet, "Running sprite sheet not loaded");
-    return new Sprite(
-      RunningSprite.__spriteSheet.textures[name]
-    );
-  }
+  public static getAtlas = (): SpriteAtlas => {
+    invariant(RunningSprite.__spriteAtlas, "Running sprite atlas not loaded");
+    return RunningSprite.__spriteAtlas;
+  };
+
+  /**
+   * Create a sprite node from a specific frame
+   */
+  public static createSprite = (name: keyof typeof RunningSprite.atlas['frames']): SceneNode => {
+    invariant(RunningSprite.__spriteAtlas, "Running sprite atlas not loaded");
+    
+    // Create scene node for WebGL rendering
+    const node = new SceneNode();
+    
+    // Set texture and size
+    node.setTexture(RunningSprite.__spriteAtlas, name, 88, 132);
+
+    return node;
+  };
 
   /**
    * Get animation frames for a specific direction
    */
-  public static getDirectionFrames = (direction: RunningDirection): string[] => {
-    return RunningSprite.atlas.animations[`running-${direction}`] || [];
+  public static getDirectionFrames = (direction: RunningDirection): Array<string> => {
+    return RunningSprite.animations[`running-${direction}`] || [];
   }
 
   /***** SPRITE ATLAS CONFIGURATION *****/
@@ -60,7 +68,7 @@ export class RunningSprite {
    * Sheet: 1936x1056 pixels, 8 rows x 22 columns
    * Tile size: 88x132 pixels (1936/22 = 88, 1056/8 = 132)
    */
-  public static atlas = {
+  public static atlas: SpriteAtlasData = {
     frames: (() => {
       const frames: Record<string, any> = {};
       const tileWidth = 88; // 1936 / 22
@@ -77,11 +85,11 @@ export class RunningSprite {
             frame: { 
               x: col * tileWidth, 
               y: row * tileHeight, 
-              w: tileWidth, 
-              h: tileHeight 
+              width: tileWidth, 
+              height: tileHeight 
             },
             sourceSize: { w: tileWidth, h: tileHeight },
-            spriteSourceSize: { x: 0, y: 0, w: tileWidth, h: tileHeight },
+            spriteSourceSize: { x: 0, y: 0, width: tileWidth, height: tileHeight },
           };
         }
       }
@@ -92,20 +100,36 @@ export class RunningSprite {
       image: RunningSheet,
       size: { w: 1936, h: 1056 },
       scale: 1
-    },
-    animations: (() => {
-      const animations: Record<string, string[]> = {};
-      const directions = ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'] as const;
-      
-      // Create animation arrays for each direction
-      for (const direction of directions) {
-        animations[`running-${direction}`] = [];
-        for (let i = 0; i < 22; i++) {
-          animations[`running-${direction}`].push(`running-${direction}-${i}`);
-        }
+    }
+  };
+
+  // Animation configuration - separate from atlas data
+  public static animations = (() => {
+    const animations: Record<string, Array<string>> = {};
+    const directions = ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'] as const;
+    
+    // Create animation arrays for each direction
+    for (const direction of directions) {
+      animations[`running-${direction}`] = [];
+      for (let i = 0; i < 22; i++) {
+        animations[`running-${direction}`].push(`running-${direction}-${i}`);
       }
-      
-      return animations;
-    })()
-  }
+    }
+    
+    return animations;
+  })();
+
+  /**
+   * Get animation frame arrays
+   */
+  public static getAnimations = () => {
+    return RunningSprite.animations;
+  };
+
+  // PIXI.js compatibility method for existing code
+  public static getSpriteSheet = () => {
+    return {
+      animations: RunningSprite.animations
+    };
+  };
 }

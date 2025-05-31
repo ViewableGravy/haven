@@ -1,4 +1,4 @@
-import type { Game } from "../game/game";
+import type { GameInterface } from "../game/gameInterface";
 import { SubscribablePosition } from "../position/subscribable";
 import { Rectangle } from "../rectangle";
 import { Size } from "../size";
@@ -13,7 +13,7 @@ export class Transform {
   public rectangle: Rectangle;
 
   constructor(
-    game: Game,
+    game: GameInterface,
     x: number,
     y: number,
     width?: number,
@@ -34,19 +34,19 @@ export class Transform {
   }
 
   // Factory methods for common entity sizes
-  static createSmall(game: Game, x: number, y: number, positionType?: "global" | "local" | "screenspace"): Transform {
+  static createSmall(game: GameInterface, x: number, y: number, positionType?: "global" | "local" | "screenspace"): Transform {
     return new Transform(game, x, y, game.consts.tileSize, game.consts.tileSize, positionType);
   }
 
-  static createMedium(game: Game, x: number, y: number, positionType?: "global" | "local" | "screenspace"): Transform {
+  static createMedium(game: GameInterface, x: number, y: number, positionType?: "global" | "local" | "screenspace"): Transform {
     return new Transform(game, x, y, game.consts.tileSize * 2, game.consts.tileSize * 2, positionType);
   }
 
-  static createLarge(game: Game, x: number, y: number, positionType?: "global" | "local" | "screenspace"): Transform {
+  static createLarge(game: GameInterface, x: number, y: number, positionType?: "global" | "local" | "screenspace"): Transform {
     return new Transform(game, x, y, game.consts.tileSize * 3, game.consts.tileSize * 3, positionType);
   }
 
-  static createCustom(game: Game, x: number, y: number, width: number, height: number, positionType?: "global" | "local" | "screenspace"): Transform {
+  static createCustom(game: GameInterface, x: number, y: number, width: number, height: number, positionType?: "global" | "local" | "screenspace"): Transform {
     return new Transform(game, x, y, width, height, positionType);
   }
 

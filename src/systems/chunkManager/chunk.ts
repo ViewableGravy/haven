@@ -3,6 +3,7 @@ import invariant from "tiny-invariant";
 import type { Game } from "../../utilities/game/game";
 import { logger } from "../../utilities/logger";
 import { Position } from "../../utilities/position";
+import { WebGLRenderer } from "../../webgl/WebGLRenderer";
 
 /***** TYPE DEFINITIONS *****/
 export interface ChunkPosition {
@@ -13,13 +14,13 @@ export interface ChunkPosition {
 /***** CHUNK CLASS *****/
 export class Chunk {
   private container: Container<ContainerChild>;
-  private chunkPosition: Position;
+  private _chunkPosition: Position;
   private game: Game;
 
   constructor(game: Game, chunkX: number, chunkY: number) {
     this.game = game;
     // Fix: Use "chunk" type instead of "local" for chunk coordinates
-    this.chunkPosition = new Position(chunkX, chunkY, "chunk" as any);
+    this._chunkPosition = new Position(chunkX, chunkY, "chunk" as any);
     
     // Create the underlying container
     this.container = new Container();
@@ -61,13 +62,13 @@ export class Chunk {
     
     // Verify the position belongs to this chunk
     invariant(
-      expectedChunkX === this.chunkPosition.x && expectedChunkY === this.chunkPosition.y,
-      `Global position (${globalPosition.x}, ${globalPosition.y}) does not belong to chunk (${this.chunkPosition.x}, ${this.chunkPosition.y})`
+      expectedChunkX === this._chunkPosition.x && expectedChunkY === this._chunkPosition.y,
+      `Global position (${globalPosition.x}, ${globalPosition.y}) does not belong to chunk (${this._chunkPosition.x}, ${this._chunkPosition.y})`
     );
 
     // Convert to local position
-    const localX = globalPosition.x - (this.chunkPosition.x * chunkSize);
-    const localY = globalPosition.y - (this.chunkPosition.y * chunkSize);
+    const localX = globalPosition.x - (this._chunkPosition.x * chunkSize);
+    const localY = globalPosition.y - (this._chunkPosition.y * chunkSize);
 
     return { x: localX, y: localY };
   }
@@ -78,8 +79,8 @@ export class Chunk {
   public getGlobalPosition(): { x: number; y: number } {
     const size = this.game.consts.chunkAbsolute;
     return {
-      x: this.chunkPosition.x * size,
-      y: this.chunkPosition.y * size
+      x: this._chunkPosition.x * size,
+      y: this._chunkPosition.y * size
     };
   }
 
@@ -87,7 +88,14 @@ export class Chunk {
    * Gets the chunk coordinates
    */
   public getChunkPosition(): ChunkPosition {
-    return { ...this.chunkPosition };
+    return { ...this._chunkPosition };
+  }
+
+  /**
+   * Get the chunk position
+   */
+  public get chunkPosition(): Position {
+    return this._chunkPosition;
   }
 
   /**
@@ -116,5 +124,14 @@ export class Chunk {
    */
   public destroy(): void {
     this.container.destroy();
+  }
+
+  /**
+   * Render the chunk using WebGL
+   * @param renderer - The WebGL renderer instance
+   */
+  public render(renderer: WebGLRenderer): void {
+    // Logic to render the chunk using WebGL
+    renderer.drawChunk(this);
   }
 }

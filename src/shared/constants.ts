@@ -15,6 +15,10 @@ export namespace GameConstants {
   /** Total pixel size of a chunk (TILE_SIZE * CHUNK_SIZE) */
   export const CHUNK_ABSOLUTE = TILE_SIZE * CHUNK_SIZE; // 1024 pixels
 
+  /** Width and height of each chunk in pixels */
+  export const CHUNK_WIDTH = CHUNK_ABSOLUTE;
+  export const CHUNK_HEIGHT = CHUNK_ABSOLUTE;
+
   /***** CHUNK LOADING CONFIGURATION *****/
   /** Default radius for chunk loading around player (in chunks) */
   export const DEFAULT_LOAD_RADIUS = 10;

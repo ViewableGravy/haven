@@ -1,9 +1,8 @@
 import { createContext, use } from "react";
 import invariant from "tiny-invariant";
-import type { Game } from "../../utilities/game/game";
+import type { GameInterface } from "../../utilities/game/gameInterface";
 
-
-export const PixiContext = createContext<Game | null>(null);
+export const PixiContext = createContext<GameInterface | null>(null);
 export const usePixiContext = () => {
   const context = use(PixiContext)
   invariant(context, "Pixi context must be used within a PixiProvider");
