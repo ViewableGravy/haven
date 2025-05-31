@@ -5,8 +5,11 @@ import { AssemblerSprite } from "../../spriteSheets/assembler";
 import { CharacterSprite } from "../../spriteSheets/character";
 import { MeadowSprite } from "../../spriteSheets/meadow";
 import { RunningSprite } from "../../spriteSheets/running";
+import { SpruceTreeSprite } from "../../spriteSheets/spruceTree";
 // Import assembler factory to ensure infographic registration happens
 import "../../entities/assembler/factory";
+// Import spruce tree factory to ensure infographic registration happens
+import "../../entities/spruceTree/factory";
 import { GameConstants } from "../../shared/constants";
 import { ChunkManager } from "../../systems/chunkManager";
 import { KeyboardController } from "../keyboardController";
@@ -268,6 +271,7 @@ export class Game {
     await CharacterSprite.load();
     await MeadowSprite.load();
     await RunningSprite.load();
+    await SpruceTreeSprite.load();
     await Assets.load(Selection);
   }
 

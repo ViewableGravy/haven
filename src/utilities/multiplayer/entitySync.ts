@@ -117,6 +117,7 @@ export class EntitySyncManager {
     // Try to get the appropriate chunk using global coordinates
     // If chunk doesn't exist yet, queue this entity for later placement
     try {
+      entityData.chunkX
       const chunk = this.game.controllers.chunkManager.getChunk(entityData.x, entityData.y);
       this.placeEntityInChunk(entity, entityData, chunk);
     } catch {

@@ -4,6 +4,7 @@ import { GameConstants } from "../shared/constants";
 import { logger } from "../utilities/logger";
 import { createChunkKey } from "../utilities/tagged";
 import type { ServerChunkObject } from "./chunkdb";
+import type { EntityData } from "./types";
 import type { LoadChunkEvent } from "./types/events/load_chunk";
 
 /***** SERVER CHUNK GENERATOR *****/
@@ -32,22 +33,23 @@ export class ServerChunkGenerator {
    * Generate a complete chunk with tiles at the specified coordinates
    * @param chunkX - The chunk x coordinate
    * @param chunkY - The chunk y coordinate
-   * @returns Server chunk object with generated tiles and empty entities array
+   * @returns Server chunk object with generated tiles and entities array
    */
   public generateChunk(chunkX: number, chunkY: number): ServerChunkObject {
     const chunkKey = createChunkKey(chunkX, chunkY);
     const tiles = this.generateTiles(chunkX, chunkY);
+    const entities = this.generateEntities(chunkX, chunkY);
     
     const chunkData: ServerChunkObject = {
       chunkKey,
       chunkX,
       chunkY,
       tiles,
-      entities: [], // Empty for new chunks
+      entities,
       generatedAt: Date.now()
     };
 
-    logger.log(`ServerChunkGenerator: Generated chunk (${chunkX}, ${chunkY}) with ${tiles.length} tiles`);
+    logger.log(`ServerChunkGenerator: Generated chunk (${chunkX}, ${chunkY}) with ${tiles.length} tiles and ${entities.length} entities`);
     return chunkData;
   }
 
@@ -142,6 +144,63 @@ export class ServerChunkGenerator {
     
     // Map to sprite index (0-5)
     return Math.floor(noiseValue * 6);
+  }
+
+  /**
+   * Generate entities for a specific chunk using secondary noise
+   * @param chunkX - The chunk x coordinate
+   * @param chunkY - The chunk y coordinate
+   * @returns Array of entity data objects
+   */
+  private generateEntities(chunkX: number, chunkY: number): Array<EntityData> {
+    const entities: Array<EntityData> = [];
+    const size = this.chunkSize * this.tileSize;
+
+    // Re-initialize seed to ensure consistent generation
+    this.initializeSeed();
+
+    // Generate a deterministic but varied number of trees per chunk (3-5)
+    const chunkSeed = (chunkX * 73856093) ^ (chunkY * 19349663); // Hash chunk coordinates
+    const seededRandom = Math.abs(Math.sin(chunkSeed)) * 43758.5453; // Convert to 0-1 range
+    const treeCount = 3 + Math.floor((seededRandom % 1) * 3); // 3-5 trees
+
+    // Generate spruce trees at varied positions within the chunk
+    for (let i = 0; i < treeCount; i++) {
+      // Use chunk coordinates and tree index to create unique seeds for each tree
+      const treeSeedX = ((chunkX + i * 7) * 127) ^ ((chunkY + i * 11) * 311);
+      const treeSeedY = ((chunkX + i * 13) * 197) ^ ((chunkY + i * 17) * 419);
+      
+      // Generate pseudo-random values (0-1) for positioning
+      const randomX = Math.abs(Math.sin(treeSeedX)) * 43758.5453;
+      const randomY = Math.abs(Math.sin(treeSeedY)) * 43758.5453;
+      const positionNoiseX = randomX % 1;
+      const positionNoiseY = randomY % 1;
+      
+      // Convert to position within chunk, with padding from edges
+      const padding = 96; // Keep trees away from chunk edges (space for 2x3 tree)
+      const availableSpace = size - (padding * 2);
+      const localTreeX = Math.floor(padding + (positionNoiseX * availableSpace));
+      const localTreeY = Math.floor(padding + (positionNoiseY * availableSpace));
+      
+      // Convert local chunk coordinates to global world coordinates
+      const globalTreeX = (chunkX * size) + localTreeX;
+      const globalTreeY = (chunkY * size) + localTreeY;
+      
+      // Generate unique entity ID using chunk and tree index
+      const entityId = `spruce-tree-${chunkX}-${chunkY}-${i}`;
+      
+      entities.push({
+        id: entityId,
+        type: "spruce-tree",
+        x: globalTreeX,
+        y: globalTreeY,
+        chunkX,
+        chunkY,
+        placedBy: "server" // Server-generated entity
+      });
+    }
+
+    return entities;
   }
 
   /**

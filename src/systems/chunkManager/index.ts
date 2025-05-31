@@ -59,6 +59,18 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
   };
 
   /**
+   * Retrieves a chunk by its unique key
+   * @param chunkKey - The unique identifier for the chunk
+   * @returns The chunk associated with the specified key
+   * @throws {Error} If the chunk is not found
+   */
+  public getChunkByKey = (chunkKey: ChunkKey): Chunk => {
+    const chunk = this.chunkRegistry.getChunk(chunkKey);
+    invariant(chunk, `Chunk not found: ${chunkKey}`);
+    return chunk;
+  };
+
+  /**
    * Initialize the chunk unloading system
    * This should be called after multiplayer is set up
    */
