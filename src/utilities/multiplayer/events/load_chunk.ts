@@ -1,5 +1,6 @@
 /***** TYPE DEFINITIONS *****/
-import type { LoadChunkEvent } from "../../../server/types/events/load_chunk";
+import type { LoadChunkEvent } from "../../../server/main/types/events/load_chunk";
+import type { Chunk } from "../../../systems/chunkManager/chunk";
 import { logger } from "../../logger";
 import { parseChunkKey } from "../../tagged";
 import type { MultiplayerManager } from "../manager";
@@ -11,19 +12,29 @@ export class RemoteChunkLoadHandler implements ServerEventHandler {
         private multiplayerManager: MultiplayerManager
     ) {}
 
-    public handleEvent(data: LoadChunkEvent.LoadChunkData): void {
+    public async handleEvent(data: LoadChunkEvent.LoadChunkData): Promise<void> {
         // Parse chunk coordinates from the chunkKey
         const { chunkX, chunkY } = parseChunkKey(data.chunkKey);
         
-        logger.log(`RemoteChunkLoadHandler: Loading chunk (${chunkX}, ${chunkY}) with ${data.tiles.length} tiles and ${data.entities.length} entities`);
+        logger.log(`RemoteChunkLoadHandler: Loading chunk (${chunkX}, ${chunkY}) with ${data.type} decoding function`);
         
         try {
-            // Create chunk from server tile data using ChunkManager
-            const chunk = this.multiplayerManager.game.controllers.chunkManager.createChunkFromTiles(
-                chunkX, 
-                chunkY, 
-                data.tiles
-            );
+
+            let chunk: Chunk;
+
+            if (data.type === "tiles") {
+                chunk = this.multiplayerManager.game.controllers.chunkManager.createChunkFromTiles(
+                    chunkX, 
+                    chunkY, 
+                    data.tiles
+                );
+            } else {
+                chunk = await this.multiplayerManager.game.controllers.chunkManager.createChunkFromTexture(
+                    chunkX,
+                    chunkY,
+                    data.texture
+                );
+            }
             
             logger.log(`RemoteChunkLoadHandler: Created chunk container at position (${chunk.getContainer().x}, ${chunk.getContainer().y})`);
 

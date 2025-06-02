@@ -172,11 +172,8 @@ export class BunMultiplayerServer {
     if (ServerConfig.experimental_serverSideChunkRendering) {
       const file = `src/server/main/public/chunks/chunk_${chunkX}_${chunkY}.png`;
       const publicUrl = `http://${ServerConfig.host}:${ServerConfig.port}/public/chunks/chunk_${chunkX}_${chunkY}.png`;
-      
-      console.log(`Checking for chunk texture at ${file}`);
 
       if (await Bun.file(file).exists()) {
-        logger.log(`Chunk texture for ${chunkKey} already exists, sending cached texture`);
         const loadChunkMessage: ServerEvents.LoadChunkMessage = {
           type: 'load_chunk',
           data: {

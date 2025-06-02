@@ -1,5 +1,5 @@
 /***** TYPE DEFINITIONS *****/
-import type { EntityData } from "../../server/types";
+import type { EntityData } from "../../server/main/types";
 import type { Game } from "../game/game";
 import type { Player } from "../player";
 import { MultiplayerClient, type RemotePlayer as RemotePlayerData } from "./client";
@@ -97,8 +97,8 @@ export class MultiplayerManager {
       this.entitiesListHandler.handleEvent(data);
     });
 
-    this.client.on('load_chunk', (data) => {
-      this.remoteChunkLoadHandler.handleEvent(data);
+    this.client.on('load_chunk', async (data) => {
+      await this.remoteChunkLoadHandler.handleEvent(data);
     });
   }
 

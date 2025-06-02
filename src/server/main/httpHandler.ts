@@ -17,6 +17,18 @@ export class HttpHandler {
   handleRequest = async (req: Request): Promise<Response> => {
     const url = new URL(req.url);
     
+    // Handle CORS preflight requests
+    if (req.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        }
+      });
+    }
+    
     // Upgrade WebSocket connections
     if (req.headers.get("upgrade") === "websocket") {
       const success = this.server.upgradeWebSocket(req);
@@ -25,7 +37,12 @@ export class HttpHandler {
         return undefined as any; // Connection was upgraded
       }
       
-      return new Response("WebSocket upgrade failed", { status: 400 });
+      return new Response("WebSocket upgrade failed", { 
+        status: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
     }
 
     // Serve static files from public directory
@@ -38,7 +55,13 @@ export class HttpHandler {
       return this.handleHealthCheck();
     }
 
-    return new Response("Haven Game Server (Bun)", { status: 200 });
+    return new Response("Haven Game Server (Bun)", { 
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'text/plain'
+      }
+    });
   };
 
   /***** HEALTH CHECK *****/
@@ -52,7 +75,10 @@ export class HttpHandler {
       chunks: stats.chunkCount,
       timestamp: Date.now()
     }), {
-      headers: { "Content-Type": "application/json" }
+      headers: { 
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      }
     });
   };
 
@@ -100,16 +126,17 @@ export class HttpHandler {
           contentType = 'application/json';
           break;
       }
-
+      
       return new Response(file, {
         headers: {
           'Content-Type': contentType,
-          'Cache-Control': 'public, max-age=3600' // Cache for 1 hour
+          'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+          'Access-Control-Allow-Origin': '*'
         }
       });
     } catch (error) {
       console.error('Error serving static file:', error);
-      return new Response("Internal server error", { status: 500 });
+      return new Response("Internal server error");
     }
   };
 }

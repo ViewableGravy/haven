@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite, Texture, type ContainerChild } from "pixi.js";
+import { Assets, Container, Graphics, Sprite, Texture, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
 import type { BaseEntity } from "../../entities/base";
 import { ContainerTrait } from "../../entities/traits/container";
@@ -145,6 +145,45 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
   }
 
   /***** SERVER CHUNK CREATION *****/
+  public async createChunkFromTexture(
+    chunkX: number,
+    chunkY: number,
+    textureUrl: string
+  ): Promise<Chunk> {
+    logger.log(`ChunkManager: Creating chunk (${chunkX}, ${chunkY}) from texture URL: ${textureUrl}`);
+    
+    // Create chunk instance
+    const chunk = new Chunk(this.game, chunkX, chunkY);
+    
+    logger.log(`ChunkManager: Chunk container created at position (${chunk.getContainer().x}, ${chunk.getContainer().y})`);
+    logger.log(`ChunkManager: Chunk size should be ${this.game.consts.chunkAbsolute}x${this.game.consts.chunkAbsolute} pixels`);
+    
+    console.log(textureUrl)
+    // Load texture from URL using Assets.load for proper async loading
+    const texture = await Assets.load(textureUrl);
+    const backgroundSprite = new Sprite(texture);
+    backgroundSprite.x = 0;
+    backgroundSprite.y = 0;
+    backgroundSprite.zIndex = -1;
+    
+    // Add background sprite to chunk
+    chunk.addChild(backgroundSprite);
+    
+    logger.log(`ChunkManager: Created sprite from texture URL for chunk (${chunkX}, ${chunkY})`);
+    
+    // Create debug border (inset by 1px to avoid overlap with adjacent chunks)
+    const debugBorder = new Graphics();
+    debugBorder.rect(3, 3, this.game.consts.chunkAbsolute - 6, this.game.consts.chunkAbsolute - 6);
+    debugBorder.stroke({ color: 0x00FF00, width: 6 }); // Green border to distinguish from tile-based chunks
+    debugBorder.zIndex = 100; // Above background (-1) but below entities
+    chunk.addChild(debugBorder);
+    
+    logger.log(`ChunkManager: Added green debug border to texture-based chunk (${chunkX}, ${chunkY})`);
+    logger.log(`ChunkManager: Chunk (${chunkX}, ${chunkY}) creation from texture complete`);
+    
+    return chunk;
+  }
+
   public registerChunkWithEntities(
     chunkKey: ChunkKey, 
     chunk: Chunk, 

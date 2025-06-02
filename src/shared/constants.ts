@@ -46,5 +46,5 @@ export namespace GameConstants {
 
   /***** DEBUG CONFIGURATION *****/
   /** Enable debug logging throughout the application */
-  export const DEBUG = false;
+  export const DEBUG = true;
 }
