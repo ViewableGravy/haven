@@ -1,8 +1,8 @@
 /***** TYPE DEFINITIONS *****/
 import { noiseSeed, noise as perlinNoise } from "@chriscourses/perlin-noise";
-import { GameConstants } from "../shared/constants";
-import { logger } from "../utilities/logger";
-import { createChunkKey } from "../utilities/tagged";
+import { GameConstants } from "../../shared/constants";
+import { logger } from "../../utilities/logger";
+import { createChunkKey } from "../../utilities/tagged";
 import type { ServerChunkObject } from "./chunkdb";
 import type { EntityData } from "./types";
 import type { LoadChunkEvent } from "./types/events/load_chunk";

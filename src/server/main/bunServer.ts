@@ -1,11 +1,13 @@
 /***** TYPE DEFINITIONS *****/
 import { v4 as uuidv4 } from 'uuid';
-import { GameConstants } from '../shared/constants';
-import { logger } from "../utilities/logger";
-import { createChunkKey } from '../utilities/tagged';
+import { GameConstants } from '../../shared/constants';
+import { logger } from "../../utilities/logger";
+import { createChunkKey } from '../../utilities/tagged';
 import { chunkDatabase } from './chunkdb';
 import { ServerChunkGenerator } from './chunkGenerator';
+import { ServerConfig } from "./config";
 import { HttpHandler } from './httpHandler';
+import { RendererServiceClient } from './services/rendererClient';
 import type { EntityData, Player, ServerEvents } from './types';
 import { WebSocketHandler } from './webSocketHandler';
 
@@ -16,6 +18,7 @@ export class BunMultiplayerServer {
   private entities: Map<string, EntityData> = new Map();
   private port: number;
   private chunkGenerator: ServerChunkGenerator;
+  private chunkRenderer: RendererServiceClient;
   private httpHandler: HttpHandler;
   private webSocketHandler: WebSocketHandler;
   private readonly chunkAbsolute: number = GameConstants.CHUNK_ABSOLUTE;
@@ -25,7 +28,9 @@ export class BunMultiplayerServer {
     this.chunkGenerator = new ServerChunkGenerator(GameConstants.DEFAULT_SEED);
     this.httpHandler = new HttpHandler(this);
     this.webSocketHandler = new WebSocketHandler(this);
+    this.chunkRenderer = new RendererServiceClient();
     this.setupServer();
+    this.initializeServices();
   }
 
   /***** SERVER SETUP *****/
@@ -43,6 +48,18 @@ export class BunMultiplayerServer {
 
     logger.log(`Bun server started on port ${this.port} with auto-restart enabled`);
     logger.log('Auto-restart test: Server file modified!');
+  };
+
+  /***** SERVICE INITIALIZATION *****/
+  private initializeServices = async (): Promise<void> => {
+    try {
+      logger.log('Initializing renderer service connection...');
+      await this.chunkRenderer.initialize();
+      logger.log('Renderer service connection established');
+    } catch (error) {
+      logger.log(`Warning: Renderer service unavailable: ${error}`);
+      logger.log('Server will fall back to tile-based chunk rendering');
+    }
   };
 
   /***** PUBLIC METHODS FOR HANDLERS *****/
@@ -121,46 +138,96 @@ export class BunMultiplayerServer {
       }
     }
 
-    const chunksToLoad: Array<{x: number, y: number}> = [];
-    newVisibleChunks.forEach((chunkKey) => {
+    let totalLoadedChunks = 0;
+    for (const chunkKey of newVisibleChunks) {
       if (!player.visibleChunks.has(chunkKey)) {
         const [x, y] = chunkKey.split(',').map(Number);
-        chunksToLoad.push({x, y});
+        totalLoadedChunks++;
+        this.ensureChunkExistsAndSend(playerId, x, y)
       }
-    });
-
-    chunksToLoad.forEach(({x, y}) => {
-      this.ensureChunkExistsAndSend(playerId, x, y);
-    });
+    }
 
     player.visibleChunks = newVisibleChunks;
 
-    if (chunksToLoad.length > 0) {
-      logger.log(`Sent ${chunksToLoad.length} new chunks to player ${playerId} at chunk (${newChunkX}, ${newChunkY})`);
+    if (totalLoadedChunks) {
+      logger.log(`Sent ${totalLoadedChunks} new chunks to player ${playerId} at chunk (${newChunkX}, ${newChunkY})`);
     }
   };
 
-  private ensureChunkExistsAndSend = (playerId: string, chunkX: number, chunkY: number): void => {
+  private ensureChunkExistsAndSend = async (playerId: string, chunkX: number, chunkY: number): Promise<void> => {
+    // For testing purposes, always use chunk (0, 0)
+    chunkX = 0;
+    chunkY = 0; 
+
     const chunkKey = createChunkKey(chunkX, chunkY);
-    
+
     let chunkData = chunkDatabase.getChunk(chunkKey);
-    
+      
     if (!chunkData) {
       chunkData = this.chunkGenerator.generateChunk(chunkX, chunkY);
       chunkDatabase.storeChunk(chunkKey, chunkData);
       logger.log(`Generated and stored new chunk ${chunkKey}`);
     }
 
+    if (ServerConfig.experimental_serverSideChunkRendering) {
+      const file = `./public/chunks/chunk_${chunkX}_${chunkY}.png`;
+      
+      if (await Bun.file(file).exists()) {
+        logger.log(`Chunk texture for ${chunkKey} already exists, sending cached texture`);
+        const loadChunkMessage: ServerEvents.LoadChunkMessage = {
+          type: 'load_chunk',
+          data: {
+            type: 'texture',
+            chunkKey: chunkData.chunkKey,
+            texture: file, // Send file path directly
+            entities: chunkData.entities
+          }
+        };
+        return this.sendToPlayer(playerId, loadChunkMessage);
+      }
+
+      // file does not exist, generate texture
+      const spriteData = chunkData.tiles.map((tile) => ({
+        x: tile.x * GameConstants.TILE_SIZE,
+        y: tile.y * GameConstants.TILE_SIZE,
+        spriteIndex: tile.spriteIndex
+      }));
+
+      try {
+        // Generate chunk texture via renderer service
+        const base64Texture = await this.chunkRenderer.generateChunkTexture(spriteData);
+
+        // Store the texture as a file
+        await Bun.write(file, base64Texture, { createPath: true });
+        
+        const loadChunkMessage: ServerEvents.LoadChunkMessage = {
+          type: "load_chunk",
+          data: {
+            type: "texture",
+            chunkKey: chunkData.chunkKey,
+            texture: file, // Send base64 data directly
+            entities: chunkData.entities
+          }
+        };
+
+        logger.log(`Sent chunk texture for ${chunkKey} to player ${playerId}`);
+        return this.sendToPlayer(playerId, loadChunkMessage);
+      } catch (error) {
+        // continue onto fallback of tile based rendering
+      }
+    }
+    
     const loadChunkMessage: ServerEvents.LoadChunkMessage = {
       type: 'load_chunk',
       data: {
         chunkKey: chunkData.chunkKey,
+        type: "tiles",
         tiles: chunkData.tiles,
         entities: chunkData.entities
       }
     };
 
-    this.sendToPlayer(playerId, loadChunkMessage);
+    return this.sendToPlayer(playerId, loadChunkMessage);
   };
 
   /***** PLAYER AND ENTITY MANAGEMENT *****/

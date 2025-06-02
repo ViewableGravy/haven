@@ -8,14 +8,16 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server": "bun --watch src/server/bunServer.ts",
-    "server:prod": "bun src/server/bunServer.ts",
-    "dev:full": "concurrently \"bun run server\" \"bun run dev\"",
-    "test:server": "bun src/server/bunServer.ts"
+    "server": "bun --watch src/server/main/bunServer.ts",
+    "server:prod": "bun src/server/main/bunServer.ts",
+    "renderer": "cd src/server/renderer && npm install && bun run dev",
+    "renderer:prod": "cd src/server/renderer && npm install && npm start",
+    "dev:full": "concurrently \"bun run renderer\" \"sleep 3 && bun run server\" \"bun run dev\"",
+    "test:server": "bun src/server/main/bunServer.ts"
   },
   "dependencies": {
     "@chriscourses/perlin-noise": "^1.0.6",
-    "@tanstack/react-store": "^0.7.0",
+    "@tanstack/react-store": "^0.7.1",
     "pixi.js": "^8.9.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -23,20 +25,21 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.25.0",
-    "@types/react": "^19.1.2",
-    "@types/react-dom": "^19.1.2",
-    "@vitejs/plugin-react-swc": "^3.9.0",
-    "concurrently": "^9.1.2",
-    "eslint": "^9.25.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.19",
-    "globals": "^16.0.0",
-    "typescript": "~5.8.3",
-    "typescript-eslint": "^8.30.1",
-    "vite": "6.1.0",
+    "@eslint/js": "^9.28.0",
+    "@pixi/node": "^7.3.0",
     "@types/bun": "^1.2.15",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
     "@types/uuid": "^10.0.0",
-    "type-fest": "^4.41.0"
+    "@vitejs/plugin-react-swc": "^3.10.0",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.28.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.2.0",
+    "type-fest": "^4.41.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.33.0",
+    "vite": "6.1.0"
   }
 }

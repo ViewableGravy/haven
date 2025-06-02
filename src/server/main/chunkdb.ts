@@ -1,6 +1,6 @@
 /***** TYPE DEFINITIONS *****/
-import { logger } from "../utilities/logger";
-import type { ChunkKey } from "../utilities/tagged";
+import { logger } from "../../utilities/logger";
+import type { ChunkKey } from "../../utilities/tagged";
 import type { EntityData } from "./types";
 import type { LoadChunkEvent } from "./types/events/load_chunk";
 

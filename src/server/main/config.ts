@@ -28,6 +28,18 @@ export const ServerConfig = {
   maxConnections: 100,
   heartbeatInterval: 30000, // 30 seconds
   connectionTimeout: 5000,   // 5 seconds
+
+  /***** FEATURE FLAGS *****/
+  experimental_serverSideChunkRendering: true,
+
+  /***** RENDERER SERVICE SETTINGS *****/
+  rendererService: {
+    host: 'localhost',
+    port: 3001,
+    healthCheckRetries: 30,
+    healthCheckDelayMs: 1000,
+    requestTimeoutMs: 10000,
+  },
 } as const;
 
 /***** RUNTIME SERVER SELECTION *****/
@@ -41,4 +53,8 @@ export function getServerUrl(): string {
 
 export function getServerHttpUrl(): string {
   return `http://${ServerConfig.host}:${ServerConfig.port}`;
+}
+
+export function getRendererServiceUrl(): string {
+  return `http://${ServerConfig.rendererService.host}:${ServerConfig.rendererService.port}`;
 }

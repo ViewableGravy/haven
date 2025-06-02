@@ -25,6 +25,7 @@ The application utilizes a modular architecture with clear separation between cl
 ### Prerequisites
 - **Bun**: Install from [bun.sh](https://bun.sh)
 - **Node.js**: v18+ (for compatibility)
+- **Node GL Renderer**: Install from [npmjs](https://www.npmjs.com/package/gl/v/4.5.3-win64.0#system-dependencies)
 
 ### Development Setup
 1. **Install Dependencies**:
@@ -42,9 +43,6 @@ The application utilizes a modular architecture with clear separation between cl
    ```bash
    # Start Bun server with auto-restart (recommended)
    bun run server
-   
-   # Start legacy Node.js server (fallback)
-   bun run server:legacy
    
    # Start only the client
    bun run dev

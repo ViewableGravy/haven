@@ -1,6 +1,6 @@
 /***** TYPE DEFINITIONS *****/
 import { v4 as uuidv4 } from 'uuid';
-import { logger } from "../utilities/logger";
+import { logger } from "../../utilities/logger";
 import type { BunMultiplayerServer } from './bunServer';
 import type { BunWebSocket, EntityData, Player } from './types';
 
