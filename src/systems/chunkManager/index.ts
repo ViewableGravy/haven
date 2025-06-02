@@ -158,7 +158,6 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     logger.log(`ChunkManager: Chunk container created at position (${chunk.getContainer().x}, ${chunk.getContainer().y})`);
     logger.log(`ChunkManager: Chunk size should be ${this.game.consts.chunkAbsolute}x${this.game.consts.chunkAbsolute} pixels`);
     
-    console.log(textureUrl)
     // Load texture from URL using Assets.load for proper async loading
     const texture = await Assets.load(textureUrl);
     const backgroundSprite = new Sprite(texture);

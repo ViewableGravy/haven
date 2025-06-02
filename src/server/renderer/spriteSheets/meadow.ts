@@ -91,7 +91,6 @@ export class ServerMeadowSprite {
       const scale = tileSize / ServerMeadowSprite.size;
       sprite.scale.set(scale);
       
-      console.log(data)
       // Position sprite
       sprite.x = data.x;
       sprite.y = data.y;

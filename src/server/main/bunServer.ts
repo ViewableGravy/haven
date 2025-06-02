@@ -155,10 +155,6 @@ export class BunMultiplayerServer {
   };
 
   private ensureChunkExistsAndSend = async (playerId: string, chunkX: number, chunkY: number): Promise<void> => {
-    // For testing purposes, always use chunk (0, 0)
-    chunkX = 0;
-    chunkY = 0; 
-
     const chunkKey = createChunkKey(chunkX, chunkY);
 
     let chunkData = chunkDatabase.getChunk(chunkKey);
