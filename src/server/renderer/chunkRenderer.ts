@@ -33,15 +33,6 @@ class ServerChunkRenderer {
   };
 
   public textureToDataURL = async (texture: RenderTexture): Promise<Base64URLString> => {
-
-    // const pixels = new Uint8ClampedArray(this.application.renderer.extract.pixels(this.application.stage));
-    // const imageData = new ImageData(pixels, 1024, 1024);
-
-    // const canvas = new Canvas(1024, 1024);
-    // const ctxt = canvas.getContext('2d');
-    // ctxt.putImageData(imageData, 0, 0);
-
-
     // Create a temporary container for staging sprites
     const tempContainer = new Container();
 

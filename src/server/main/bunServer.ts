@@ -170,8 +170,11 @@ export class BunMultiplayerServer {
     }
 
     if (ServerConfig.experimental_serverSideChunkRendering) {
-      const file = `./public/chunks/chunk_${chunkX}_${chunkY}.png`;
+      const file = `src/server/main/public/chunks/chunk_${chunkX}_${chunkY}.png`;
+      const publicUrl = `http://${ServerConfig.host}:${ServerConfig.port}/public/chunks/chunk_${chunkX}_${chunkY}.png`;
       
+      console.log(`Checking for chunk texture at ${file}`);
+
       if (await Bun.file(file).exists()) {
         logger.log(`Chunk texture for ${chunkKey} already exists, sending cached texture`);
         const loadChunkMessage: ServerEvents.LoadChunkMessage = {
@@ -179,7 +182,7 @@ export class BunMultiplayerServer {
           data: {
             type: 'texture',
             chunkKey: chunkData.chunkKey,
-            texture: file, // Send file path directly
+            texture: publicUrl, // Send public URL instead of file path
             entities: chunkData.entities
           }
         };
@@ -188,8 +191,8 @@ export class BunMultiplayerServer {
 
       // file does not exist, generate texture
       const spriteData = chunkData.tiles.map((tile) => ({
-        x: tile.x * GameConstants.TILE_SIZE,
-        y: tile.y * GameConstants.TILE_SIZE,
+        x: tile.x,
+        y: tile.y,
         spriteIndex: tile.spriteIndex
       }));
 
@@ -197,15 +200,16 @@ export class BunMultiplayerServer {
         // Generate chunk texture via renderer service
         const base64Texture = await this.chunkRenderer.generateChunkTexture(spriteData);
 
-        // Store the texture as a file
-        await Bun.write(file, base64Texture, { createPath: true });
+        // Convert base64 to buffer and write to file
+        const base64Data = base64Texture.replace(/^data:image\/png;base64,/, '');
+        await Bun.write(file, Buffer.from(base64Data, 'base64'));
         
         const loadChunkMessage: ServerEvents.LoadChunkMessage = {
           type: "load_chunk",
           data: {
             type: "texture",
             chunkKey: chunkData.chunkKey,
-            texture: file, // Send base64 data directly
+            texture: publicUrl, // Send public URL instead of file path
             entities: chunkData.entities
           }
         };
@@ -213,6 +217,7 @@ export class BunMultiplayerServer {
         logger.log(`Sent chunk texture for ${chunkKey} to player ${playerId}`);
         return this.sendToPlayer(playerId, loadChunkMessage);
       } catch (error) {
+        console.error(`Failed to generate chunk texture for ${chunkKey}:`, error);
         // continue onto fallback of tile based rendering
       }
     }
