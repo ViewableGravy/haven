@@ -76,10 +76,10 @@ export class MeadowSprite {
       : MeadowSprite.getSpriteByIndex(spriteIndex);
 
     // Reset sprite to default state
-    sprite.x = 0;
-    sprite.y = 0;
-    sprite.scale.set(1);
-    sprite.parent?.removeChild(sprite);
+    // sprite.x = 0;
+    // sprite.y = 0;
+    // sprite.scale.set(1);
+    // sprite.parent?.removeChild(sprite);
 
     return sprite;
   };

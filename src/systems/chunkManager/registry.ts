@@ -66,7 +66,7 @@ export class ChunkRegistry {
    * Gets a copy of all chunks in the registry
    * @returns A new Map containing all chunks
    */
-  public getAllChunks(): Map<ChunkKey, Chunk> {
-    return new Map(this.activeChunksByKey);
+  public getAllChunks(): Readonly<Map<ChunkKey, Chunk>> {
+    return this.activeChunksByKey;
   }
 }
