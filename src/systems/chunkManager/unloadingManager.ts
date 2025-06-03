@@ -93,23 +93,12 @@ export class ChunkUnloadingManager {
   private performChunkUnloading(playerChunkX: number, playerChunkY: number): void {
     // Get all currently loaded chunks
     const loadedChunks = this.chunkManager['chunkRegistry'].getAllChunks();
-    const chunksToUnload: Array<ChunkKey> = [];
 
     // Check each loaded chunk against the render distance
-    loadedChunks.forEach((_, chunkKey) => {
+    for (const [chunkKey] of loadedChunks.entries()) {
       if (this.isChunkOutsideRenderDistance(chunkKey, playerChunkX, playerChunkY)) {
-        chunksToUnload.push(chunkKey);
-      }
-    });
-
-    // Unload chunks that are too far away
-    if (chunksToUnload.length > 0) {
-      logger.log(`ChunkUnloadingManager: Unloading ${chunksToUnload.length} chunks outside render distance`);
-      
-      chunksToUnload.forEach((chunkKey) => {
         this.chunkManager.unloadChunk(chunkKey);
-        logger.log(`ChunkUnloadingManager: Unloaded chunk ${chunkKey}`);
-      });
+      }
     }
   }
 

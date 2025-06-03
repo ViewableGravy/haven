@@ -238,14 +238,12 @@ export class EntitySyncManager {
    * This prevents duplicate detection when chunks are reloaded
    * @param chunkKey - The key of the chunk being unloaded
    */
-  public handleChunkUnload(chunkKey: string): void {
-    const entitiesToRemove: Array<string> = [];
-    
+  public handleChunkUnload(chunkKey: string): void {    
     // Parse chunk coordinates from the key
     const [chunkX, chunkY] = chunkKey.split(',').map(Number);
     
     // Find all entities that belong to this chunk
-    this.remoteEntities.forEach((entity, entityId) => {
+    for (const [entityId, entity] of this.remoteEntities.entries()) {
       // Get entity's world position to determine which chunk it belongs to
       if (this.hasTransform(entity)) {
         const transform = entity.transform;
@@ -263,15 +261,14 @@ export class EntitySyncManager {
         
         // If this entity belongs to the unloading chunk, mark it for removal
         if (entityChunkX === chunkX && entityChunkY === chunkY) {
-          entitiesToRemove.push(entityId);
+          this.handleRemoteEntityRemoved({ id: entityId });
         }
+
+        continue
       }
-    });
-    
-    // Remove the entity references from our tracking
-    entitiesToRemove.forEach((entityId) => {
-      this.remoteEntities.delete(entityId);
-    });
+
+      console.log("entitiy", entity, "does not have transform trait, cannot determine position for chunk unload");
+    }
   }
 
   public destroy(): void {
