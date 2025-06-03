@@ -7,6 +7,8 @@ import MeadowSpritesAsset from '../assets/meadow-sprites.png';
 export class MeadowSprite {
   private static __spriteSheet: Spritesheet | null = null;
   private static size = 250; 
+  private static spritePools: Map<number, Sprite[]> = new Map();
+  private static MAX_POOL_SIZE = 256; // Maximum sprites per pool
 
   /**
    * Load the meadow sprite sheet
@@ -55,6 +57,53 @@ export class MeadowSprite {
     return MeadowSprite.createSprite(spriteName);
   };
 
+    /***** SPRITE POOLING METHODS *****/
+  /**
+   * Borrow a sprite from the pool for the given sprite index
+   * Creates a new sprite if pool is empty
+   */
+  private static borrowSprite = (spriteIndex: number): Sprite => {
+    // Ensure pool exists for this sprite index
+    if (!MeadowSprite.spritePools.has(spriteIndex)) {
+      MeadowSprite.spritePools.set(spriteIndex, []);
+    }
+
+    const pool = MeadowSprite.spritePools.get(spriteIndex)!;
+    
+    // Try to reuse from pool, otherwise create new
+    const sprite = pool.length > 0 
+      ? pool.pop()! 
+      : MeadowSprite.getSpriteByIndex(spriteIndex);
+
+    // Reset sprite to default state
+    sprite.x = 0;
+    sprite.y = 0;
+    sprite.scale.set(1);
+    sprite.parent?.removeChild(sprite);
+
+    return sprite;
+  };
+
+  /**
+   * Return a sprite to its pool for reuse
+   */
+  private static returnSprite = (sprite: Sprite, spriteIndex: number): void => {
+    // Remove from any container
+    sprite.parent?.removeChild(sprite);
+    
+    // Reset sprite state
+    sprite.x = 0;
+    sprite.y = 0;
+    sprite.scale.set(1);
+
+    // Return to pool if there's space
+    const pool = MeadowSprite.spritePools.get(spriteIndex);
+    if (pool && pool.length < MeadowSprite.MAX_POOL_SIZE) {
+      pool.push(sprite);
+    }
+    // If pool is full, allow sprite to be garbage collected
+  };
+
   /**
    * Create an optimized chunk background texture from sprite indices
    * @param spriteData - Array of sprite data with positions and indices
@@ -78,9 +127,12 @@ export class MeadowSprite {
       height: chunkSize,
     });
 
+    const borrowedSprites: { sprite: Sprite, index: number }[] = [];
+    
     // Add all sprites to the temporary container
     for (const data of spriteData) {
-      const sprite = MeadowSprite.getSpriteByIndex(data.spriteIndex);
+      const sprite = MeadowSprite.borrowSprite(data.spriteIndex);
+      borrowedSprites.push({ sprite, index: data.spriteIndex });
       
       // Scale sprite from 270x270 to tile MeadowSprite.size (64x64)
       const scale = tileSize / MeadowSprite.size;
@@ -96,10 +148,12 @@ export class MeadowSprite {
     // Render all sprites to the render texture
     renderer.render(tempContainer, { renderTexture });
 
+    for (const { index, sprite } of borrowedSprites) {
+      MeadowSprite.returnSprite(sprite, index);
+    }
+
     // Clean up temporary container
-    setTimeout(() => {
-      tempContainer.destroy({ children: true });
-    }, Math.random() * 1000 + 500); // Random delay between 0.5s and 1.5s
+    tempContainer.destroy({ children: false });
 
     return renderTexture;
   };
