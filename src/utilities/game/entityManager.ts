@@ -3,8 +3,8 @@ import type { BaseEntity } from "../../entities/base";
 import { ContainerTrait } from "../../entities/traits/container";
 import { GhostableTrait } from "../../entities/traits/ghostable";
 import { PlaceableTrait } from "../../entities/traits/placeable";
+import type { HasTransformTrait } from "../../entities/traits/transform";
 import type { ChunkKey } from "../tagged";
-import type { HasTransformTrait } from "../transform";
 import type { Game } from "./game";
 
 interface HasContainerTrait {

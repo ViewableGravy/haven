@@ -7,11 +7,11 @@ import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
 import { entitySyncRegistry } from "../../utilities/multiplayer/entitySyncRegistry";
 import type { Position } from "../../utilities/position";
-import { TransformTrait } from "../../utilities/transform";
 import { BaseEntity } from "../base";
 import { ContainerTrait } from "../traits/container";
 import { GhostableTrait } from "../traits/ghostable";
 import { PlaceableTrait } from "../traits/placeable";
+import { TransformTrait } from "../traits/transform";
 import { createSpruceTreeInfographicNode } from "./info";
 
 /***** BASE SPRUCE TREE *****/

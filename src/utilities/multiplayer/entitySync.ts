@@ -4,10 +4,10 @@ import type { BaseEntity } from "../../entities/base";
 import { ContainerTrait } from "../../entities/traits/container";
 import { GhostableTrait } from "../../entities/traits/ghostable";
 import { PlaceableTrait } from "../../entities/traits/placeable";
+import { TransformTrait } from "../../entities/traits/transform";
 import type { EntityData } from "../../server/types";
 import type { Chunk } from "../../systems/chunkManager/chunk";
 import type { Game } from "../game/game";
-import { TransformTrait } from "../transform";
 import { entitySyncRegistry } from "./entitySyncRegistry";
 
 /***** ENTITY SYNC MANAGER *****/

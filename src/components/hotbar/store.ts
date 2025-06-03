@@ -4,10 +4,10 @@ import type { BaseEntity } from "../../entities/base";
 import { ContainerTrait } from "../../entities/traits/container";
 import { GhostableTrait } from "../../entities/traits/ghostable";
 import { PlaceableTrait } from "../../entities/traits/placeable";
+import type { HasTransformTrait } from "../../entities/traits/transform";
 import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
 import type { Position } from "../../utilities/position";
-import type { HasTransformTrait } from "../../utilities/transform";
 
 /***** TYPE DEFINITIONS *****/
 interface HasContainerTrait {

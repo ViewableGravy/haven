@@ -1,7 +1,7 @@
 /***** TYPE DEFINITIONS *****/
 import { Container } from "pixi.js";
-import type { TransformTrait } from "../../utilities/transform";
 import type { BaseEntity } from "../base";
+import type { TransformTrait } from "./transform";
 
 export interface HasContainerTrait {
   containerTrait: ContainerTrait;

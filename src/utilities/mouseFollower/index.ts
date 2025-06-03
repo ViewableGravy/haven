@@ -2,9 +2,9 @@ import type { BaseEntity } from "../../entities/base";
 import { ContainerTrait } from "../../entities/traits/container";
 import { GhostableTrait } from "../../entities/traits/ghostable";
 import { PlaceableTrait } from "../../entities/traits/placeable";
+import { TransformTrait, type HasTransformTrait } from "../../entities/traits/transform";
 import type { Game } from "../game/game";
 import { Rectangle } from "../rectangle";
-import { TransformTrait, type HasTransformTrait } from "../transform";
 
 /***** TYPE DEFINITIONS *****/
 interface HasContainerTrait {

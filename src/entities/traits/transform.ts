@@ -1,9 +1,9 @@
-import type { BaseEntity } from "../../entities/base";
-import type { Game } from "../game/game";
-import type { PositionType } from "../position";
-import { SubscribablePosition } from "../position/subscribable";
-import { Rectangle } from "../rectangle";
-import { Size } from "../size";
+import type { Game } from "../../utilities/game/game";
+import type { PositionType } from "../../utilities/position";
+import { SubscribablePosition } from "../../utilities/position/subscribable";
+import { Rectangle } from "../../utilities/rectangle";
+import { Size } from "../../utilities/size";
+import type { BaseEntity } from "../base";
 
 export interface HasTransformTrait {
   transformTrait: TransformTrait;
