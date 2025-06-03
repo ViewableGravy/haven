@@ -12,6 +12,7 @@ import { PlayerJoinHandler } from "./events/player_join";
 import { PlayerLeaveHandler } from "./events/player_leave";
 import { PlayerUpdateHandler } from "./events/player_update";
 import { PlayersListHandler } from "./events/players_list";
+import type { ServerEventHandler } from "./events/types";
 import { RemotePlayer } from "./remotePlayer";
 
 /***** MULTIPLAYER MANAGER *****/
@@ -23,14 +24,14 @@ export class MultiplayerManager {
   public entitySync: EntitySyncManager;
 
   // Event Handlers
-  private remoteChunkLoadHandler: RemoteChunkLoadHandler;
-  private playerJoinHandler: PlayerJoinHandler;
-  private playerLeaveHandler: PlayerLeaveHandler;
-  private playerUpdateHandler: PlayerUpdateHandler;
-  private playersListHandler: PlayersListHandler;
-  private entityPlacedHandler: EntityPlacedHandler;
-  private entityRemovedHandler: EntityRemovedHandler;
-  private entitiesListHandler: EntitiesListHandler;
+  private remoteChunkLoadHandler: ServerEventHandler;
+  private playerJoinHandler: ServerEventHandler;
+  private playerLeaveHandler: ServerEventHandler;
+  private playerUpdateHandler: ServerEventHandler;
+  private playersListHandler: ServerEventHandler;
+  private entityPlacedHandler: ServerEventHandler;
+  private entityRemovedHandler: ServerEventHandler;
+  private entitiesListHandler: ServerEventHandler;
 
   constructor(game: Game, localPlayer: Player, serverUrl?: string) {
     this.game = game;
