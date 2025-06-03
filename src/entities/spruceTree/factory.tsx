@@ -7,7 +7,7 @@ import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
 import { entitySyncRegistry } from "../../utilities/multiplayer/entitySyncRegistry";
 import type { Position } from "../../utilities/position";
-import { Transform } from "../../utilities/transform";
+import { TransformTrait } from "../../utilities/transform";
 import { BaseEntity } from "../base";
 import { ContainerTrait } from "../traits/container";
 import { GhostableTrait } from "../traits/ghostable";
@@ -16,7 +16,7 @@ import { createSpruceTreeInfographicNode } from "./info";
 
 /***** BASE SPRUCE TREE *****/
 export class BaseSpruceTree extends BaseEntity {
-  public transform: Transform;
+  public transformTrait: TransformTrait;
   public spruceTreeSprite: Sprite;
   public selectionSprite: Sprite;
   public containerTrait: ContainerTrait;
@@ -26,19 +26,19 @@ export class BaseSpruceTree extends BaseEntity {
   constructor(game: Game, position: Position) {
     super({ name: "spruce-tree" });
 
-    this.transform = Transform.createSmall(game, position.x, position.y, position.type);
-    this.spruceTreeSprite = BaseSpruceTree.createSpruceTreeSprite(this.transform);
+    this.transformTrait = TransformTrait.createSmall(game, position.x, position.y, position.type);
+    this.spruceTreeSprite = BaseSpruceTree.createSpruceTreeSprite(this.transformTrait);
     this.selectionSprite = BaseSpruceTree.createSelectionSprite();
 
     // Initialize traits
-    this.containerTrait = new ContainerTrait(this, this.transform);
+    this.containerTrait = new ContainerTrait(this, this.transformTrait);
     this.ghostableTrait = new GhostableTrait(this, false);
     this.placeableTrait = new PlaceableTrait(this, false, () => {
       this.ghostableTrait.ghostMode = false;
     });
   }
 
-  private static createSpruceTreeSprite(transform: Transform): Sprite {
+  private static createSpruceTreeSprite(transform: TransformTrait): Sprite {
     const sprite = SpruceTreeSprite.createSprite("spruce-tree");
     sprite.interactive = true;
     

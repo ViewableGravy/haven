@@ -7,7 +7,7 @@ import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
 import { entitySyncRegistry } from "../../utilities/multiplayer/entitySyncRegistry";
 import type { Position } from "../../utilities/position";
-import { Transform } from "../../utilities/transform";
+import { TransformTrait } from "../../utilities/transform";
 import { BaseEntity } from "../base";
 import { ContainerTrait } from "../traits/container";
 import { GhostableTrait } from "../traits/ghostable";
@@ -16,7 +16,7 @@ import { createTestEntityInfographicNode } from "./info";
 
 /***** BASE ASSEMBLER *****/
 export class BaseAssembler extends BaseEntity {
-  public transform: Transform;
+  public transformTrait: TransformTrait;
   public assemblerSprite: Sprite;
   public selectionSprite: Sprite;
   public containerTrait: ContainerTrait;
@@ -26,19 +26,19 @@ export class BaseAssembler extends BaseEntity {
   constructor(game: Game, position: Position) {
     super({ name: "assembler" });
 
-    this.transform = Transform.createLarge(game, position.x, position.y, position.type);
-    this.assemblerSprite = BaseAssembler.createAssemblerSprite(this.transform);
-    this.selectionSprite = BaseAssembler.createSelectionSprite(this.transform);
+    this.transformTrait = TransformTrait.createLarge(game, position.x, position.y, position.type);
+    this.assemblerSprite = BaseAssembler.createAssemblerSprite(this.transformTrait);
+    this.selectionSprite = BaseAssembler.createSelectionSprite(this.transformTrait);
 
     // Initialize traits
-    this.containerTrait = new ContainerTrait(this, this.transform);
+    this.containerTrait = new ContainerTrait(this, this.transformTrait);
     this.ghostableTrait = new GhostableTrait(this, false);
     this.placeableTrait = new PlaceableTrait(this, false, () => {
       this.ghostableTrait.ghostMode = false;
     });
   }
 
-  private static createAssemblerSprite(transform: Transform): Sprite {
+  private static createAssemblerSprite(transform: TransformTrait): Sprite {
     const sprite = AssemblerSprite.createSprite("assembling-machine-1");
     sprite.interactive = true;
     sprite.width = transform.size.width;
@@ -48,7 +48,7 @@ export class BaseAssembler extends BaseEntity {
     return sprite;
   }
 
-  private static createSelectionSprite(transform: Transform): Sprite {
+  private static createSelectionSprite(transform: TransformTrait): Sprite {
     const sprite = new Sprite(Texture.from(Selection));
     sprite.width = transform.size.width;
     sprite.height = transform.size.height;

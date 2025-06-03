@@ -1,13 +1,13 @@
 import { Store } from "@tanstack/react-store";
 import type React from "react";
 import type { BaseEntity } from "../../entities/base";
-import type { HasTransform } from "../../entities/interfaces";
 import { ContainerTrait } from "../../entities/traits/container";
 import { GhostableTrait } from "../../entities/traits/ghostable";
 import { PlaceableTrait } from "../../entities/traits/placeable";
 import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
 import type { Position } from "../../utilities/position";
+import type { HasTransformTrait } from "../../utilities/transform";
 
 /***** TYPE DEFINITIONS *****/
 interface HasContainerTrait {
@@ -22,7 +22,7 @@ interface HasPlaceableTrait {
   placeableTrait: PlaceableTrait;
 }
 
-export type FollowableEntity = BaseEntity & HasGhostableTrait & HasContainerTrait & HasTransform & HasPlaceableTrait;
+export type FollowableEntity = BaseEntity & HasGhostableTrait & HasContainerTrait & HasTransformTrait & HasPlaceableTrait;
 
 export type HotbarItem = {
   name: string;

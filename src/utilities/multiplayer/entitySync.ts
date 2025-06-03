@@ -1,13 +1,13 @@
 /***** TYPE DEFINITIONS *****/
 import invariant from "tiny-invariant";
 import type { BaseEntity } from "../../entities/base";
-import type { HasTransform } from "../../entities/interfaces";
 import { ContainerTrait } from "../../entities/traits/container";
 import { GhostableTrait } from "../../entities/traits/ghostable";
 import { PlaceableTrait } from "../../entities/traits/placeable";
 import type { EntityData } from "../../server/types";
 import type { Chunk } from "../../systems/chunkManager/chunk";
 import type { Game } from "../game/game";
+import { TransformTrait } from "../transform";
 import { entitySyncRegistry } from "./entitySyncRegistry";
 
 /***** ENTITY SYNC MANAGER *****/
@@ -134,17 +134,17 @@ export class EntitySyncManager {
     GhostableTrait.setGhostMode(entity, false);
 
     // Set the entity's transform position to global coordinates
-    invariant(this.hasTransform(entity), "Entities must have a transform trait to set position");
+    invariant(TransformTrait.is(entity), "Entities must have a transform trait to set position");
     invariant(ContainerTrait.is(entity), "Entities must have a container trait to be placed in a chunk");
 
-    entity.transform.position.position = {
+    entity.transformTrait.position.position = {
       x: entityData.x,
       y: entityData.y,
       type: "global"
     };
 
     // Add to chunk and mark as placed
-    const { x, y } = chunk.toLocalPosition(entity.transform.position);
+    const { x, y } = chunk.toLocalPosition(entity.transformTrait.position);
     entity.containerTrait.container.x = x;
     entity.containerTrait.container.y = y;
 
@@ -186,11 +186,6 @@ export class EntitySyncManager {
     });
     
     this.queuedEntities = remainingQueue;
-  }
-
-  /***** TYPE GUARDS *****/
-  private hasTransform(entity: BaseEntity): entity is BaseEntity & HasTransform {
-    return 'transform' in entity;
   }
 
   /***** ENTITY REMOVAL *****/
@@ -243,10 +238,9 @@ export class EntitySyncManager {
     // Find all entities that belong to this chunk
     for (const [entityId, entity] of this.remoteEntities.entries()) {
       // Get entity's world position to determine which chunk it belongs to
-      if (this.hasTransform(entity)) {
-        const transform = entity.transform;
-        const worldX = transform.position.position.x;
-        const worldY = transform.position.position.y;
+      if (TransformTrait.is(entity)) {
+        const worldX = entity.transformTrait.position.position.x;
+        const worldY = entity.transformTrait.position.position.y;
         
         // Skip if position is undefined
         if (worldX === undefined || worldY === undefined) {
@@ -264,8 +258,6 @@ export class EntitySyncManager {
 
         continue
       }
-
-      console.log("entitiy", entity, "does not have transform trait, cannot determine position for chunk unload");
     }
   }
 

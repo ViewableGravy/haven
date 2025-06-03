@@ -1,10 +1,10 @@
 /***** TYPE DEFINITIONS *****/
 import type { BaseEntity } from "../../entities/base";
-import type { HasTransform } from "../../entities/interfaces";
 import { ContainerTrait } from "../../entities/traits/container";
 import { GhostableTrait } from "../../entities/traits/ghostable";
 import { PlaceableTrait } from "../../entities/traits/placeable";
 import type { ChunkKey } from "../tagged";
+import type { HasTransformTrait } from "../transform";
 import type { Game } from "./game";
 
 interface HasContainerTrait {
@@ -19,7 +19,7 @@ interface HasPlaceableTrait {
   placeableTrait: PlaceableTrait;
 }
 
-type PlaceableEntity = BaseEntity & HasContainerTrait & HasTransform & HasGhostableTrait & HasPlaceableTrait;
+type PlaceableEntity = BaseEntity & HasContainerTrait & HasGhostableTrait & HasPlaceableTrait & HasTransformTrait;
 
 interface EntityPlacementEvent {
   entity: PlaceableEntity;
@@ -79,7 +79,7 @@ export class EntityManager {
 
       // Update entity state with global coordinates
       GhostableTrait.setGhostMode(entity, false);
-      entity.transform.position.position = {
+      entity.transformTrait.position.position = {
         x: globalX,
         y: globalY,
         type: "global"

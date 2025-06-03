@@ -20,7 +20,7 @@ export const createSpruceTreeInfographicNode = (entity: SpruceTree): React.FC =>
       <p style={{ margin: '5px 0', fontSize: '12px', color: '#ccc' }}>
         • Provides natural decoration to the landscape<br/>
         • Can be manually placed or naturally generated<br/>
-        • Position: ({Math.round(entity.transform.position.position.x ?? 0)}, {Math.round(entity.transform.position.position.y ?? 0)})
+        • Position: ({Math.round(entity.transformTrait.position.position.x ?? 0)}, {Math.round(entity.transformTrait.position.position.y ?? 0)})
       </p>
     </div>
   );

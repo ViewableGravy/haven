@@ -1,13 +1,19 @@
+import type { BaseEntity } from "../../entities/base";
 import type { Game } from "../game/game";
+import type { PositionType } from "../position";
 import { SubscribablePosition } from "../position/subscribable";
 import { Rectangle } from "../rectangle";
 import { Size } from "../size";
+
+export interface HasTransformTrait {
+  transformTrait: TransformTrait;
+}
 
 /**
  * Transform combines position, size, and rectangle into a single cohesive system
  * This simplifies entity creation and management
  */
-export class Transform {
+export class TransformTrait {
   public position: SubscribablePosition;
   public size: Size;
   public rectangle: Rectangle;
@@ -29,20 +35,20 @@ export class Transform {
   }
 
   // Factory methods for common entity sizes
-  static createSmall(game: Game, x: number, y: number, positionType?: "global" | "screenspace"): Transform {
-    return new Transform(game, x, y, game.consts.tileSize, game.consts.tileSize, positionType);
+  static createSmall(game: Game, x: number, y: number, positionType?: PositionType): TransformTrait {
+    return new TransformTrait(game, x, y, game.consts.tileSize, game.consts.tileSize, positionType);
   }
  
-  static createMedium(game: Game, x: number, y: number, positionType?: "global" | "screenspace"): Transform {
-    return new Transform(game, x, y, game.consts.tileSize * 2, game.consts.tileSize * 2, positionType);
+  static createMedium(game: Game, x: number, y: number, positionType?: PositionType): TransformTrait {
+    return new TransformTrait(game, x, y, game.consts.tileSize * 2, game.consts.tileSize * 2, positionType);
   }
 
-  static createLarge(game: Game, x: number, y: number, positionType?: "global" | "screenspace"): Transform {
-    return new Transform(game, x, y, game.consts.tileSize * 3, game.consts.tileSize * 3, positionType);
+  static createLarge(game: Game, x: number, y: number, positionType?: PositionType): TransformTrait {
+    return new TransformTrait(game, x, y, game.consts.tileSize * 3, game.consts.tileSize * 3, positionType);
   }
 
-  static createCustom(game: Game, x: number, y: number, width: number, height: number, positionType?: "global" | "screenspace"): Transform {
-    return new Transform(game, x, y, width, height, positionType);
+  static createCustom(game: Game, x: number, y: number, width: number, height: number, positionType?: PositionType): TransformTrait {
+    return new TransformTrait(game, x, y, width, height, positionType);
   }
 
   // Helper methods
@@ -54,11 +60,15 @@ export class Transform {
     this.size.size = { width, height };
   }
 
-  public intersects(other: Transform): boolean {
+  public intersects(other: TransformTrait): boolean {
     return Rectangle.intersects(this.rectangle, other.rectangle);
   }
 
-  public contains(other: Transform): boolean {
+  public contains(other: TransformTrait): boolean {
     return Rectangle.contains(this.rectangle, other.rectangle);
+  }
+
+  public static is(entity: BaseEntity): entity is BaseEntity & HasTransformTrait {
+    return 'transformTrait' in entity && entity.transformTrait instanceof TransformTrait;
   }
 }
