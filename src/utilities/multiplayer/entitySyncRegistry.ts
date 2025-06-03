@@ -28,7 +28,7 @@ export class EntitySyncRegistry {
 
     try {
       // Create entity at temporary position (will be positioned properly by EntitySyncManager)
-      const tempPosition = { x: 0, y: 0, type: "local" as const };
+      const tempPosition: Position = { x: 0, y: 0, type: "global" as const };
       const entity = creator.creatorFunction(game, tempPosition);
       
       // Set multiplayer properties using BaseEntity methods

@@ -1,4 +1,4 @@
-export type PositionType = "global" | "local" | "screenspace";
+export type PositionType = "global" | "screenspace" | "local";
 export type NonNullablePosition = Omit<Position, "type"> & { type: PositionType };
 
 type Args = [number, number] | [number, number, PositionType];

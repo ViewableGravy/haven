@@ -1,12 +1,13 @@
 /***** TYPE DEFINITIONS *****/
+import invariant from "tiny-invariant";
 import type { BaseEntity } from "../../entities/base";
 import type { HasTransform } from "../../entities/interfaces";
 import { ContainerTrait } from "../../entities/traits/container";
 import { GhostableTrait } from "../../entities/traits/ghostable";
 import { PlaceableTrait } from "../../entities/traits/placeable";
 import type { EntityData } from "../../server/types";
+import type { Chunk } from "../../systems/chunkManager/chunk";
 import type { Game } from "../game/game";
-import { Position } from "../position";
 import { entitySyncRegistry } from "./entitySyncRegistry";
 
 /***** ENTITY SYNC MANAGER *****/
@@ -117,7 +118,6 @@ export class EntitySyncManager {
     // Try to get the appropriate chunk using global coordinates
     // If chunk doesn't exist yet, queue this entity for later placement
     try {
-      entityData.chunkX
       const chunk = this.game.controllers.chunkManager.getChunk(entityData.x, entityData.y);
       this.placeEntityInChunk(entity, entityData, chunk);
     } catch {
@@ -129,31 +129,29 @@ export class EntitySyncManager {
   /**
    * Actually places an entity in a chunk
    */
-  private placeEntityInChunk(entity: any, entityData: EntityData, chunk: any): void {
-
-    // Convert global position to local chunk coordinates
-    const globalPosition = new Position(entityData.x, entityData.y, "global");
-    const localPosition = chunk.toLocalPosition(globalPosition);
-
+  private placeEntityInChunk(entity: BaseEntity, entityData: EntityData, chunk: Chunk): void {
     // Ensure entity is not in ghost mode (if it supports ghosting)
     GhostableTrait.setGhostMode(entity, false);
 
-    // Set the entity's transform position to local coordinates
-    if (this.hasTransform(entity)) {
-      entity.transform.position.position = {
-        x: localPosition.x,
-        y: localPosition.y,
-        type: "local"
-      };
-    }
+    // Set the entity's transform position to global coordinates
+    invariant(this.hasTransform(entity), "Entities must have a transform trait to set position");
+    invariant(ContainerTrait.is(entity), "Entities must have a container trait to be placed in a chunk");
+
+    entity.transform.position.position = {
+      x: entityData.x,
+      y: entityData.y,
+      type: "global"
+    };
 
     // Add to chunk and mark as placed
-    if (ContainerTrait.is(entity)) {
-      chunk.addChild(entity.containerTrait.container);
+    const { x, y } = chunk.toLocalPosition(entity.transform.position);
+    entity.containerTrait.container.x = x;
+    entity.containerTrait.container.y = y;
 
-      // Mark entity as placed if it has the placeable trait
-      PlaceableTrait.place(entity);
-    }
+    chunk.addChild(entity.containerTrait.container);
+
+    // Mark entity as placed if it has the placeable trait
+    PlaceableTrait.place(entity);
 
     // Add to entity manager and track as remote entity
     this.game.entityManager.addEntity(entity);

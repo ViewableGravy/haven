@@ -77,15 +77,12 @@ export class EntityManager {
       // Get appropriate chunk
       const chunk = this.game.controllers.chunkManager.getChunk(globalX, globalY);
 
-      // Convert to local chunk coordinates
-      const localPosition = chunk.toLocalPosition({ x: globalX, y: globalY, type: "global" });
-
-      // Update entity state
+      // Update entity state with global coordinates
       GhostableTrait.setGhostMode(entity, false);
       entity.transform.position.position = {
-        x: localPosition.x,
-        y: localPosition.y,
-        type: "local"
+        x: globalX,
+        y: globalY,
+        type: "global"
       };
 
       // Place entity in chunk and add to tracking
