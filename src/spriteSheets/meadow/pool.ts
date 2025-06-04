@@ -22,16 +22,25 @@ export abstract class SpritePool<TPoolName> {
     abstract createSprite(name: TPoolName): Sprite
 
 // public:
+    /**
+     * Borrows a sprite from the pool of sprites with the given name. If a sprite
+     * does not exist in the pool, it will be created and returned, with the expectation
+     * that it will be returned to the pool later.
+     */
     public borrowSprite = (name: TPoolName): BorrowedSpriteResult => {
         const sprite = this.getOrCreateSprite(name);
-        const returnSprite = () => this.returnSprite(name, sprite);
+        const returnSprite = () => this.releaseSprite(name, sprite);
 
         return [sprite, returnSprite];
     }
 
-    public returnSprite = (name: TPoolName, sprite: Sprite): void => {
+    /**
+     * Returns a sprite to the pool. The sprite must be removed from its parent before
+     * returning it to the pool.
+     */
+    public releaseSprite = (name: TPoolName, sprite: Sprite): void => {
         invariant(sprite, "Sprite must not be null or undefined");
-        invariant(sprite.parent, "Sprite must be removed from its parent before returning to pool");
+        invariant(!sprite.parent, "Sprite must be removed from its parent before returning to pool");
 
         const pool = this.getSpritePool(name);
         if (pool && pool.length < this.MAX_POOL_SIZE) {

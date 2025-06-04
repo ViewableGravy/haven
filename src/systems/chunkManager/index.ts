@@ -25,6 +25,7 @@ export interface ChunkLoadedEvent {
 export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
   private chunkRegistry = new ChunkRegistry();
   private unloadingManager: ChunkUnloadingManager;
+  private meadowSprite: MeadowSprite;
 
   /**
    * Creates a new ChunkManager instance
@@ -39,6 +40,7 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     
     // Initialize the chunk unloading manager
     this.unloadingManager = new ChunkUnloadingManager(this.game, this);
+    this.meadowSprite = new MeadowSprite();
   }
 
   /**
@@ -133,7 +135,7 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     }
     
     // Use meadow sprite texture creation
-    const renderTexture = MeadowSprite.createChunkTexture(
+    const renderTexture = this.meadowSprite.createChunkTexture(
       spriteData,
       this.game.state.app.renderer,
       chunkAbsolute,
