@@ -3,7 +3,7 @@ import Selection from "../../assets/selection.png";
 import { refreshHotbarItems } from "../../components/hotbar/store";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
 import { CharacterSprite } from "../../spriteSheets/character";
-import { MeadowSprite } from "../../spriteSheets/meadow";
+import { MeadowSprite } from "../../spriteSheets/meadow/meadow";
 import { RunningSprite } from "../../spriteSheets/running";
 import { SpruceTreeSprite } from "../../spriteSheets/spruceTree";
 // Import assembler factory to ensure infographic registration happens

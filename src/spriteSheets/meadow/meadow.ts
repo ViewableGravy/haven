@@ -1,7 +1,7 @@
 /***** TYPE DEFINITIONS *****/
 import { Assets, Container, RenderTexture, Sprite, Spritesheet, Texture } from "pixi.js";
 import invariant from "tiny-invariant";
-import MeadowSpritesAsset from '../assets/meadow-sprites.png';
+import MeadowSpritesAsset from '../../assets/meadow-sprites.png';
 
 /***** MEADOW SPRITE CLASS *****/
 export class MeadowSprite {
@@ -51,7 +51,7 @@ export class MeadowSprite {
   /**
    * Get a sprite by index (0-5)
    */
-  public static getSpriteByIndex = (index: number): Sprite => {
+  public static createSpriteByIndex = (index: number): Sprite => {
     invariant(index >= 0 && index <= 5, `Invalid sprite index: ${index}. Must be 0-5.`);
     const spriteName = `meadow-${index}` as keyof typeof MeadowSprite.atlas['frames'];
     return MeadowSprite.createSprite(spriteName);
@@ -73,7 +73,7 @@ export class MeadowSprite {
     // Try to reuse from pool, otherwise create new
     const sprite = pool.length > 0 
       ? pool.pop()! 
-      : MeadowSprite.getSpriteByIndex(spriteIndex);
+      : MeadowSprite.createSpriteByIndex(spriteIndex);
 
     // Reset sprite to default state
     // sprite.x = 0;

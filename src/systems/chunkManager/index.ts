@@ -2,7 +2,7 @@ import { Container, Graphics, Sprite, Texture, type ContainerChild } from "pixi.
 import invariant from "tiny-invariant";
 import type { BaseEntity } from "../../entities/base";
 import { ContainerTrait } from "../../entities/traits/container";
-import { MeadowSprite } from "../../spriteSheets/meadow";
+import { MeadowSprite } from "../../spriteSheets/meadow/meadow";
 import { EventEmitter } from "../../utilities/eventEmitter";
 import type { Game } from "../../utilities/game/game";
 import { logger } from "../../utilities/logger";
