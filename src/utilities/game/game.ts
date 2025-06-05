@@ -12,6 +12,7 @@ import "../../entities/assembler/factory";
 import "../../entities/spruceTree/factory";
 import { GameConstants } from "../../shared/constants";
 import { ChunkManager } from "../../systems/chunkManager";
+import { globalRenderTexturePool } from "../../systems/chunkManager/renderTexturePool";
 import { KeyboardController } from "../keyboardController";
 import { logger } from "../logger";
 import { MultiplayerManager } from "../multiplayer/manager";
@@ -160,9 +161,20 @@ export class Game {
     });
   }
 
+  /***** RENDER TEXTURE POOL SETUP *****/
+  private initializeRenderTexturePool() {
+    // Warm up the render texture pool with some initial textures
+    // This helps reduce allocation spikes during gameplay
+    globalRenderTexturePool.warmPool(5);
+    logger.log('Render texture pool initialized and warmed');
+  }
+
   private async initializeSystems() {
     // Initialize controllers
     this.controllers.keyboard = new KeyboardController();
+    
+    // Initialize render texture pool
+    this.initializeRenderTexturePool();
     
     // Create and setup player
     const player = this.setupPlayer();
@@ -290,6 +302,10 @@ export class Game {
 
     // Clean up chunk manager and its dependencies
     this.controllers.chunkManager?.destroy();
+
+    // Clean up render texture pool
+    globalRenderTexturePool.destroy();
+    logger.log('Render texture pool cleared');
 
     // Clean up entity manager
     this.entityManager.clear();

@@ -229,6 +229,13 @@ export class EntitySyncManager {
   /**
    * Handle chunk unloading by cleaning up entity references for that chunk
    * This prevents duplicate detection when chunks are reloaded
+   * 
+   * TODO: There is still a lot of performance left on the table here, since
+   * we are iterating through all remote entities rather than just the ones
+   * that are in the chunk being unloaded. This is fine for now, but should
+   * create a quad tree to store entities by chunk coordinates, or 
+   * simply store them in a cache based on chunk coordinates.
+   * 
    * @param chunkKey - The key of the chunk being unloaded
    */
   public handleChunkUnload(chunkKey: string): void {    

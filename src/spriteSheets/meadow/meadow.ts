@@ -44,16 +44,18 @@ export class MeadowSprite extends SpritePool<MeadowSpriteName> {
    * @param renderer - PIXI renderer for texture generation
    * @param chunkSize - Size of the chunk in pixels (typically 1024)
    * @param tileSize - Size of each tile in pixels (typically 64)
+   * @param externalRenderTexture - Optional pre-allocated RenderTexture to use (for pooling)
    * @returns Rendered texture containing all sprites
    */
   public createChunkTexture = (
     spriteData: Array<{ x: number, y: number, spriteIndex: number }>,
     renderer: any,
     chunkSize: number,
-    tileSize: number
+    tileSize: number,
+    externalRenderTexture?: RenderTexture
   ): RenderTexture => {
-    // Create render texture for the chunk
-    const renderTexture = RenderTexture.create({
+    // Use provided texture or create new one
+    const renderTexture = externalRenderTexture ?? RenderTexture.create({
       width: chunkSize,
       height: chunkSize,
     });

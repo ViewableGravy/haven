@@ -1,8 +1,9 @@
-import { Container, Rectangle, type ContainerChild } from "pixi.js";
+import { Container, Rectangle, RenderTexture, Sprite, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
 import type { Game } from "../../utilities/game/game";
 import { logger } from "../../utilities/logger";
 import { Position } from "../../utilities/position";
+import { globalRenderTexturePool } from "./renderTexturePool";
 
 /***** TYPE DEFINITIONS *****/
 export interface ChunkPosition {
@@ -116,10 +117,34 @@ export class Chunk {
    * Destroys the chunk and its container
    */
   public destroy(): void {
+    // Extract and return render textures to pool before destroying
+    this.returnRenderTexturesToPool();
+    
     // Recursively destroy children and their textures
     this.container.destroy({ 
       children: true, 
       texture: true
+    });
+  }
+
+  /***** RENDER TEXTURE POOL MANAGEMENT *****/
+  /**
+   * Finds and returns RenderTextures to the pool before chunk destruction
+   */
+  private returnRenderTexturesToPool(): void {
+    // Walk through all children to find sprites with RenderTextures
+    this.container.children.forEach((child) => {
+      if (child instanceof Sprite && child.texture instanceof RenderTexture) {
+        const renderTexture = child.texture;
+        
+        // Remove the texture from the sprite to prevent it from being destroyed
+        child.texture = null as any; // Temporarily null to prevent destruction
+        
+        // Return the render texture to the pool
+        globalRenderTexturePool.returnTexture(renderTexture);
+        
+        logger.log("Chunk: Returned RenderTexture to pool during destruction");
+      }
     });
   }
 }

@@ -30,6 +30,10 @@ export namespace GameConstants {
   export const HALF_CHUNK_RENDER_WIDTH = Math.floor(CHUNK_RENDER_WIDTH / 2);
   export const HALF_CHUNK_RENDER_HEIGHT = Math.floor(CHUNK_RENDER_HEIGHT / 2);
 
+  /***** RENDER TEXTURE POOL CONFIGURATION *****/
+  /** Maximum number of render textures to keep in the pool */
+  export const MAX_RENDER_TEXTURE_POOL_SIZE = 20;
+
   /***** NOISE GENERATION CONFIGURATION *****/
   /** Divisor for noise generation to control terrain scale */
   export const NOISE_DIVISOR = 500;

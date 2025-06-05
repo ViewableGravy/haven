@@ -9,6 +9,7 @@ import { logger } from "../../utilities/logger";
 import { createChunkKey, type ChunkKey } from "../../utilities/tagged";
 import { Chunk } from "./chunk";
 import { ChunkRegistry } from "./registry";
+import { globalRenderTexturePool } from "./renderTexturePool";
 import { ChunkUnloadingManager } from "./unloadingManager";
 
 /***** TYPE DEFINITIONS *****/
@@ -134,15 +135,19 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
       };
     }
     
-    // Use meadow sprite texture creation
+    // Borrow a render texture from the pool
+    const pooledRenderTexture = globalRenderTexturePool.borrowTexture();
+    
+    // Use meadow sprite texture creation with pooled texture
     const renderTexture = this.meadowSprite.createChunkTexture(
       spriteData,
       this.game.state.app.renderer,
       chunkAbsolute,
-      tileSize
+      tileSize,
+      pooledRenderTexture
     );
     
-    logger.log(`ChunkManager: Created sprite-based background texture`);
+    logger.log(`ChunkManager: Created sprite-based background texture using pooled RenderTexture`);
     return renderTexture;
   }
 
