@@ -27,6 +27,10 @@ export class RemotePlayer {
   private velocity: { x: number; y: number } = { x: 0, y: 0 };
   private interpolationSpeed: number = 0.15;
   private predictionTime: number = 100; // ms to predict ahead
+  
+  // Cleanup tracking
+  private positionUnsubscribe: (() => void) | null = null;
+  private animationFrameId: number | null = null;
 
   constructor(id: string, x: number, y: number, game: Game) {
     this.id = id;
@@ -67,7 +71,7 @@ export class RemotePlayer {
     this.sprite.tint = 0xccccff;
 
     // Subscribe to position changes to update sprite position
-    this.position.subscribeImmediately(({ x, y }) => {
+    this.positionUnsubscribe = this.position.subscribeImmediately(({ x, y }) => {
       if (this.sprite) {
         this.sprite.x = x;
         this.sprite.y = y;
@@ -104,9 +108,9 @@ export class RemotePlayer {
   private startUpdateLoop(): void {
     const update = () => {
       this.interpolatePosition();
-      requestAnimationFrame(update);
+      this.animationFrameId = requestAnimationFrame(update);
     };
-    requestAnimationFrame(update);
+    this.animationFrameId = requestAnimationFrame(update);
   }
 
   private interpolatePosition(): void {
@@ -182,6 +186,19 @@ export class RemotePlayer {
 
   /***** CLEANUP *****/
   public destroy(): void {
+    // Cancel animation frame loop
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+    
+    // Unsubscribe from position changes
+    if (this.positionUnsubscribe) {
+      this.positionUnsubscribe();
+      this.positionUnsubscribe = null;
+    }
+    
+    // Clean up sprite
     if (this.sprite) {
       this.game.world.removeChild(this.sprite);
       this.sprite.destroy();

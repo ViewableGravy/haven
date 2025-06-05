@@ -244,7 +244,7 @@ export class EntitySyncManager {
         
         // Skip if position is undefined
         if (worldX === undefined || worldY === undefined) {
-          return;
+          continue;
         }
         
         // Calculate which chunk this entity belongs to
@@ -255,8 +255,6 @@ export class EntitySyncManager {
         if (entityChunkX === chunkX && entityChunkY === chunkY) {
           this.handleRemoteEntityRemoved({ id: entityId });
         }
-
-        continue
       }
     }
   }

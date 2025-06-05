@@ -1,4 +1,4 @@
-import { Container, type ContainerChild } from "pixi.js";
+import { Container, Rectangle, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
 import type { Game } from "../../utilities/game/game";
 import { logger } from "../../utilities/logger";
@@ -35,6 +35,7 @@ export class Chunk {
     this.container.y = worldY;
     this.container.width = size;
     this.container.height = size;
+    this.container.boundsArea = new Rectangle(0, 0, size, size);
     this.container.zIndex = 0;
     this.container.sortableChildren = true;
     
@@ -115,6 +116,10 @@ export class Chunk {
    * Destroys the chunk and its container
    */
   public destroy(): void {
-    this.container.destroy();
+    // Recursively destroy children and their textures
+    this.container.destroy({ 
+      children: true, 
+      texture: true
+    });
   }
 }

@@ -78,6 +78,9 @@ export class MultiplayerClient {
       this.ws = null;
       this.isConnected = false;
     }
+    
+    // Clear all event handlers to prevent memory leaks
+    this.events = {};
   }
 
   /***** MESSAGE HANDLING *****/

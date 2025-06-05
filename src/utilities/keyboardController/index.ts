@@ -14,8 +14,8 @@ export class KeyboardController {
 
   constructor() {
     // Register event listeners for keydown and keyup events.
-    window.addEventListener("keydown", (event) => this.keydownHandler(event));
-    window.addEventListener("keyup", (event) => this.keyupHandler(event));
+    window.addEventListener("keydown", this.keydownHandler);
+    window.addEventListener("keyup", this.keyupHandler);
   }
 
   private keydownHandler = (event: KeyboardEvent) => {
@@ -64,4 +64,10 @@ export class KeyboardController {
     KeyD: "right",
     ArrowRight: "right",
   } as const;
+
+  /***** CLEANUP *****/
+  public destroy(): void {
+    window.removeEventListener("keydown", this.keydownHandler);
+    window.removeEventListener("keyup", this.keyupHandler);
+  }
 }

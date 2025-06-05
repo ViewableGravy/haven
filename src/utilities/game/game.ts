@@ -282,6 +282,9 @@ export class Game {
   }
 
   public destroy = () => {
+    // Clean up keyboard controller event listeners
+    this.controllers.keyboard?.destroy();
+    
     // Clean up multiplayer system
     this.controllers.multiplayer?.destroy();
 
