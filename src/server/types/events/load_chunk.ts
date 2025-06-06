@@ -8,7 +8,8 @@ export namespace LoadChunkEvent {
     export type Tile = {
         x: number,
         y: number,
-        spriteIndex: number,
+        index: number,
+        biome: "meadow"
     }
     
     export type LoadChunkType = "load_chunk";

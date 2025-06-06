@@ -1,15 +1,15 @@
-import { Container, Graphics, Sprite, Texture, type ContainerChild } from "pixi.js";
+import { Container, Graphics, Sprite, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
 import type { BaseEntity } from "../../entities/base";
 import { ContainerTrait } from "../../entities/traits/container";
-import { MeadowSprite } from "../../spriteSheets/meadow/meadow";
+import type { LoadChunkEvent } from "../../server/types/events/load_chunk";
 import { EventEmitter } from "../../utilities/eventEmitter";
 import type { Game } from "../../utilities/game/game";
 import { logger } from "../../utilities/logger";
 import { createChunkKey, type ChunkKey } from "../../utilities/tagged";
 import { Chunk } from "./chunk";
 import { ChunkRegistry } from "./registry";
-import { globalRenderTexturePool } from "./renderTexturePool";
+import { ChunkTextureBuilder } from "./textureBuilder";
 import { ChunkUnloadingManager } from "./unloadingManager";
 
 /***** TYPE DEFINITIONS *****/
@@ -26,7 +26,7 @@ export interface ChunkLoadedEvent {
 export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
   private chunkRegistry = new ChunkRegistry();
   private unloadingManager: ChunkUnloadingManager;
-  private meadowSprite: MeadowSprite;
+  private chunkTextureBuilder: ChunkTextureBuilder;
 
   /**
    * Creates a new ChunkManager instance
@@ -41,7 +41,7 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     
     // Initialize the chunk unloading manager
     this.unloadingManager = new ChunkUnloadingManager(this.game, this);
-    this.meadowSprite = new MeadowSprite();
+    this.chunkTextureBuilder = new ChunkTextureBuilder(this.game.state.app.renderer);
   }
 
   /**
@@ -118,39 +118,6 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     return this.chunkRegistry.hasChunk(createChunkKey(chunkX, chunkY));
   }
 
-  /***** EFFICIENT TILE RENDERING *****/
-  private createChunkBackgroundTexture(
-    tiles: Array<{ x: number, y: number, spriteIndex: number }>
-  ): Texture {
-    const { tileSize, chunkAbsolute } = this.game.consts;
-    
-    // Create sprite data array for meadow sprite texture creation
-    const spriteData = new Array(tiles.length);
-    for (let i = 0; i < tiles.length; i++) {
-      const tile = tiles[i];
-      spriteData[i] = {
-        x: tile.x,
-        y: tile.y,
-        spriteIndex: tile.spriteIndex,
-      };
-    }
-    
-    // Borrow a render texture from the pool
-    const pooledRenderTexture = globalRenderTexturePool.borrowTexture();
-    
-    // Use meadow sprite texture creation with pooled texture
-    const renderTexture = this.meadowSprite.createChunkTexture(
-      spriteData,
-      this.game.state.app.renderer,
-      chunkAbsolute,
-      tileSize,
-      pooledRenderTexture
-    );
-    
-    logger.log(`ChunkManager: Created sprite-based background texture using pooled RenderTexture`);
-    return renderTexture;
-  }
-
   /***** SERVER CHUNK CREATION *****/
   public registerChunkWithEntities(
     chunkKey: ChunkKey, 
@@ -190,7 +157,7 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
   public createChunkFromTiles(
     chunkX: number,
     chunkY: number,
-    tiles: Array<{ x: number, y: number, spriteIndex: number }>
+    tiles: Array<LoadChunkEvent.Tile>
   ): Chunk {
     logger.log(`ChunkManager: Creating chunk (${chunkX}, ${chunkY}) from ${tiles.length} tiles`);
     
@@ -201,7 +168,7 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     logger.log(`ChunkManager: Chunk size should be ${this.game.consts.chunkAbsolute}x${this.game.consts.chunkAbsolute} pixels`);
     
     // Generate background texture efficiently
-    const backgroundTexture = this.createChunkBackgroundTexture(tiles);
+    const backgroundTexture = this.chunkTextureBuilder.createChunkBackgroundTexture(tiles);
     
     // Create single sprite from the generated texture
     const backgroundSprite = new Sprite(backgroundTexture);

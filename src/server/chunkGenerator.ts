@@ -76,12 +76,15 @@ export class ServerChunkGenerator {
         const yOffset = (chunkY * size) + y;
         
         // Generate sprite index using perlin noise
-        const spriteIndex = this.generateSpriteIndex(xOffset / this.noiseDivisor, yOffset / this.noiseDivisor);
+        const index = this.generateSpriteIndex(xOffset / this.noiseDivisor, yOffset / this.noiseDivisor);
 
         tiles.push({
           x,
           y,
-          spriteIndex
+          index,
+
+          // All tiles in this generator are meadow tiles for now
+          biome: "meadow"
         });
       }
     }

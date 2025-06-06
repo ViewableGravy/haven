@@ -32,7 +32,7 @@ export class RenderTexturePool {
    * Borrows a RenderTexture from the pool. If pool is empty, creates a new texture.
    * @returns RenderTexture ready for use
    */
-  public borrowTexture(): RenderTexture {
+  public borrowTexture(width: number, height: number): RenderTexture {
     let texture: RenderTexture;
 
     if (this.pool.length > 0) {
@@ -40,8 +40,8 @@ export class RenderTexturePool {
       logger.log(`RenderTexturePool: Borrowed texture from pool (${this.pool.length} remaining)`);
     } else {
       texture = RenderTexture.create({
-        width: this.textureWidth,
-        height: this.textureHeight,
+        width,
+        height,
       });
       logger.log(`RenderTexturePool: Created new texture (pool was empty)`);
     }
