@@ -42,7 +42,7 @@ export class DesertSprite {
     "desert-8": true
   };
   
-  public static size = 300; 
+  public static size = 290; 
   public static load = async (): Promise<void> => {
     // Load the asset sheet
     await Assets.load(DesertSprite.atlas.meta.image);
@@ -93,47 +93,47 @@ export class DesertSprite {
   public static atlas: Atlas<DesertSpriteName> = {
     frames: {
       "desert-0": {
-        frame: { x: 20, y: 20, w: DesertSprite.size, h: DesertSprite.size },
+        frame: { x: 20, y: 25, w: DesertSprite.size, h: DesertSprite.size },
         sourceSize: { w: DesertSprite.size, h: DesertSprite.size },
         spriteSourceSize: { x: 0, y: 0, w: DesertSprite.size, h: DesertSprite.size },
       },
       "desert-1": {
-        frame: { x: 320, y: 20, w: DesertSprite.size, h: DesertSprite.size },
+        frame: { x: 355, y: 25, w: DesertSprite.size, h: DesertSprite.size },
         sourceSize: { w: DesertSprite.size, h: DesertSprite.size },
         spriteSourceSize: { x: 0, y: 0, w: DesertSprite.size, h: DesertSprite.size },
       },
       "desert-2": {
-        frame: { x: 620, y: 20, w: DesertSprite.size, h: DesertSprite.size },
+        frame: { x: 695, y: 25, w: DesertSprite.size, h: DesertSprite.size },
         sourceSize: { w: DesertSprite.size, h: DesertSprite.size },
         spriteSourceSize: { x: 0, y: 0, w: DesertSprite.size, h: DesertSprite.size },
       },
       "desert-3": {
-        frame: { x: 20, y: 320, w: DesertSprite.size, h: DesertSprite.size },
+        frame: { x: 20, y: 345, w: DesertSprite.size, h: DesertSprite.size },
         sourceSize: { w: DesertSprite.size, h: DesertSprite.size },
         spriteSourceSize: { x: 0, y: 0, w: DesertSprite.size, h: DesertSprite.size },
       },
       "desert-4": {
-        frame: { x: 320, y: 320, w: DesertSprite.size, h: DesertSprite.size },
+        frame: { x: 355, y: 345, w: DesertSprite.size, h: DesertSprite.size },
         sourceSize: { w: DesertSprite.size, h: DesertSprite.size },
         spriteSourceSize: { x: 0, y: 0, w: DesertSprite.size, h: DesertSprite.size },
       },
       "desert-5": {
-        frame: { x: 620, y: 320, w: DesertSprite.size, h: DesertSprite.size },
+        frame: { x: 695, y: 345, w: DesertSprite.size, h: DesertSprite.size },
         sourceSize: { w: DesertSprite.size, h: DesertSprite.size },
         spriteSourceSize: { x: 0, y: 0, w: DesertSprite.size, h: DesertSprite.size },
       },
       "desert-6": {
-        frame: { x: 20, y: 620, w: DesertSprite.size, h: DesertSprite.size },
+        frame: { x: 20, y: 670, w: DesertSprite.size, h: DesertSprite.size },
         sourceSize: { w: DesertSprite.size, h: DesertSprite.size },
         spriteSourceSize: { x: 0, y: 0, w: DesertSprite.size, h: DesertSprite.size },
       },
       "desert-7": {
-        frame: { x: 320, y: 620, w: DesertSprite.size, h: DesertSprite.size },
+        frame: { x: 355, y: 670, w: DesertSprite.size, h: DesertSprite.size },
         sourceSize: { w: DesertSprite.size, h: DesertSprite.size },
         spriteSourceSize: { x: 0, y: 0, w: DesertSprite.size, h: DesertSprite.size },
       },
       "desert-8": {
-        frame: { x: 620, y: 620, w: DesertSprite.size, h: DesertSprite.size },
+        frame: { x: 695, y: 670, w: DesertSprite.size, h: DesertSprite.size },
         sourceSize: { w: DesertSprite.size, h: DesertSprite.size },
         spriteSourceSize: { x: 0, y: 0, w: DesertSprite.size, h: DesertSprite.size },
       }

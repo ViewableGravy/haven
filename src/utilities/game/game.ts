@@ -11,6 +11,7 @@ import "../../entities/assembler/factory";
 // Import spruce tree factory to ensure infographic registration happens
 import "../../entities/spruceTree/factory";
 import { GameConstants } from "../../shared/constants";
+import { DesertSprite } from "../../spriteSheets/desert/desert";
 import { ChunkManager } from "../../systems/chunkManager";
 import { globalRenderTexturePool } from "../../systems/chunkManager/renderTexturePool";
 import { KeyboardController } from "../keyboardController";
@@ -282,6 +283,7 @@ export class Game {
     await AssemblerSprite.load();
     await CharacterSprite.load();
     await MeadowSprite.load();
+    await DesertSprite.load();
     await RunningSprite.load();
     await SpruceTreeSprite.load();
     await Assets.load(Selection);

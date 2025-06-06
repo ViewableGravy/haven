@@ -31,7 +31,7 @@ export namespace GameConstants {
 
   /***** NOISE GENERATION CONFIGURATION *****/
   /** Divisor for noise generation to control terrain scale */
-  export const NOISE_DIVISOR = 500;
+  export const NOISE_DIVISOR = 3000;
   
   /** Default seed for consistent world generation */
   export const DEFAULT_SEED = 'haven-world-seed';

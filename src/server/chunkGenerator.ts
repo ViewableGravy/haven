@@ -66,6 +66,7 @@ export class ServerChunkGenerator {
     // Re-initialize seed to ensure consistent generation
     this.initializeSeed();
 
+    // First pass: Generate initial tiles based on perlin noise
     for (let i = 0; i < this.chunkSize; i++) {
       for (let j = 0; j < this.chunkSize; j++) {
         const x = this.tileSize * i;
@@ -75,30 +76,34 @@ export class ServerChunkGenerator {
         const xOffset = (chunkX * size) + x;
         const yOffset = (chunkY * size) + y;
         
-        // Generate sprite index using perlin noise
-        const index = this.generateSpriteIndex(xOffset / this.noiseDivisor, yOffset / this.noiseDivisor);
+        // Generate initial biome and sprite index using perlin noise
+        const biomeData = this.generateBiomeAndSprite(xOffset / this.noiseDivisor, yOffset / this.noiseDivisor);
 
         tiles.push({
           x,
           y,
-          index,
-
-          // All tiles in this generator are meadow tiles for now
-          biome: "meadow"
+          index: biomeData.index,
+          biome: biomeData.biome
         });
       }
     }
+
+    // Run multiple smoothing passes to create natural biome transitions
+    this.applySmoothingPasses(tiles, chunkX, chunkY, 5);
 
     return tiles;
   }
 
   /**
-   * Generate a sprite index based on perlin noise at the given coordinates
+   * Generate biome and sprite index based on perlin noise at the given coordinates
+   * 
+   * In the future, this should be 
+   * 
    * @param x - The x coordinate for noise generation
    * @param y - The y coordinate for noise generation
-   * @returns Sprite index (0-5) for meadow sprites
+   * @returns Object containing biome type and sprite index
    */
-  private generateSpriteIndex(x: number, y: number): number {
+  private generateBiomeAndSprite(x: number, y: number): { biome: "desert" | "meadow"; index: number } {
     // Generate primary noise value (0-1)
     const baseNoise: number = perlinNoise(x, y);
     
@@ -113,8 +118,20 @@ export class ServerChunkGenerator {
     const variation: number = (Math.random() - 0.05) * randomFactor;
     const noiseValue: number = Math.max(0, Math.min(1, combinedNoise + variation));
     
-    // Map to sprite index (0-5)
-    return Math.floor(noiseValue * 6);
+    // Determine biome based on noise value
+    if (noiseValue < 0.4) {
+      // Desert biome (0-8 sprite indices)
+      return {
+        biome: "desert",
+        index: Math.floor(noiseValue * 22.5) // Map 0-0.4 to 0-8
+      };
+    } else {
+      // Meadow biome (0-5 sprite indices)
+      return {
+        biome: "meadow",
+        index: Math.floor((noiseValue - 0.4) * 6) // Map 0.4-1 to 0-5
+      };
+    }
   }
 
   /**
@@ -157,6 +174,11 @@ export class ServerChunkGenerator {
       const globalTreeX = (chunkX * size) + localTreeX;
       const globalTreeY = (chunkY * size) + localTreeY;
       
+      // Check biome at tree position and within 3-tile radius - only place trees on meadow tiles
+      if (!this.isSafeTreeLocation(globalTreeX, globalTreeY)) {
+        continue; // Skip tree generation if location is unsafe (desert nearby)
+      }
+      
       // Generate unique entity ID using chunk and tree index
       const entityId = `spruce-tree-${chunkX}-${chunkY}-${i}`;
       
@@ -172,6 +194,80 @@ export class ServerChunkGenerator {
     }
 
     return entities;
+  }
+
+  /**
+   * Check if a tree location is safe (no desert tiles within 3-tile radius)
+   * @param globalX - Global x coordinate of potential tree position
+   * @param globalY - Global y coordinate of potential tree position
+   * @returns True if location is safe for tree placement, false otherwise
+   */
+  private isSafeTreeLocation(globalX: number, globalY: number): boolean {
+    const checkRadius = 3 * this.tileSize; // 3 tiles in pixels
+    
+    // Check a grid of positions around the tree location
+    for (let dx = -checkRadius; dx <= checkRadius; dx += this.tileSize) {
+      for (let dy = -checkRadius; dy <= checkRadius; dy += this.tileSize) {
+        const checkX = globalX + dx;
+        const checkY = globalY + dy;
+        
+        // Generate biome at this position (Not ideal for performance, and not a long term solution, but good for testing for now)
+        const biomeData = this.generateBiomeAndSprite(checkX / this.noiseDivisor, checkY / this.noiseDivisor);
+        
+        // If any position within radius is desert, location is unsafe
+        if (biomeData.biome === "desert") {
+          return false;
+        }
+      }
+    }
+    
+    return true; // All positions within radius are meadow
+  }
+
+  /**
+   * Check if a meadow tile should be converted to desert based on neighboring desert tiles
+   * @param globalX - Global x coordinate of the tile
+   * @param globalY - Global y coordinate of the tile
+   * @returns True if the meadow tile should be converted to desert
+   */
+  private shouldConvertMeadowToDesert(globalX: number, globalY: number): boolean {
+    // Check adjacent tiles (1 tile away in each direction)
+    const checkPositions = [
+      { x: globalX - this.tileSize, y: globalY }, // Left
+      { x: globalX + this.tileSize, y: globalY }, // Right
+      { x: globalX, y: globalY - this.tileSize }, // Up
+      { x: globalX, y: globalY + this.tileSize }  // Down
+    ];
+
+    let desertCount = 0;
+    
+    for (const pos of checkPositions) {
+      const biomeData = this.generateBiomeAndSprite(pos.x / this.noiseDivisor, pos.y / this.noiseDivisor);
+      if (biomeData.biome === "desert") {
+        desertCount++;
+      }
+    }
+
+    // Convert to desert if at least 2 adjacent tiles are desert
+    return desertCount >= 2;
+  }
+
+  /**
+   * Get the closest appropriate desert tile variant based on position
+   * @param globalX - Global x coordinate of the tile
+   * @param globalY - Global y coordinate of the tile
+   * @returns Desert biome data with appropriate sprite index
+   */
+  private getClosestDesertTile(globalX: number, globalY: number): { biome: "desert"; index: number } {
+    // Generate a pseudo-random desert tile index based on position
+    const positionSeed = (globalX * 127) ^ (globalY * 311);
+    const randomValue = Math.abs(Math.sin(positionSeed)) * 43758.5453;
+    const desertIndex = Math.floor((randomValue % 1) * 9); // 0-8 desert variants
+    
+    return {
+      biome: "desert",
+      index: desertIndex
+    };
   }
 
   /**
@@ -227,6 +323,40 @@ export class ServerChunkGenerator {
 
     logger.log(`ServerChunkGenerator: Generated ${chunks.length} chunks`);
     return chunks;
+  }
+
+  /**
+   * Apply multiple smoothing passes to create natural biome transitions
+   * @param tiles - Array of tiles to apply smoothing to
+   * @param chunkX - The chunk x coordinate
+   * @param chunkY - The chunk y coordinate
+   * @param passes - Number of smoothing passes to run
+   */
+  private applySmoothingPasses(tiles: Array<LoadChunkEvent.Tile>, chunkX: number, chunkY: number, passes: number): void {
+    const size = this.chunkSize * this.tileSize;
+    
+    for (let pass = 0; pass < passes; pass++) {
+      // Create a copy of current tiles to avoid modifying during iteration
+      const currentTiles = [...tiles];
+      
+      for (let i = 0; i < tiles.length; i++) {
+        const tile = currentTiles[i];
+        
+        // Only check meadow tiles for conversion
+        if (tile.biome === "meadow") {
+          // Calculate global position
+          const globalX = (chunkX * size) + tile.x;
+          const globalY = (chunkY * size) + tile.y;
+          
+          // Check if this meadow tile should be converted to desert
+          if (this.shouldConvertMeadowToDesert(globalX, globalY)) {
+            const desertTile = this.getClosestDesertTile(globalX, globalY);
+            tiles[i].biome = desertTile.biome;
+            tiles[i].index = desertTile.index;
+          }
+        }
+      }
+    }
   }
 
   /**
