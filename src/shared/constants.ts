@@ -31,7 +31,7 @@ export namespace GameConstants {
 
   /***** NOISE GENERATION CONFIGURATION *****/
   /** Divisor for noise generation to control terrain scale */
-  export const NOISE_DIVISOR = 3000;
+  export const NOISE_DIVISOR = 1000;
   
   /** Default seed for consistent world generation */
   export const DEFAULT_SEED = 'haven-world-seed';
@@ -46,4 +46,6 @@ export namespace GameConstants {
   /***** DEBUG CONFIGURATION *****/
   /** Enable debug logging throughout the application */
   export const DEBUG = false;
+  export const DEBUG_CLIENT = false; // Enable client-side debug logging
+  export const DEBUG_SERVER = true; // Enable server-side debug logging
 }

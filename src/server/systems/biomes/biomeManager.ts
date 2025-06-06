@@ -3,7 +3,6 @@ import type { Tagged } from "type-fest";
 import { GameConstants } from "../../../shared/constants";
 import { clamp } from "../../../utilities/clamp";
 import { hashString } from "../../../utilities/hashString";
-import { Logger } from "../../../utilities/logger";
 import { mapToRange, type MappableValue } from "../../../utilities/mapRange";
 
 /***** TYPE DEFINITIONS *****/
@@ -41,10 +40,12 @@ const createPrecipitation = (value: MappableValue<0, 400>): Precipitation => {
 export class BiomeManager {
   private annualPrecipitationNoiseOffset: number = 10_0000;
   private annualAverageTemperatureNoiseOffset: number = 20_0000;
+  private xOffset: number = 200_000;
+  private yOffset: number = -300_000;
 
-  constructor() {
+  constructor(seed: string = GameConstants.DEFAULT_SEED) {
     // Update the noise seed to ensure consistent generation
-    noiseSeed(hashString(GameConstants.DEFAULT_SEED))
+    noiseSeed(hashString(seed))
   }
 
   /**
@@ -61,8 +62,8 @@ export class BiomeManager {
   public getAnnualPrecipitation(x: number, y: number): Precipitation {
     const rawTemp = this.getAnnualAverageTemperature(x, y);
     const rawPrecipNoise = perlinNoise(
-      x / GameConstants.NOISE_DIVISOR,
-      y / GameConstants.NOISE_DIVISOR,
+      (x + this.xOffset) / GameConstants.NOISE_DIVISOR,
+      (y + this.yOffset) / GameConstants.NOISE_DIVISOR,
       this.annualPrecipitationNoiseOffset
     );
 
@@ -83,8 +84,8 @@ export class BiomeManager {
   public getAnnualAverageTemperature(x: number, y: number): Temperature {
     // Generate a noise value based on the coordinates and the offset
     const noiseValue = perlinNoise(
-      x / GameConstants.NOISE_DIVISOR,
-      y / GameConstants.NOISE_DIVISOR,
+      (x + this.xOffset) / GameConstants.NOISE_DIVISOR,
+      (y + this.yOffset) / GameConstants.NOISE_DIVISOR,
       this.annualAverageTemperatureNoiseOffset
     );
 
@@ -113,10 +114,6 @@ export class BiomeManager {
         return range.biome;
       }
     }
-
-    Logger.warn(
-      `No matching biome found for coordinates (${x}, ${y}) with temperature ${temperature} and precipitation ${precipitation}.`
-    );
 
     // Fallback to temperate grassland if no match found
     return "Temperate Grassland";

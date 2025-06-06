@@ -1,9 +1,10 @@
 /***** TYPE DEFINITIONS *****/
-import { noiseSeed, noise as perlinNoise } from "@chriscourses/perlin-noise";
+import { noise as perlinNoise } from "@chriscourses/perlin-noise";
 import { GameConstants } from "../shared/constants";
 import { logger } from "../utilities/logger";
 import { createChunkKey } from "../utilities/tagged";
 import type { ServerChunkObject } from "./chunkdb";
+import { BiomeManager } from "./systems/biomes/biomeManager";
 import type { EntityData } from "./types";
 import type { LoadChunkEvent } from "./types/events/load_chunk";
 
@@ -11,22 +12,12 @@ import type { LoadChunkEvent } from "./types/events/load_chunk";
 export class ServerChunkGenerator {
   private readonly tileSize: number = GameConstants.TILE_SIZE;
   private readonly chunkSize: number = GameConstants.CHUNK_SIZE;
-  private readonly noiseDivisor: number = GameConstants.NOISE_DIVISOR;
   private readonly seed: string | number;
+  private biomeManager: BiomeManager;
 
-  constructor(seed: string | number = GameConstants.DEFAULT_SEED) {
+  constructor(seed: string = GameConstants.DEFAULT_SEED) {
     this.seed = seed;
-    this.initializeSeed();
-  }
-
-  /**
-   * Initialize the noise seed for consistent generation
-   */
-  private initializeSeed(): void {
-    const seedValue = typeof this.seed === 'string' 
-      ? this.stringToNumber(this.seed) 
-      : this.seed;
-    noiseSeed(seedValue);
+    this.biomeManager = new BiomeManager(seed);
   }
 
   /**
@@ -63,9 +54,6 @@ export class ServerChunkGenerator {
     const tiles: Array<LoadChunkEvent.Tile> = [];
     const size = this.chunkSize * this.tileSize;
 
-    // Re-initialize seed to ensure consistent generation
-    this.initializeSeed();
-
     // First pass: Generate initial tiles based on perlin noise
     for (let i = 0; i < this.chunkSize; i++) {
       for (let j = 0; j < this.chunkSize; j++) {
@@ -77,7 +65,7 @@ export class ServerChunkGenerator {
         const yOffset = (chunkY * size) + y;
         
         // Generate initial biome and sprite index using perlin noise
-        const biomeData = this.generateBiomeAndSprite(xOffset / this.noiseDivisor, yOffset / this.noiseDivisor);
+        const biomeData = this.generateBiomeAndSprite(xOffset, yOffset);
 
         tiles.push({
           x,
@@ -95,43 +83,35 @@ export class ServerChunkGenerator {
   }
 
   /**
-   * Generate biome and sprite index based on perlin noise at the given coordinates
-   * 
-   * In the future, this should be 
+   * Generate biome and sprite index using BiomeManager and perlin noise
    * 
    * @param x - The x coordinate for noise generation
    * @param y - The y coordinate for noise generation
    * @returns Object containing biome type and sprite index
    */
   private generateBiomeAndSprite(x: number, y: number): { biome: "desert" | "meadow"; index: number } {
-    // Generate primary noise value (0-1)
-    const baseNoise: number = perlinNoise(x, y);
+    // Get biome from BiomeManager
+    const biomeName = this.biomeManager.getBiome(x, y);
     
-    // Generate secondary noise layer with offset
-    const secondaryNoise: number = perlinNoise(x + 100, y + 100);
+    // Map biome to render type
+    const renderBiome: "desert" | "meadow" = biomeName === "Temperate Grassland" ? "meadow" : "desert";
     
-    // Combine noise layers (weighted average)
-    const combinedNoise: number = (baseNoise * 0.5) + (secondaryNoise * 0.4);
-    
-    // Add random variation (0.1-0.2)
-    const randomFactor: number = 0.05 + Math.random() * 0.05;
-    const variation: number = (Math.random() - 0.05) * randomFactor;
-    const noiseValue: number = Math.max(0, Math.min(1, combinedNoise + variation));
-    
-    // Determine biome based on noise value
-    if (noiseValue < 0.4) {
-      // Desert biome (0-8 sprite indices)
-      return {
-        biome: "desert",
-        index: Math.floor(noiseValue * 22.5) // Map 0-0.4 to 0-8
-      };
-    } else {
+    // Generate sprite index using perlin noise
+    const spriteNoise = perlinNoise((x + 200_000) / 1500, y / 1500); // Offset to avoid correlation with biome noise
+
+    let spriteIndex: number;
+    if (renderBiome === "meadow") {
       // Meadow biome (0-5 sprite indices)
-      return {
-        biome: "meadow",
-        index: Math.floor((noiseValue - 0.4) * 6) // Map 0.4-1 to 0-5
-      };
+      spriteIndex = Math.floor(spriteNoise * 6);
+    } else {
+      // Desert biome (0-8 sprite indices)
+      spriteIndex = Math.floor(spriteNoise * 9);
     }
+    
+    return {
+      biome: renderBiome,
+      index: spriteIndex
+    };
   }
 
   /**
@@ -143,9 +123,6 @@ export class ServerChunkGenerator {
   private generateEntities(chunkX: number, chunkY: number): Array<EntityData> {
     const entities: Array<EntityData> = [];
     const size = this.chunkSize * this.tileSize;
-
-    // Re-initialize seed to ensure consistent generation
-    this.initializeSeed();
 
     // Generate a deterministic but varied number of trees per chunk (3-5)
     const chunkSeed = (chunkX * 73856093) ^ (chunkY * 19349663); // Hash chunk coordinates
@@ -212,7 +189,7 @@ export class ServerChunkGenerator {
         const checkY = globalY + dy;
         
         // Generate biome at this position (Not ideal for performance, and not a long term solution, but good for testing for now)
-        const biomeData = this.generateBiomeAndSprite(checkX / this.noiseDivisor, checkY / this.noiseDivisor);
+        const biomeData = this.generateBiomeAndSprite(checkX, checkY);
         
         // If any position within radius is desert, location is unsafe
         if (biomeData.biome === "desert") {
@@ -242,7 +219,7 @@ export class ServerChunkGenerator {
     let desertCount = 0;
     
     for (const pos of checkPositions) {
-      const biomeData = this.generateBiomeAndSprite(pos.x / this.noiseDivisor, pos.y / this.noiseDivisor);
+      const biomeData = this.generateBiomeAndSprite(pos.x, pos.y);
       if (biomeData.biome === "desert") {
         desertCount++;
       }
@@ -357,33 +334,5 @@ export class ServerChunkGenerator {
         }
       }
     }
-  }
-
-  /**
-   * Convert a string to a numeric hash for seeding purposes
-   * @param str - The string to convert to a number
-   * @returns A numeric hash of the input string
-   */
-  private stringToNumber(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    return Math.abs(hash);
-  }
-
-  /**
-   * Get the current configuration
-   * @returns Object containing generator configuration
-   */
-  public getConfig() {
-    return {
-      tileSize: this.tileSize,
-      chunkSize: this.chunkSize,
-      noiseDivisor: this.noiseDivisor,
-      seed: this.seed
-    };
   }
 }

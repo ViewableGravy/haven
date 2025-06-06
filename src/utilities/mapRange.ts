@@ -21,10 +21,8 @@ export function mapToRange<TMappableValue extends MappableValue, TToA extends nu
   invariant(fromA !== fromB, "fromA and fromB cannot be the same value.");
   invariant(toA as any !== toB, "toA and toB cannot be the same value.");
 
-  const ratio = (value - fromA) / (fromB - fromA);
-  const mappedValue = toA + ratio * (toB - toA);
-
-  return mappedValue as MappableValue<TToA, TToB>;
+  // From Line 605 of https://github.com/processing/p5.js/blob/main/src/math/calculation.js
+  return createMappableValue((value - fromA) / (fromB - fromA) * (toB - toA) + toA, toA, toB);
 }
 
 

@@ -35,6 +35,22 @@ export class Logger {
       console.warn(message);
     }
   }
+
+  public static log = (message: string, chance: number = 1): void => {
+    
+    // We are on the server, so we don't have a window object
+    if (typeof window !== undefined) {
+      if ((GameConstants.DEBUG_SERVER || GameConstants.DEBUG) && Math.random() < chance) {
+        console.log(message);
+      }
+    }
+
+    if (GameConstants.DEBUG && Math.random() < chance) {
+      if ((GameConstants.DEBUG_CLIENT || GameConstants.DEBUG) && Math.random() < chance) {
+        console.log(message);
+      }
+    }
+  }
 }
 
 /***** GLOBAL LOGGER INSTANCE *****/
