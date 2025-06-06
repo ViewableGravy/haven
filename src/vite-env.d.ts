@@ -7,7 +7,7 @@ declare module "@chriscourses/perlin-noise" {
    * @param y - The y coordinate for the noise function (optional).
    * @param z - The z coordinate for the noise function (optional).
    */
-  function noise(x, y?: number, z?: number): number;
+  function noise(x, y?: number, z?: number): import("./utilities/mapRange").MappableValue<0, 1>;
 
   /**
    * Sets the seed for the perlin noise function to ensure consistent results

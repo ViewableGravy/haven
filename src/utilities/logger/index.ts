@@ -25,6 +25,16 @@ export class Logger {
   public error = (message: string, error?: any): void => {
     console.error(message, error);
   };
+
+  /**
+   * Log a warning message to the console if debug mode is enabled
+   * @param message - The warning message to log
+   */
+  public static warn = (message: string): void => {
+    if (GameConstants.DEBUG) {
+      console.warn(message);
+    }
+  }
 }
 
 /***** GLOBAL LOGGER INSTANCE *****/
