@@ -2,7 +2,6 @@
 import { Assets, Sprite, Spritesheet, Texture } from "pixi.js";
 import invariant from "tiny-invariant";
 import MeadowSpritesAsset from '../../assets/meadow-sprites.png';
-import type { SpriteSheet } from "../../systems/chunkManager/textureBuilder";
 
 export type MeadowSpriteName = "meadow-0" | "meadow-1" | "meadow-2" | "meadow-3" | "meadow-4" | "meadow-5";
 export type Atlas<TFrames extends string> = {
@@ -20,16 +19,16 @@ export type Atlas<TFrames extends string> = {
 };
 
 /***** MEADOW SPRITE CLASS *****/
-export class MeadowSprite implements SpriteSheet {
+export class MeadowSprite {
 // public:
-  public createSprite = (name: MeadowSpriteName): Sprite => {
+  public static createSprite = (name: MeadowSpriteName): Sprite => {
     invariant(MeadowSprite.__spriteSheet, "Meadow sprite sheet not loaded");
     return new Sprite(
       MeadowSprite.__spriteSheet.textures[name]
     );
   };
 
-  public normalizedSpriteNames: Record<MeadowSpriteName, true> = {
+  public static normalizedSpriteNames: Record<MeadowSpriteName, true> = {
     "meadow-0": true,
     "meadow-1": true,
     "meadow-2": true,
@@ -42,7 +41,7 @@ export class MeadowSprite implements SpriteSheet {
   private static __spriteSheet: Spritesheet | null = null;
 
 // public static:
-  public static size = 250; 
+  public static size = 250;
   public static load = async (): Promise<void> => {
     // Load the asset sheet
     await Assets.load(MeadowSprite.atlas.meta.image);

@@ -16,15 +16,10 @@ export namespace GameConstants {
   export const CHUNK_ABSOLUTE = TILE_SIZE * CHUNK_SIZE; // 1024 pixels
 
   /***** CHUNK LOADING CONFIGURATION *****/
-  /** Default radius for chunk loading around player (in chunks) */
-  export const DEFAULT_LOAD_RADIUS = 10;
-  
-  /** Half radius for chunk calculations */
-  export const HALF_LOAD_RADIUS = Math.floor(DEFAULT_LOAD_RADIUS / 2);
 
   /** Chunk render dimensions (rectangular pattern) */
-  export const CHUNK_RENDER_WIDTH = 15;  // 15 chunks wide
-  export const CHUNK_RENDER_HEIGHT = 10; // 10 chunks high
+  export const CHUNK_RENDER_WIDTH = 22;  // 15 chunks wide
+  export const CHUNK_RENDER_HEIGHT = 12; // 10 chunks high
   
   /** Half dimensions for chunk calculations */
   export const HALF_CHUNK_RENDER_WIDTH = Math.floor(CHUNK_RENDER_WIDTH / 2);
