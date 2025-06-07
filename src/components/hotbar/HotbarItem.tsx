@@ -1,5 +1,5 @@
-import type React from "react";
 import { useStore } from "@tanstack/react-store";
+import type React from "react";
 import { GhostableTrait } from "../../entities/traits/ghostable";
 import { useCleanupCallback } from "../../utilities/hooks";
 import { MouseFollower } from "../../utilities/mouseFollower/index";
@@ -7,7 +7,7 @@ import { Position } from "../../utilities/position";
 import { usePixiContext } from "../pixi/context";
 import { useKeyboardShortcut } from "./hooks";
 import type { HotbarItem as HotbarItemType } from "./store";
-import { selectionStore, clearSelection } from "./store";
+import { clearSelection, selectionStore } from "./store";
 import "./styles.css";
 
 /***** TYPE DEFINITIONS *****/

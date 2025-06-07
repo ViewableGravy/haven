@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import React, { useRef, useState } from "react";
 import { Game } from "../../utilities/game/game";
 import { PixiContext } from "./context";
 
@@ -10,19 +11,25 @@ type PixiCanvasProps = {
 /***** COMPONENT START *****/
 export const PixiProvider = React.memo<PixiCanvasProps>(({ children }) => {
   const [game] = useState(new Game());
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const { isPending, isSuccess,  } = useQuery({
+    queryKey: ["game", "initialize"],
+    async queryFn() {
+      if (canvasRef.current) {
+        await game.initialize(canvasRef.current);
+      }
 
-  const initializeGame = (instance: HTMLElement | null) => {
-    if (instance) {
-      game.initialize(instance);
+      return null;
     }
-  }
+  });
 
   /***** RENDER *****/
   return (
     <>
-      <div id="game-container" ref={initializeGame}></div>;
+      <div id="game-container" ref={canvasRef}></div>
       <PixiContext value={game}>
-        {children}
+        {isPending && <div>Loading...</div>}
+        {isSuccess && children}
       </PixiContext>
     </>
   );

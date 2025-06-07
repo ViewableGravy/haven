@@ -170,7 +170,7 @@ export class Game {
     logger.log('Render texture pool initialized and warmed');
   }
 
-  private async initializeSystems() {
+  private initializeSystems = async () => {
     // Initialize controllers
     this.controllers.keyboard = new KeyboardController();
     

@@ -1,0 +1,124 @@
+/***** INVENTORY PANEL STYLES *****/
+.inventory-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid #444;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  color: white;
+  font-family: 'Courier New', monospace;
+}
+
+.inventory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #444;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.inventory-header h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 18px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.inventory-content {
+  padding: 16px;
+}
+
+/***** INVENTORY GRID STYLES *****/
+.inventory-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inventory-row {
+  display: flex;
+  gap: 4px;
+}
+
+/***** INVENTORY SLOT STYLES *****/
+.inventory-slot {
+  width: 64px;
+  height: 64px;
+  border: 2px solid #666;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inventory-slot:hover {
+  border-color: #888;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.inventory-slot.selected {
+  border-color: #4a9eff;
+  background: rgba(74, 158, 255, 0.2);
+  box-shadow: 0 0 8px rgba(74, 158, 255, 0.4);
+}
+
+.inventory-slot.has-item {
+  border-color: #8a6914;
+}
+
+.inventory-slot.has-item:hover {
+  border-color: #b8941d;
+}
+
+/***** ITEM STYLES *****/
+.item-icon {
+  width: 48px;
+  height: 48px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+.item-quantity {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 2px 4px;
+  border-radius: 2px;
+  min-width: 16px;
+  text-align: center;
+  line-height: 1;
+}

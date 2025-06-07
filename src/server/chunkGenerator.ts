@@ -12,11 +12,9 @@ import type { LoadChunkEvent } from "./types/events/load_chunk";
 export class ServerChunkGenerator {
   private readonly tileSize: number = GameConstants.TILE_SIZE;
   private readonly chunkSize: number = GameConstants.CHUNK_SIZE;
-  private readonly seed: string | number;
   private biomeManager: BiomeManager;
 
   constructor(seed: string = GameConstants.DEFAULT_SEED) {
-    this.seed = seed;
     this.biomeManager = new BiomeManager(seed);
   }
 

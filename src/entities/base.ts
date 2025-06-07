@@ -15,6 +15,7 @@ export class BaseEntity {
   // Multiplayer properties
   public multiplayerId?: string; // Server-assigned ID for remote entities
   public placedBy?: string; // Player ID who placed this entity
+  public isRemoteEntity: boolean = false; // True if entity came from server
   
   constructor(entityMeta: EntityMeta) {
     this.entityMeta = entityMeta;
@@ -42,6 +43,7 @@ export class BaseEntity {
   public setAsRemoteEntity(multiplayerId: string, placedBy?: string): void {
     this.multiplayerId = multiplayerId;
     this.placedBy = placedBy;
+    this.isRemoteEntity = true;
   }
 
   public getMultiplayerId(): string {
