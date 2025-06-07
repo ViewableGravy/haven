@@ -35,6 +35,11 @@ export class MouseFollower {
   public start(): () => void {
     this.bindEvents();
     this.game.world.addChild(this.entity.containerTrait.container);
+    
+    // Immediately position the entity at the current cursor position
+    this.updateEntityPosition();
+    this.checkCollisions();
+    
     return this.cleanup.bind(this);
   }
 

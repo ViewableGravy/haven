@@ -113,7 +113,7 @@ export class MultiplayerManager {
   }
 
   public getRemoteEntityCount(): number {
-    return this.entitySync.getRemoteEntityCount();
+    return this.entitySync.getServerEntityCount();
   }
 
   public disconnect(): void {

@@ -13,7 +13,6 @@ import { entitySyncRegistry } from "./entitySyncRegistry";
 /***** ENTITY SYNC MANAGER *****/
 export class EntitySyncManager {
   private game: Game;
-  private remoteEntities: Map<string, BaseEntity> = new Map();
   private queuedEntities: EntityData[] = [];
   private isReady: boolean = false;
   private chunkLoadSubscription: (() => void) | null = null;
@@ -40,8 +39,8 @@ export class EntitySyncManager {
   private setupEntityPlacementListener(): void {
     // Listen to local entity placements and notify server
     this.game.entityManager.onEntityPlacement((event) => {
-      // Only notify server for locally placed entities (not remote ones)
-      if (!event.entity.isRemoteEntity) {
+      // Only notify server for locally placed entities (not server-generated ones)
+      if (!event.entity.multiplayerId) {
         this.notifyServerEntityPlaced(
           event.entity, 
           event.globalPosition.x, 
@@ -95,6 +94,19 @@ export class EntitySyncManager {
     });
   }
 
+  /***** UTILITY METHODS *****/
+  /**
+   * Find an entity by its multiplayer ID in the unified entity system
+   */
+  private findEntityById(multiplayerId: string): BaseEntity | null {
+    for (const entity of this.game.entityManager.getEntities()) {
+      if (entity.getMultiplayerId() === multiplayerId) {
+        return entity;
+      }
+    }
+    return null;
+  }
+
   /***** REMOTE ENTITY HANDLING *****/
   public handleRemoteEntityPlaced(entityData: EntityData): void {
     // Server tells us about entity at world position
@@ -106,8 +118,9 @@ export class EntitySyncManager {
       return;
     }
 
-    // Don't create if already exists
-    if (this.remoteEntities.has(entityData.id)) {
+    // Check if entity already exists in the unified entity system
+    const existingEntity = this.findEntityById(entityData.id);
+    if (existingEntity) {
       return;
     }
 
@@ -153,9 +166,8 @@ export class EntitySyncManager {
     // Mark entity as placed if it has the placeable trait
     PlaceableTrait.place(entity);
 
-    // Add to entity manager and track as remote entity
+    // Add to unified entity manager
     this.game.entityManager.addEntity(entity);
-    this.remoteEntities.set(entityData.id, entity);
   }
 
   /**
@@ -190,7 +202,7 @@ export class EntitySyncManager {
 
   /***** ENTITY REMOVAL *****/
   public handleRemoteEntityRemoved(data: { id: string }): void {
-    const entity = this.remoteEntities.get(data.id);
+    const entity = this.findEntityById(data.id);
     if (entity) {
       // Remove from chunk and game
       if (ContainerTrait.is(entity)) {
@@ -198,14 +210,13 @@ export class EntitySyncManager {
       }
 
       this.game.entityManager.removeEntity(entity);
-      this.remoteEntities.delete(data.id);
     }
   }
 
   /***** ENTITY SYNC *****/
   public syncExistingEntities(entities: EntityData[]): void {
-    // Clear existing remote entities
-    this.clearRemoteEntities();
+    // Clear existing server entities (if any)
+    this.clearServerEntities();
 
     // If not ready yet, queue all entities
     if (!this.isReady) {
@@ -220,10 +231,13 @@ export class EntitySyncManager {
   }
 
   /***** CLEANUP *****/
-  private clearRemoteEntities(): void {
-    this.remoteEntities.forEach((_, id) => {
-      this.handleRemoteEntityRemoved({ id });
-    });
+  private clearServerEntities(): void {
+    for (const entity of this.game.entityManager.getEntities()) {
+      // Remove entities that have a multiplayer ID (came from server)
+      if (entity.multiplayerId) {
+        this.handleRemoteEntityRemoved({ id: entity.getMultiplayerId() })
+      }
+    }
   }
 
   /**
@@ -231,7 +245,7 @@ export class EntitySyncManager {
    * This prevents duplicate detection when chunks are reloaded
    * 
    * TODO: There is still a lot of performance left on the table here, since
-   * we are iterating through all remote entities rather than just the ones
+   * we are iterating through all entities rather than just the ones
    * that are in the chunk being unloaded. This is fine for now, but should
    * create a quad tree to store entities by chunk coordinates, or 
    * simply store them in a cache based on chunk coordinates.
@@ -243,7 +257,7 @@ export class EntitySyncManager {
     const [chunkX, chunkY] = chunkKey.split(',').map(Number);
     
     // Find all entities that belong to this chunk
-    for (const [entityId, entity] of this.remoteEntities.entries()) {
+    for (const entity of this.game.entityManager.getEntities()) {
       // Get entity's world position to determine which chunk it belongs to
       if (TransformTrait.is(entity)) {
         const worldX = entity.transformTrait.position.position.x;
@@ -258,16 +272,16 @@ export class EntitySyncManager {
         const entityChunkX = Math.floor(worldX / this.game.consts.chunkAbsolute);
         const entityChunkY = Math.floor(worldY / this.game.consts.chunkAbsolute);
         
-        // If this entity belongs to the unloading chunk, mark it for removal
-        if (entityChunkX === chunkX && entityChunkY === chunkY) {
-          this.handleRemoteEntityRemoved({ id: entityId });
+        // If this entity belongs to the unloading chunk and came from server, mark it for removal
+        if (entityChunkX === chunkX && entityChunkY === chunkY && entity.multiplayerId) {
+          this.handleRemoteEntityRemoved({ id: entity.getMultiplayerId() })
         }
       }
     }
   }
 
   public destroy(): void {
-    this.clearRemoteEntities();
+    this.clearServerEntities();
     
     // Unsubscribe from chunk loading events
     if (this.chunkLoadSubscription) {
@@ -279,7 +293,13 @@ export class EntitySyncManager {
   }
 
   /***** GETTERS *****/
-  public getRemoteEntityCount(): number {
-    return this.remoteEntities.size;
+  public getServerEntityCount(): number {
+    let count = 0;
+    for (const entity of this.game.entityManager.getEntities()) {
+      if (entity.multiplayerId) {
+        count++;
+      }
+    }
+    return count;
   }
 }

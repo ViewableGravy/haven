@@ -34,6 +34,11 @@ type HotbarStore = {
   items: HotbarItem[];
 };
 
+type SelectionStore = {
+  selectedIndex: number | null;
+  cleanup: (() => void) | null;
+};
+
 /***** HOTBAR STORE *****/
 // Create a function to get items from the infographics registry
 const getHotbarItems = (): HotbarItem[] => {
@@ -54,5 +59,23 @@ export const hotbarStore = new Store<HotbarStore>({
 export const refreshHotbarItems = () => {
   hotbarStore.setState(() => ({
     items: getHotbarItems()
+  }));
+};
+
+/***** SELECTION STORE *****/
+export const selectionStore = new Store<SelectionStore>({
+  selectedIndex: null,
+  cleanup: null
+});
+
+/***** SELECTION HELPER FUNCTIONS *****/
+export const clearSelection = () => {
+  const currentState = selectionStore.state;
+  if (currentState.cleanup) {
+    currentState.cleanup();
+  }
+  selectionStore.setState(() => ({
+    selectedIndex: null,
+    cleanup: null
   }));
 };

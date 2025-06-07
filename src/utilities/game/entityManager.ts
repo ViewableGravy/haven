@@ -85,6 +85,11 @@ export class EntityManager {
         type: "global"
       };
 
+      // Convert global position to local chunk coordinates for PIXI container positioning
+      const { x, y } = chunk.toLocalPosition(entity.transformTrait.position);
+      entity.containerTrait.container.x = x;
+      entity.containerTrait.container.y = y;
+
       // Place entity in chunk and add to tracking
       chunk.addChild(entity.containerTrait.container);
       this.addEntity(entity);
