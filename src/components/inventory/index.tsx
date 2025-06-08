@@ -1,7 +1,7 @@
 import { useStore } from "@tanstack/react-store";
 import { InventorySlot } from "./InventorySlot";
 import { inventoryStore } from "./store";
-import "./styles.css";
+import "./styles.scss";
 
 /***** COMPONENT *****/
 export const InventoryPanel = inventoryStore.withRenderWhenOpen(() => {
@@ -15,21 +15,16 @@ export const InventoryPanel = inventoryStore.withRenderWhenOpen(() => {
   };
 
   return (
-    <div className="inventory-panel">
-      <div className="inventory-header">
+    <div className="InventoryPanel">
+      <div className="InventoryPanel__header">
         <h3>Inventory</h3>
-        <button className="close-button" onClick={handleClose}>
+        <button className="InventoryPanel__close-button" onClick={handleClose}>
           ×
         </button>
       </div>
-      <div className="inventory-content">
-        <div className="inventory-grid">
-          {grid.map((_, index) => (
-            <InventorySlot
-              key={index}
-              index={index}
-            />
-          ))}
+      <div className="InventoryPanel__content">
+        <div className="InventoryPanel__grid">
+          {grid.map((_, index) => <InventorySlot key={index} index={index} />)}
         </div>
       </div>
     </div>

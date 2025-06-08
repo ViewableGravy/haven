@@ -27,19 +27,20 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
+    "@types/bun": "^1.2.15",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
+    "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react-swc": "^3.9.0",
     "concurrently": "^9.1.2",
     "eslint": "^9.25.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
+    "sass": "^1.89.1",
+    "type-fest": "^4.41.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.30.1",
-    "vite": "6.1.0",
-    "@types/bun": "^1.2.15",
-    "@types/uuid": "^10.0.0",
-    "type-fest": "^4.41.0"
+    "vite": "6.1.0"
   }
 }

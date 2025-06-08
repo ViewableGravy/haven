@@ -37,14 +37,14 @@ export const InventorySlot: React.FC<InventorySlotProps> = ({
   );
 
   /***** COMPUTED VALUES *****/
-  const slotClassName = classNames("inventory-slot", {
-    "has-item": hasItem, // Show border for any slot that's part of an item
-    occupied: isSecondarySlot(slot),
-    "multi-slot-main": isMainSlot(slot) && hasItem,
+  const slotClassName = classNames("InventorySlot", {
+    "InventorySlot--has-item": hasItem, // Show border for any slot that's part of an item
+    "InventorySlot--occupied": isSecondarySlot(slot),
+    "InventorySlot--multi-slot-main": isMainSlot(slot) && hasItem,
   });
 
-  const itemClassName = classNames("item-icon", {
-    hovered: isHovered,
+  const itemClassName = classNames("InventorySlot__item", {
+    "InventorySlot__item--hovered": isHovered,
   });
 
   /***** HANDLERS *****/
@@ -77,7 +77,7 @@ export const InventorySlot: React.FC<InventorySlotProps> = ({
             onMouseLeave={handleSlotMouseLeave}
           ></div>
           {mainSlot.itemStack.quantity > 1 && (
-            <div className="item-quantity">{mainSlot.itemStack.quantity}</div>
+            <div className="InventorySlot__quantity">{mainSlot.itemStack.quantity}</div>
           )}
         </>
       )}
