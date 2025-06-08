@@ -5,7 +5,7 @@ import { TwigItem } from "../../../entities/items/twig";
 import { createStore, createStoreState } from "../../../utilities/store";
 import { InventoryNamespace } from "../types";
 import { addItemToGrid } from "./_actions";
-import { addItem, getItemStack, getMainSlot, getSlot, moveItem, removeItem, setPosition, setSelectedSlot, toggleInventory } from "./actions";
+import { addItem, getItemStack, getMainSlot, getSlot, moveItem, pickUpItem, placeHeldItem, removeItem, returnHeldItem, setCursorPosition, setHeldItem, setHoveredSlot, setPosition, setSelectedSlot, toggleInventory } from "./actions";
 
 function createGridWithDefaultItems(): InventoryNamespace.Grid {
   // Initialize as 1D array with 16 empty slots (4x4)
@@ -76,7 +76,10 @@ const _inventoryStore = createStore({
     isOpen: false,
     selectedSlot: null,
     grid: createGridWithDefaultItems(),
-    position: getInitialPosition()
+    position: getInitialPosition(),
+    heldItem: null,
+    hoveredSlot: null,
+    cursorPosition: { x: 0, y: 0 }
   }),
   actions: {
     toggleInventory,
@@ -87,7 +90,13 @@ const _inventoryStore = createStore({
     moveItem,
     getSlot,
     getMainSlot,
-    getItemStack
+    getItemStack,
+    setHeldItem,
+    setHoveredSlot,
+    setCursorPosition,
+    pickUpItem,
+    placeHeldItem,
+    returnHeldItem
   }
 })
 

@@ -416,3 +416,158 @@ export function moveItemBetweenSlots(grid: InventoryNamespace.Grid, fromSlotInde
   
   return { success: true, grid: newGrid };
 }
+
+/***** DRAG AND DROP VALIDATION FUNCTIONS *****/
+
+/**
+ * Validates if an item can be placed at a specific slot position
+ * @param grid - The current inventory grid
+ * @param item - The item to place
+ * @param targetSlot - The target slot index
+ * @returns Whether the placement is valid
+ */
+export function canPlaceItemAtSlot(
+  grid: InventoryNamespace.Grid,
+  item: InventoryNamespace.Item,
+  targetSlot: number
+): boolean {
+  const { row, col } = InventoryNamespace.indexToRowCol(targetSlot);
+  const size = item.size || { width: 1, height: 1 };
+  
+  // Check bounds
+  if (row + size.height > InventoryNamespace.GRID_ROWS || 
+      col + size.width > InventoryNamespace.GRID_COLS) {
+    return false;
+  }
+  
+  // Check if all required slots are empty or can stack
+  for (let r = row; r < row + size.height; r++) {
+    for (let c = col; c < col + size.width; c++) {
+      const index = InventoryNamespace.rowColToIndex(r, c);
+      const slot = grid[index];
+      
+      if (!isSlotEmpty(slot)) {
+        // Only allow stacking in main slot with same item type
+        if (r === row && c === col && isMainSlot(slot) && 
+            slot.itemStack.item.id === item.id &&
+            slot.itemStack.quantity < item.maxStackSize) {
+          continue;
+        }
+        return false;
+      }
+    }
+  }
+  
+  return true;
+}
+
+/**
+ * Gets all slot indices that would be occupied by placing an item at a position
+ * @param targetSlot - The target slot index (top-left)
+ * @param item - The item to place
+ * @returns Array of slot indices that would be occupied
+ */
+export function getItemOccupiedSlots(
+  targetSlot: number,
+  item: InventoryNamespace.Item
+): Array<number> {
+  const { row, col } = InventoryNamespace.indexToRowCol(targetSlot);
+  const size = item.size || { width: 1, height: 1 };
+  const occupiedSlots: Array<number> = [];
+  
+  for (let r = row; r < row + size.height; r++) {
+    for (let c = col; c < col + size.width; c++) {
+      if (InventoryNamespace.isValidPosition(r, c)) {
+        occupiedSlots.push(InventoryNamespace.rowColToIndex(r, c));
+      }
+    }
+  }
+  
+  return occupiedSlots;
+}
+
+/**
+ * Places an item at a specific target slot, handling both single-slot and multi-slot items
+ * @param grid - The current inventory grid
+ * @param item - The item to add
+ * @param quantity - The quantity to add
+ * @param targetSlot - The specific slot index to place the item at
+ * @returns Object with success status and updated grid
+ */
+export function addItemToGridAtSlot(
+  grid: InventoryNamespace.Grid, 
+  item: InventoryNamespace.Item, 
+  quantity: number,
+  targetSlot: number
+): {
+  success: boolean;
+  grid: InventoryNamespace.Grid;
+} {
+  // First check if we can place the item at the target slot
+  if (!canPlaceItemAtSlot(grid, item, targetSlot)) {
+    return { success: false, grid };
+  }
+
+  const newGrid = JSON.parse(JSON.stringify(grid)) as InventoryNamespace.Grid;
+  const { row, col } = InventoryNamespace.indexToRowCol(targetSlot);
+  const size = item.size || { width: 1, height: 1 };
+  const isMultiSlot = size.width > 1 || size.height > 1;
+
+  if (isMultiSlot) {
+    // Handle multi-slot items - place at specific position
+    const existingSlot = newGrid[targetSlot];
+    
+    if (isMainSlot(existingSlot) && existingSlot.itemStack.item.id === item.id) {
+      // Stack with existing item
+      const canAdd = Math.min(
+        quantity,
+        item.maxStackSize - existingSlot.itemStack.quantity
+      );
+      
+      if (canAdd > 0) {
+        existingSlot.itemStack.quantity += canAdd;
+        return { success: true, grid: newGrid };
+      }
+      return { success: false, grid };
+    } else {
+      // Place new multi-slot item
+      const updatedGrid = placeMultiSlotItem(newGrid, item, quantity, row, col);
+      return { success: true, grid: updatedGrid };
+    }
+  } else {
+    // Handle single-slot items
+    const existingSlot = newGrid[targetSlot];
+    
+    if (isMainSlot(existingSlot) && existingSlot.itemStack.item.id === item.id) {
+      // Stack with existing item
+      const canAdd = Math.min(
+        quantity,
+        item.maxStackSize - existingSlot.itemStack.quantity
+      );
+      
+      if (canAdd > 0) {
+        existingSlot.itemStack.quantity += canAdd;
+        return { success: true, grid: newGrid };
+      }
+      return { success: false, grid };
+    } else if (isSlotEmpty(existingSlot)) {
+      // Place new item in empty slot
+      const itemStack: InventoryNamespace.ItemStack = {
+        item,
+        quantity,
+      };
+      
+      const mainSlot: InventoryNamespace.ItemMainSlot = {
+        type: 'itemMain',
+        itemStack,
+        hasSecondarySlots: false,
+        secondarySlotIndices: [],
+      };
+      
+      newGrid[targetSlot] = mainSlot;
+      return { success: true, grid: newGrid };
+    }
+  }
+  
+  return { success: false, grid };
+}

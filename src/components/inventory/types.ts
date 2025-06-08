@@ -38,11 +38,21 @@ export namespace InventoryNamespace {
 
   export type Slot = EmptySlot | ItemMainSlot | ItemSecondarySlot;
 
+  /***** DRAG AND DROP TYPES *****/
+  export interface HeldItem {
+    itemStack: ItemStack;
+    originSlot: number;
+    cursorOffset: { x: number; y: number };
+  }
+
   export type State = {
     isOpen: boolean;
     grid: InventoryNamespace.Grid;
     selectedSlot: number | null;
     position: { x: number; y: number };
+    heldItem: HeldItem | null;
+    hoveredSlot: number | null;
+    cursorPosition: { x: number; y: number };
   }
 
   // Updated grid types - using 1D array for better performance

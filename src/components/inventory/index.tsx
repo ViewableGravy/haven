@@ -9,6 +9,8 @@ export const InventoryPanel = inventoryStore.withRenderWhenOpen(() => {
   /***** HOOKS *****/
   const grid = useStore(inventoryStore, (state) => state.grid);
   const position = useStore(inventoryStore, (state) => state.position);
+  const heldItem = useStore(inventoryStore, (state) => state.heldItem);
+  const cursorPosition = useStore(inventoryStore, (state) => state.cursorPosition);
   
   /***** DRAG STATE *****/
   const [isDragging, setIsDragging] = useState(false);
@@ -81,30 +83,66 @@ export const InventoryPanel = inventoryStore.withRenderWhenOpen(() => {
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
+  // Track cursor position for drag item rendering
+  useEffect(() => {
+    const handleGlobalMouseMove = (event: MouseEvent) => {
+      inventoryStore.setCursorPosition({ x: event.clientX, y: event.clientY });
+    };
+
+    if (heldItem) {
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      return () => {
+        document.removeEventListener('mousemove', handleGlobalMouseMove);
+      };
+    }
+  }, [heldItem]);
+
   return (
-    <div 
-      ref={panelRef}
-      className="InventoryPanel"
-      style={{
-        transform: `translate(${position.x}px, ${position.y}px)`,
-        cursor: isDragging ? 'grabbing' : 'default'
-      }}
-    >
-      <div 
-        className="InventoryPanel__header" 
-        onMouseDown={handleMouseDown}
-        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+    <>
+      <div
+        ref={panelRef}
+        className="InventoryPanel"
+        style={{
+          transform: `translate(${position.x}px, ${position.y}px)`,
+          cursor: isDragging ? 'grabbing' : 'default'
+        }}
       >
-        <h3>Inventory</h3>
-        <button className="InventoryPanel__close-button" onClick={handleClose}>
-          ×
-        </button>
-      </div>
-      <div className="InventoryPanel__content">
-        <div className="InventoryPanel__grid">
-          {grid.map((_, index) => <InventorySlot key={index} index={index} />)}
+        <div 
+          className="InventoryPanel__header" 
+          onMouseDown={handleMouseDown}
+          style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+        >
+          <h3>Inventory</h3>
+          <button className="InventoryPanel__close-button" onClick={handleClose}>
+            ×
+          </button>
+        </div>
+        <div className="InventoryPanel__content">
+          <div className="InventoryPanel__grid">
+            {grid.map((_, index) => <InventorySlot key={index} index={index} />)}
+          </div>
         </div>
       </div>
-    </div>
+      
+      {/* Render held item following cursor at document root level */}
+      {heldItem && (
+        <div 
+          className="InventoryPanel__drag-item"
+          style={{
+            left: cursorPosition.x - heldItem.cursorOffset.x,
+            top: cursorPosition.y - heldItem.cursorOffset.y,
+            backgroundImage: `url(${heldItem.itemStack.item.iconPath})`,
+            "--item-width": heldItem.itemStack.item.size?.width || 1,
+            "--item-height": heldItem.itemStack.item.size?.height || 1,
+          } as React.CSSProperties}
+        >
+          {heldItem.itemStack.quantity > 1 && (
+            <div className="InventoryPanel__drag-item-quantity">
+              {heldItem.itemStack.quantity}
+            </div>
+          )}
+        </div>
+      )}
+    </>
   );
 });
