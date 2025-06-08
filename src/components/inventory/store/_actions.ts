@@ -1,3 +1,7 @@
+import { useStore } from "@tanstack/react-store";
+import { createElement, useEffect } from "react";
+import { DuckItem } from "../../../entities/items/duck";
+import { TwigItem } from "../../../entities/items/twig";
 import { InventoryNamespace } from "../types";
 
 /***** PRIVATE UTILITY FUNCTIONS *****/
@@ -266,6 +270,76 @@ export function addItemToGrid(grid: InventoryNamespace.Grid, item: InventoryName
     success: remainingQuantity < quantity,
     grid: newGrid,
   };
+}
+
+/***** STORE INITIALIZATION FUNCTIONS *****/
+// These functions are used to initialize and configure the store
+
+export function createGridWithDefaultItems(): InventoryNamespace.Grid {
+  // Use imported items (ES6 imports at top of file)
+  
+  // Initialize as 1D array with 16 empty slots (4x4)
+  let grid: InventoryNamespace.Grid = [];
+  for (let index = 0; index < 16; index++) {
+    grid[index] = {
+      type: 'empty',
+    } as InventoryNamespace.EmptySlot;
+  }
+  
+  // Add twig item to first slot (index 0) using proper grid function
+  const twigItem = new TwigItem();
+  const twigResult = addItemToGrid(grid, twigItem, 3);
+  if (twigResult.success) {
+    grid = twigResult.grid;
+  }
+  
+  // Add duck item using proper grid function (will handle multi-slot placement)
+  const duckItem = new DuckItem();
+  const duckResult = addItemToGrid(grid, duckItem, 1);
+  if (duckResult.success) {
+    grid = duckResult.grid;
+  }
+  
+  return grid;
+}
+
+export function createWithRenderWhenOpen(store: any) {
+  // Use imported React components (ES6 imports at top of file)
+  
+  return <T extends object = {}>(component: any) => {
+    return ((props: T) => {
+      const isOpen = useStore(store, (state: any) => state.isOpen);
+
+      useEffect(() => {
+        const handleKeypress = (event: KeyboardEvent) => {
+          if (event.code === "KeyI") {
+            (store as any).toggleInventory();
+          }
+        };
+        
+        document.addEventListener("keypress", handleKeypress);
+        return () => {
+          document.removeEventListener("keypress", handleKeypress);
+        };
+      }, []);
+
+      if (!isOpen) {
+        return null; // Don't render if inventory is closed
+      }
+
+      return createElement(component, props);
+    });
+  }
+}
+
+// Get initial centered position safely
+export function getInitialPosition(): { x: number; y: number } {
+  if (typeof window !== 'undefined') {
+    const centerX = Math.max(20, (window.innerWidth - 400) / 2);
+    const centerY = Math.max(20, (window.innerHeight - 300) / 2);
+    return { x: centerX, y: centerY };
+  }
+  return { x: 300, y: 200 }; // Safe fallback position
 }
 
 /**
