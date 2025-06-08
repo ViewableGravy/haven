@@ -1,11 +1,12 @@
 import { useStore } from "@tanstack/react-store";
 import { createElement, useEffect, type ComponentType } from "react";
+import { DuckItem } from "../../../entities/items/duck";
+import { TwigItem } from "../../../entities/items/twig";
 import { createStore, createStoreState } from "../../../utilities/store";
 import type { InventoryNamespace } from "../types";
-import { addItem, getSlot, moveItem, removeItem, setSelectedSlot, toggleInventory } from "./actions";
+import { addItem, getSlot, moveItem, removeItem, setHoveredSlot, setSelectedSlot, toggleInventory } from "./actions";
 
-/***** HELPER FUNCTIONS *****/
-function createEmptyGrid(): InventoryNamespace.Grid {
+function createGridWithDefaultItems(): InventoryNamespace.Grid {
   const grid: InventoryNamespace.Grid = [];
   for (let row = 0; row < 4; row++) {
     grid[row] = [];
@@ -16,6 +17,21 @@ function createEmptyGrid(): InventoryNamespace.Grid {
       };
     }
   }
+  
+  // Add twig item to first slot
+  const twigItem = new TwigItem();
+  grid[0][0].itemStack = {
+    item: twigItem,
+    quantity: 3
+  };
+  
+  // Add duck item to second slot
+  const duckItem = new DuckItem();
+  grid[0][1].itemStack = {
+    item: duckItem,
+    quantity: 1
+  };
+  
   return grid;
 }
 
@@ -51,11 +67,13 @@ const _inventoryStore = createStore({
   state: createStoreState<InventoryNamespace.State>({
     isOpen: false,
     selectedSlot: null,
-    grid: createEmptyGrid()
+    hoveredSlot: null,
+    grid: createGridWithDefaultItems()
   }),
   actions: {
     toggleInventory,
     setSelectedSlot,
+    setHoveredSlot,
     addItem,
     removeItem,
     moveItem,

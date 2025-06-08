@@ -98,14 +98,44 @@
   border-color: #b8941d;
 }
 
+/***** MULTI-SLOT ITEM STYLES *****/
+.inventory-slot.occupied {
+  border-color: #4a4a4a;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer; /* Changed from not-allowed to pointer */
+}
+
+.inventory-slot.occupied:hover {
+  border-color: #666;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.inventory-slot.multi-slot-main {
+  border-color: #8a6914;
+}
+
+.inventory-slot.multi-slot-main:hover {
+  border-color: #b8941d;
+}
+
 /***** ITEM STYLES *****/
 .item-icon {
-  width: 48px;
-  height: 48px;
+  --item-width: 1;
+  --item-height: 1;
+  --slot-size: 64px;
+  --slot-gap: 4px;
+  
+  width: calc(var(--item-width) * var(--slot-size) + (var(--item-width) - 1) * var(--slot-gap));
+  height: calc(var(--item-height) * var(--slot-size) + (var(--item-height) - 1) * var(--slot-gap));
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
   filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  pointer-events: none; /* Prevent interference with slot clicks */
 }
 
 .item-quantity {

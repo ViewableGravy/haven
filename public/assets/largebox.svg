@@ -1,0 +1,36 @@
+<svg width="192" height="128" viewBox="0 0 192 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Large Box - 3x2 ratio (1.5 times as wide as tall) -->
+  <g transform="translate(8, 8)">
+    <!-- Main box body -->
+    <rect width="176" height="112" fill="#8B4513" rx="4"/>
+    <rect x="4" y="4" width="168" height="104" fill="#CD853F" rx="2"/>
+    <rect x="8" y="8" width="160" height="96" fill="#DEB887" rx="1"/>
+    
+    <!-- Wood grain lines -->
+    <line x1="12" y1="24" x2="164" y2="24" stroke="#A0522D" stroke-width="2"/>
+    <line x1="12" y1="48" x2="164" y2="48" stroke="#A0522D" stroke-width="2"/>
+    <line x1="12" y1="72" x2="164" y2="72" stroke="#A0522D" stroke-width="2"/>
+    <line x1="12" y1="96" x2="164" y2="96" stroke="#A0522D" stroke-width="2"/>
+    
+    <!-- Vertical planks -->
+    <line x1="40" y1="12" x2="40" y2="100" stroke="#A0522D" stroke-width="1"/>
+    <line x1="88" y1="12" x2="88" y2="100" stroke="#A0522D" stroke-width="1"/>
+    <line x1="136" y1="12" x2="136" y2="100" stroke="#A0522D" stroke-width="1"/>
+    
+    <!-- Box corners/reinforcements -->
+    <rect x="12" y="12" width="8" height="8" fill="#654321" rx="1"/>
+    <rect x="156" y="12" width="8" height="8" fill="#654321" rx="1"/>
+    <rect x="12" y="92" width="8" height="8" fill="#654321" rx="1"/>
+    <rect x="156" y="92" width="8" height="8" fill="#654321" rx="1"/>
+    
+    <!-- Center handles -->
+    <ellipse cx="64" cy="36" rx="12" ry="4" fill="#696969"/>
+    <ellipse cx="64" cy="36" rx="8" ry="2" fill="#A9A9A9"/>
+    <ellipse cx="112" cy="36" rx="12" ry="4" fill="#696969"/>
+    <ellipse cx="112" cy="36" rx="8" ry="2" fill="#A9A9A9"/>
+    
+    <!-- Box label -->
+    <rect x="48" y="60" width="80" height="20" fill="#F5F5DC" stroke="#8B4513" stroke-width="1"/>
+    <text x="88" y="74" text-anchor="middle" fill="#8B4513" font-size="12" font-family="serif">STORAGE</text>
+  </g>
+</svg>

@@ -60,6 +60,13 @@ export const moveItem = createStoreAction<InventoryNamespace.State, [fromSlotId:
   return false;
 });
 
+export const setHoveredSlot = createStoreAction<InventoryNamespace.State, [slotId: string | null]>((store, slotId) => {
+  store.setState((state) => ({
+    ...state,
+    hoveredSlot: slotId,
+  }));
+});
+
 export const getSlot = createStoreAction<InventoryNamespace.State, [slotId: string]>((store, slotId) => {
   const currentGrid = store.state.grid;
   return findSlotById(currentGrid, slotId);

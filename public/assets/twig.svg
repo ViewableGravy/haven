@@ -1,0 +1,15 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Twig - 1x1 square ratio -->
+  <g transform="translate(12, 8)">
+    <!-- Main branch -->
+    <path d="M8 48 L32 12" stroke="#8B4513" stroke-width="3" stroke-linecap="round"/>
+    <!-- Small side branches -->
+    <path d="M12 40 L18 34" stroke="#8B4513" stroke-width="2" stroke-linecap="round"/>
+    <path d="M20 28 L24 22" stroke="#8B4513" stroke-width="2" stroke-linecap="round"/>
+    <path d="M28 18 L34 14" stroke="#8B4513" stroke-width="2" stroke-linecap="round"/>
+    <!-- Small leaves -->
+    <ellipse cx="18" cy="32" rx="3" ry="2" fill="#228B22" transform="rotate(-30 18 32)"/>
+    <ellipse cx="26" cy="20" rx="3" ry="2" fill="#228B22" transform="rotate(45 26 20)"/>
+    <ellipse cx="35" cy="12" rx="2.5" ry="1.5" fill="#228B22" transform="rotate(60 35 12)"/>
+  </g>
+</svg>

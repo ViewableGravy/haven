@@ -1,0 +1,23 @@
+<svg width="128" height="64" viewBox="0 0 128 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Duck - 2x1 ratio (twice as wide as tall) -->
+  <g transform="translate(16, 8)">
+    <!-- Duck body -->
+    <ellipse cx="48" cy="32" rx="20" ry="12" fill="#FFD700"/>
+    <!-- Duck head -->
+    <circle cx="24" cy="24" r="12" fill="#FFD700"/>
+    <!-- Duck bill -->
+    <ellipse cx="12" cy="24" rx="6" ry="4" fill="#FFA500"/>
+    <!-- Duck eye -->
+    <circle cx="22" cy="20" r="3" fill="#000"/>
+    <circle cx="23" cy="19" r="1" fill="#FFF"/>
+    <!-- Duck wing -->
+    <ellipse cx="52" cy="28" rx="8" ry="6" fill="#DAA520"/>
+    <!-- Duck tail -->
+    <ellipse cx="68" cy="26" rx="6" ry="8" fill="#DAA520"/>
+    <!-- Duck feet -->
+    <ellipse cx="40" cy="44" rx="4" ry="2" fill="#FFA500"/>
+    <ellipse cx="56" cy="44" rx="4" ry="2" fill="#FFA500"/>
+    <!-- Water ripples -->
+    <ellipse cx="48" cy="48" rx="24" ry="3" fill="none" stroke="#87CEEB" stroke-width="1" opacity="0.6"/>
+  </g>
+</svg>

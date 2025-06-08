@@ -4,26 +4,20 @@ import type { InventoryNamespace } from "../../components/inventory/types";
 export interface BaseItemOptions {
   weight?: number;
   rarity?: "common" | "uncommon" | "rare" | "epic" | "legendary";
+  size?: InventoryNamespace.ItemSize;
 }
 
 /***** BASE ITEM CLASS *****/
 export abstract class BaseItem implements InventoryNamespace.Item {
-  public readonly id: string;
-  public readonly name: string;
-  public readonly description: string;
-  public readonly iconPath: string;
-  public readonly maxStackSize: number;
-  public readonly weight: number;
-  public readonly rarity: "common" | "uncommon" | "rare" | "epic" | "legendary";
-
   constructor(
-    id: string,
-    name: string,
-    description: string,
-    iconPath: string,
-    maxStackSize: number = 5,
-    weight: number = 1,
-    rarity: "common" | "uncommon" | "rare" | "epic" | "legendary" = "common"
+    public readonly id: string,
+    public readonly name: string,
+    public readonly description: string,
+    public readonly iconPath: string,
+    public readonly maxStackSize: number = 5,
+    public readonly weight: number = 1,
+    public readonly rarity: "common" | "uncommon" | "rare" | "epic" | "legendary" = "common",
+    public readonly size?: InventoryNamespace.ItemSize
   ) {
     this.id = id;
     this.name = name;
@@ -32,6 +26,7 @@ export abstract class BaseItem implements InventoryNamespace.Item {
     this.maxStackSize = maxStackSize;
     this.weight = weight;
     this.rarity = rarity;
+    this.size = size;
   }
 
   /***** ABSTRACT METHODS *****/
