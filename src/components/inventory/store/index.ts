@@ -4,8 +4,8 @@ import { DuckItem } from "../../../entities/items/duck";
 import { TwigItem } from "../../../entities/items/twig";
 import { createStore, createStoreState } from "../../../utilities/store";
 import { InventoryNamespace } from "../types";
-import { addItem, getSlot, moveItem, removeItem, setHoveredSlot, setSelectedSlot, toggleInventory } from "./actions";
 import { addItemToGrid } from "./_actions";
+import { addItem, getItemStack, getMainSlot, getSlot, moveItem, removeItem, setSelectedSlot, toggleInventory } from "./actions";
 
 function createGridWithDefaultItems(): InventoryNamespace.Grid {
   // Initialize as 1D array with 16 empty slots (4x4)
@@ -65,17 +65,17 @@ const _inventoryStore = createStore({
   state: createStoreState<InventoryNamespace.State>({
     isOpen: false,
     selectedSlot: null,
-    hoveredSlot: null,
     grid: createGridWithDefaultItems()
   }),
   actions: {
     toggleInventory,
     setSelectedSlot,
-    setHoveredSlot,
     addItem,
     removeItem,
     moveItem,
-    getSlot
+    getSlot,
+    getMainSlot,
+    getItemStack
   }
 })
 

@@ -1,6 +1,7 @@
 import { useStore } from "@tanstack/react-store";
 import classNames from "classnames";
 import type React from "react";
+import { useState } from "react";
 import {
   getMainSlotFromAny,
   isMainSlot,
@@ -17,35 +18,27 @@ interface InventorySlotProps {
 export const InventorySlot: React.FC<InventorySlotProps> = ({
   index,
 }) => {
+  /***** LOCAL STATE *****/
+  const [isHovered, setIsHovered] = useState(false);
+
   /***** HOOKS *****/
-  const { slot, mainSlot, hasItem, isHovered } = useStore(
+  const { slot, mainSlot, hasItem } = useStore(
     inventoryStore,
     (state) => {
       const slot = state.grid[index];
-
-      // Get main slot using helper function
       const mainSlot = getMainSlotFromAny(state.grid, slot);
-      
-      // Determine the main slot index for hover checking
-      let mainSlotIndex: number | null = null;
-      if (isMainSlot(slot)) {
-        mainSlotIndex = index;
-      } else if (isSecondarySlot(slot)) {
-        mainSlotIndex = slot.mainSlotIndex;
-      }
       
       return {
         slot,
         mainSlot,
         hasItem: mainSlot !== null,
-        isHovered: mainSlot && mainSlotIndex !== null ? state.hoveredSlot === mainSlotIndex : false,
       };
     }
   );
 
   /***** COMPUTED VALUES *****/
   const slotClassName = classNames("inventory-slot", {
-    "has-item": hasItem,
+    "has-item": hasItem, // Show border for any slot that's part of an item
     occupied: isSecondarySlot(slot),
     "multi-slot-main": isMainSlot(slot) && hasItem,
   });
@@ -56,34 +49,18 @@ export const InventorySlot: React.FC<InventorySlotProps> = ({
 
   /***** HANDLERS *****/
   const handleSlotMouseEnter = () => {
-    // Always attempt to set hover state if there's a main slot to hover
     if (mainSlot) {
-      // Determine the main slot index for hover state
-      let mainSlotIndex: number | null = null;
-      if (isMainSlot(slot)) {
-        mainSlotIndex = index;
-      } else if (isSecondarySlot(slot)) {
-        mainSlotIndex = slot.mainSlotIndex;
-      }
-      
-      if (mainSlotIndex !== null) {
-        inventoryStore.setHoveredSlot(mainSlotIndex);
-      }
+      setIsHovered(true);
     }
   };
 
-  const handleItemMouseLeave = () => {
-    // Clear hover state when leaving the item
-    inventoryStore.setHoveredSlot(null);
+  const handleSlotMouseLeave = () => {
+    setIsHovered(false);
   };
 
   /***** RENDER *****/
   return (
-    <div 
-      className={slotClassName}
-      onMouseEnter={handleSlotMouseEnter}
-      onMouseLeave={handleItemMouseLeave}
-    >
+    <div className={slotClassName}>
       {/* Only render item visuals in main slots, not secondary slots */}
       {mainSlot && isMainSlot(slot) && (
         <>
@@ -96,7 +73,8 @@ export const InventorySlot: React.FC<InventorySlotProps> = ({
                 "--item-height": mainSlot.itemStack.item.size?.height || 1,
               } as React.CSSProperties
             }
-            
+            onMouseEnter={handleSlotMouseEnter}
+            onMouseLeave={handleSlotMouseLeave}
           ></div>
           {mainSlot.itemStack.quantity > 1 && (
             <div className="item-quantity">{mainSlot.itemStack.quantity}</div>

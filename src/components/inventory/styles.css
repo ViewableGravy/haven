@@ -94,6 +94,11 @@
   cursor: pointer;
 }
 
+/* Ensure has-item border takes precedence over occupied border */
+.inventory-slot.has-item.occupied {
+  border-color: #8a6914;
+}
+
 .inventory-slot.multi-slot-main {
   border-color: #8a6914;
 }
@@ -127,7 +132,7 @@
   top: 0;
   left: 0;
   z-index: 2;
-  pointer-events: none; /* Prevent interference with slot clicks */
+  pointer-events: auto; /* Enable mouse events for hover detection */
   border-radius: 2px;
   transition: all 0.2s ease;
 }

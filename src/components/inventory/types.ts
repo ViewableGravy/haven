@@ -42,7 +42,6 @@ export namespace InventoryNamespace {
     isOpen: boolean;
     grid: InventoryNamespace.Grid;
     selectedSlot: number | null;
-    hoveredSlot: number | null;
   }
 
   // Updated grid types - using 1D array for better performance

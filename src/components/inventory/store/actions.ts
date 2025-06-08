@@ -1,6 +1,7 @@
+import type { Store } from "@tanstack/react-store";
 import { createStoreAction } from "../../../utilities/store";
 import type { InventoryNamespace } from "../types";
-import { addItemToGrid, getSlotByIndex, moveItemBetweenSlots, removeItemFromGrid } from "./_actions";
+import { addItemToGrid, getItemStackFromSlot, getMainSlotFromAny, getSlotByIndex, moveItemBetweenSlots, removeItemFromGrid } from "./_actions";
 
 /***** PUBLIC ACTIONS *****/
 
@@ -60,14 +61,32 @@ export const moveItem = createStoreAction<InventoryNamespace.State, [fromSlotInd
   return false;
 });
 
-export const setHoveredSlot = createStoreAction<InventoryNamespace.State, [slotIndex: number | null]>((store, slotIndex) => {
-  store.setState((state) => ({
-    ...state,
-    hoveredSlot: slotIndex,
-  }));
-});
-
-export const getSlot = createStoreAction<InventoryNamespace.State, [slotIndex: number]>((store, slotIndex) => {
+/**
+ * Gets a slot by its index in the inventory grid
+ * @param slotIndex - The index of the slot to retrieve
+ * @returns The slot at the given index, or null if invalid
+ */
+export const getSlot = createStoreAction((store: Store<InventoryNamespace.State>, slotIndex: number) => {
   const currentGrid = store.state.grid;
   return getSlotByIndex(currentGrid, slotIndex);
+});
+
+/**
+ * Gets the main slot from any slot (handles both main and secondary slots)
+ * @param slot - The slot to get the main slot from
+ * @returns The main slot, or null if not found
+ */
+export const getMainSlot = createStoreAction((store: Store<InventoryNamespace.State>, slot: InventoryNamespace.Slot) => {
+  const currentGrid = store.state.grid;
+  return getMainSlotFromAny(currentGrid, slot);
+});
+
+/**
+ * Gets the item stack from any slot (handles both main and secondary slots)
+ * @param slot - The slot to get the item stack from
+ * @returns The item stack, or null if no item
+ */
+export const getItemStack = createStoreAction((store: Store<InventoryNamespace.State>, slot: InventoryNamespace.Slot) => {
+  const currentGrid = store.state.grid;
+  return getItemStackFromSlot(currentGrid, slot);
 });
