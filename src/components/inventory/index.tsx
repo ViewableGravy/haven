@@ -70,6 +70,13 @@ export const InventoryPanel = inventoryStore.withRenderWhenOpen(() => {
     setIsDragging(false);
   }, []);
 
+  const handleInventoryMouseLeave = useCallback(() => {
+    // Clear hovered slot when mouse leaves the inventory area to prevent crashes
+    if (heldItem) {
+      inventoryStore.setHoveredSlot(null);
+    }
+  }, [heldItem]);
+
   // Add global mouse event listeners for dragging
   useEffect(() => {
     if (isDragging) {
@@ -89,10 +96,19 @@ export const InventoryPanel = inventoryStore.withRenderWhenOpen(() => {
       inventoryStore.setCursorPosition({ x: event.clientX, y: event.clientY });
     };
 
+    const handleGlobalMouseLeave = () => {
+      // Clear hovered slot when mouse leaves the document entirely
+      if (heldItem) {
+        inventoryStore.setHoveredSlot(null);
+      }
+    };
+
     if (heldItem) {
       document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseleave', handleGlobalMouseLeave);
       return () => {
         document.removeEventListener('mousemove', handleGlobalMouseMove);
+        document.removeEventListener('mouseleave', handleGlobalMouseLeave);
       };
     }
   }, [heldItem]);
@@ -102,6 +118,7 @@ export const InventoryPanel = inventoryStore.withRenderWhenOpen(() => {
       <div
         ref={panelRef}
         className="InventoryPanel"
+        onMouseLeave={handleInventoryMouseLeave}
         style={{
           transform: `translate(${position.x}px, ${position.y}px)`,
           cursor: isDragging ? 'grabbing' : 'default'

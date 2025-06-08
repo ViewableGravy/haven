@@ -146,6 +146,12 @@
       outline-offset: -2px;
       box-shadow: 0 0 6px rgba(184, 148, 29, 0.3);
     }
+
+    &--secondary-hovered {
+      background: rgba(184, 148, 29, 0.1);
+      outline: 1px solid rgba(184, 148, 29, 0.4);
+      outline-offset: -1px;
+    }
   }
 
   &__quantity {
