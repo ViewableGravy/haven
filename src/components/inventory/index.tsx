@@ -1,5 +1,6 @@
 import { useStore } from "@tanstack/react-store";
-import { useCallback, useEffect } from "react";
+import { useMouse } from "@uidotdev/usehooks";
+import { useCallback } from "react";
 import { DraggableComponent } from "../draggable";
 import { InventorySlot } from "./InventorySlot";
 import { inventoryStore } from "./store";
@@ -8,10 +9,10 @@ import "./styles.scss";
 /***** COMPONENT *****/
 export const InventoryPanel = inventoryStore.withRenderWhenOpen(() => {
   /***** HOOKS *****/
+  const [cursorPosition] = useMouse();
   const grid = useStore(inventoryStore, (state) => state.grid);
   const position = useStore(inventoryStore, (state) => state.position);
   const heldItem = useStore(inventoryStore, (state) => state.heldItem);
-  const cursorPosition = useStore(inventoryStore, (state) => state.cursorPosition);
 
   /***** HANDLERS *****/
   const handleClose = useCallback((event: React.MouseEvent) => {
@@ -20,45 +21,11 @@ export const InventoryPanel = inventoryStore.withRenderWhenOpen(() => {
     inventoryStore.setSelectedSlot(null);
   }, []);
 
-  const handlePositionChange = useCallback((newPosition: { x: number; y: number }) => {
-    inventoryStore.setPosition(newPosition);
-  }, []);
-
-  const handleInventoryMouseLeave = useCallback(() => {
-    // Clear hovered slot when mouse leaves the inventory area to prevent crashes
-    if (heldItem) {
-      inventoryStore.setHoveredSlot(null);
-    }
-  }, [heldItem]);
-
-  // Track cursor position for drag item rendering
-  useEffect(() => {
-    const handleGlobalMouseMove = (event: MouseEvent) => {
-      inventoryStore.setCursorPosition({ x: event.clientX, y: event.clientY });
-    };
-
-    const handleGlobalMouseLeave = () => {
-      // Clear hovered slot when mouse leaves the document entirely
-      if (heldItem) {
-        inventoryStore.setHoveredSlot(null);
-      }
-    };
-
-    if (heldItem) {
-      document.addEventListener("mousemove", handleGlobalMouseMove);
-      document.addEventListener("mouseleave", handleGlobalMouseLeave);
-      return () => {
-        document.removeEventListener("mousemove", handleGlobalMouseMove);
-        document.removeEventListener("mouseleave", handleGlobalMouseLeave);
-      };
-    }
-  }, [heldItem]);
-
   return (
     <>
       <DraggableComponent
         position={position}
-        onPositionChange={handlePositionChange}
+        onPositionChange={(position) => inventoryStore.setPosition(position)}
         className="InventoryPanel"
       >
         <DraggableComponent.DragHandle>
@@ -70,7 +37,7 @@ export const InventoryPanel = inventoryStore.withRenderWhenOpen(() => {
           </div>
         </DraggableComponent.DragHandle>
         
-        <div className="InventoryPanel__content" onMouseLeave={handleInventoryMouseLeave}>
+        <div className="InventoryPanel__content">
           <div className="InventoryPanel__grid">
             {grid.map((_, index) => <InventorySlot key={index} index={index} />)}
           </div>
