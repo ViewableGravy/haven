@@ -54,15 +54,13 @@
 
 /***** INVENTORY GRID STYLES *****/
 .inventory-grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(4, 64px);
+  grid-template-rows: repeat(4, 64px);
   gap: 4px;
 }
 
-.inventory-row {
-  display: flex;
-  gap: 4px;
-}
+/* Remove the inventory-row class as we no longer need it */
 
 /***** INVENTORY SLOT STYLES *****/
 .inventory-slot {
@@ -79,11 +77,6 @@
   justify-content: center;
 }
 
-.inventory-slot:hover {
-  border-color: #888;
-  background: rgba(255, 255, 255, 0.15);
-}
-
 .inventory-slot.selected {
   border-color: #4a9eff;
   background: rgba(74, 158, 255, 0.2);
@@ -94,39 +87,38 @@
   border-color: #8a6914;
 }
 
-.inventory-slot.has-item:hover {
-  border-color: #b8941d;
-}
-
 /***** MULTI-SLOT ITEM STYLES *****/
 .inventory-slot.occupied {
   border-color: #4a4a4a;
   background: rgba(255, 255, 255, 0.05);
-  cursor: pointer; /* Changed from not-allowed to pointer */
-}
-
-.inventory-slot.occupied:hover {
-  border-color: #666;
-  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
 }
 
 .inventory-slot.multi-slot-main {
   border-color: #8a6914;
 }
 
-.inventory-slot.multi-slot-main:hover {
-  border-color: #b8941d;
-}
-
 /***** ITEM STYLES *****/
 .item-icon {
-  --item-width: 1;
-  --item-height: 1;
   --slot-size: 64px;
   --slot-gap: 4px;
   
-  width: calc(var(--item-width) * var(--slot-size) + (var(--item-width) - 1) * var(--slot-gap));
-  height: calc(var(--item-height) * var(--slot-size) + (var(--item-height) - 1) * var(--slot-gap));
+  width: calc(
+    var(--item-width, 1) * 
+    var(--slot-size) + 
+    var(--item-width, 1) * 
+    var(--slot-gap) - 
+    8px
+  );
+
+  height: calc(
+    var(--item-height, 1) * 
+    var(--slot-size) + 
+    var(--item-height, 1) * 
+    var(--slot-gap) -
+    8px
+  );
+
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
@@ -136,6 +128,15 @@
   left: 0;
   z-index: 2;
   pointer-events: none; /* Prevent interference with slot clicks */
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+/* Item hover effect - unified border around entire item */
+.item-icon.hovered {
+  outline: 2px solid #b8941d;
+  outline-offset: -2px;
+  box-shadow: 0 0 6px rgba(184, 148, 29, 0.3);
 }
 
 .item-quantity {

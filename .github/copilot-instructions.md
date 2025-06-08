@@ -7,6 +7,7 @@
 - Always write arrow functions using `() => ` syntax, even if unnecessary. For example `withCallback((x) => x)` instead of `withCallback(x => x)`
 - In most cases where a type is needed, always check for an existing type that matches our needs rather than creating a new one inline.
 - If many types need to be created, or exported from a file or area of the code, create a types.ts file in that folder. 
+- Always try and use types over interfaces where possible
 - Opt for namespaces when there are a collection of types that are related to one "area", for example
 ```ts
 export namespace ClientChunkNamespace {

@@ -1,90 +1,103 @@
 import { useStore } from "@tanstack/react-store";
 import classNames from "classnames";
 import type React from "react";
+import {
+  getMainSlotFromAny,
+  isMainSlot,
+  isSecondarySlot,
+} from "./store/_actions";
 import { inventoryStore } from "./store/index";
 
 /***** TYPE DEFINITIONS *****/
 interface InventorySlotProps {
-  rowIndex: number;
-  colIndex: number;
+  index: number;
 }
 
 /***** COMPONENT *****/
 export const InventorySlot: React.FC<InventorySlotProps> = ({
-  rowIndex,
-  colIndex,
+  index,
 }) => {
   /***** HOOKS *****/
-  const { slot, mainSlot, isMainSlot, isSelected, hasItem } = useStore(inventoryStore, (state) => {
-    const slot = state.grid[rowIndex][colIndex];
-    
-    // Find the main slot if this slot is occupied by another slot
-    const getMainSlot = () => {
-      if (slot.occupiedBy) {
-        for (const row of state.grid) {
-          for (const gridSlot of row) {
-            if (gridSlot.id === slot.occupiedBy) {
-              return gridSlot;
-            }
-          }
-        }
+  const { slot, mainSlot, hasItem, isHovered } = useStore(
+    inventoryStore,
+    (state) => {
+      const slot = state.grid[index];
+
+      // Get main slot using helper function
+      const mainSlot = getMainSlotFromAny(state.grid, slot);
+      
+      // Determine the main slot index for hover checking
+      let mainSlotIndex: number | null = null;
+      if (isMainSlot(slot)) {
+        mainSlotIndex = index;
+      } else if (isSecondarySlot(slot)) {
+        mainSlotIndex = slot.mainSlotIndex;
       }
-      return slot;
-    };
-
-    const mainSlot = getMainSlot();
-
-    return {
-      slot,
-      mainSlot,
-      get isMainSlot() { return mainSlot.id === slot.id},
-      get isSelected() { return state.selectedSlot === slot.id },
-      get hasItem() { return !!mainSlot.itemStack }
-    };
-  });
+      
+      return {
+        slot,
+        mainSlot,
+        hasItem: mainSlot !== null,
+        isHovered: mainSlot && mainSlotIndex !== null ? state.hoveredSlot === mainSlotIndex : false,
+      };
+    }
+  );
 
   /***** COMPUTED VALUES *****/
-  const slotClassName = classNames('inventory-slot', {
-    selected: isSelected,
-    'has-item': hasItem,
-    occupied: slot.occupiedBy && !isMainSlot,
-    'multi-slot-main': isMainSlot && hasItem && mainSlot.itemStack?.item.size && 
-      (mainSlot.itemStack.item.size.width > 1 || mainSlot.itemStack.item.size.height > 1),
+  const slotClassName = classNames("inventory-slot", {
+    "has-item": hasItem,
+    occupied: isSecondarySlot(slot),
+    "multi-slot-main": isMainSlot(slot) && hasItem,
+  });
+
+  const itemClassName = classNames("item-icon", {
+    hovered: isHovered,
   });
 
   /***** HANDLERS *****/
-  const handleClick = () => {
-    // Always interact with the main slot, even if clicking on an occupied slot
-    const targetSlotId = mainSlot.id;
-    const isMainSelected = isSelected;
-    inventoryStore.setSelectedSlot(isMainSelected ? null : targetSlotId);
+  const handleSlotMouseEnter = () => {
+    // Always attempt to set hover state if there's a main slot to hover
+    if (mainSlot) {
+      // Determine the main slot index for hover state
+      let mainSlotIndex: number | null = null;
+      if (isMainSlot(slot)) {
+        mainSlotIndex = index;
+      } else if (isSecondarySlot(slot)) {
+        mainSlotIndex = slot.mainSlotIndex;
+      }
+      
+      if (mainSlotIndex !== null) {
+        inventoryStore.setHoveredSlot(mainSlotIndex);
+      }
+    }
   };
 
-  const handleDoubleClick = () => {
-    if (mainSlot.itemStack) {
-      // Double click to use/consume item
-      console.log(`Using item: ${mainSlot.itemStack.item.name}`);
-      inventoryStore.removeItem(mainSlot.id, 1);
-    }
+  const handleItemMouseLeave = () => {
+    // Clear hover state when leaving the item
+    inventoryStore.setHoveredSlot(null);
   };
 
   /***** RENDER *****/
   return (
-    <div
+    <div 
       className={slotClassName}
-      onClick={handleClick}
-      onDoubleClick={handleDoubleClick}
+      onMouseEnter={handleSlotMouseEnter}
+      onMouseLeave={handleItemMouseLeave}
     >
-      {isMainSlot && mainSlot.itemStack && (
+      {/* Only render item visuals in main slots, not secondary slots */}
+      {mainSlot && isMainSlot(slot) && (
         <>
           <div
-            className="item-icon"
-            style={{
-              backgroundImage: `url(${mainSlot.itemStack.item.iconPath})`,
-              '--item-width': mainSlot.itemStack.item.size?.width || 1,
-              '--item-height': mainSlot.itemStack.item.size?.height || 1,
-            } as React.CSSProperties}
-          />
+            className={itemClassName}
+            style={
+              {
+                backgroundImage: `url(${mainSlot.itemStack.item.iconPath})`,
+                "--item-width": mainSlot.itemStack.item.size?.width || 1,
+                "--item-height": mainSlot.itemStack.item.size?.height || 1,
+              } as React.CSSProperties
+            }
+            
+          ></div>
           {mainSlot.itemStack.quantity > 1 && (
             <div className="item-quantity">{mainSlot.itemStack.quantity}</div>
           )}

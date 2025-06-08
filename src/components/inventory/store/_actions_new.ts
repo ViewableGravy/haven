@@ -1,12 +1,19 @@
+// filepath: /home/gravy/programming/haven/src/components/inventory/store/_actions.ts
 import { InventoryNamespace } from "../types";
 
 /***** PRIVATE UTILITY FUNCTIONS *****/
 
-export function getSlotByIndex(grid: InventoryNamespace.Grid, index: number): InventoryNamespace.Slot | null {
-  if (index >= 0 && index < grid.length) {
-    return grid[index];
+export function findSlotById(grid: InventoryNamespace.Grid, slotId: string): InventoryNamespace.Slot | null {
+  for (const slot of grid) {
+    if (slot.id === slotId) {
+      return slot;
+    }
   }
   return null;
+}
+
+export function findSlotIndex(grid: InventoryNamespace.Grid, slotId: string): number {
+  return grid.findIndex((slot) => slot.id === slotId);
 }
 
 /***** HELPER FUNCTIONS FOR DISCRIMINATED UNION *****/
@@ -16,7 +23,7 @@ export function getMainSlotFromAny(grid: InventoryNamespace.Grid, slot: Inventor
     return slot;
   }
   if (slot.type === 'itemSecondary') {
-    const mainSlot = grid[slot.mainSlotIndex];
+    const mainSlot = findSlotById(grid, slot.mainSlotId);
     return mainSlot?.type === 'itemMain' ? mainSlot : null;
   }
   return null;
@@ -105,6 +112,7 @@ export function addItemToGrid(grid: InventoryNamespace.Grid, item: InventoryName
         // Convert empty slot to item main slot
         const mainSlot: InventoryNamespace.ItemMainSlot = {
           type: 'itemMain',
+          id: slot.id,
           itemStack: {
             item,
             quantity: addQuantity,
@@ -130,13 +138,13 @@ export function addItemToGrid(grid: InventoryNamespace.Grid, item: InventoryName
   };
 }
 
-export function removeItemFromGrid(grid: InventoryNamespace.Grid, slotIndex: number, quantity: number): {
+export function removeItemFromGrid(grid: InventoryNamespace.Grid, slotId: string, quantity: number): {
   success: boolean;
   grid: InventoryNamespace.Grid;
   removedStack: InventoryNamespace.ItemStack | null;
 } {
   const newGrid = JSON.parse(JSON.stringify(grid)) as InventoryNamespace.Grid;
-  const slot = getSlotByIndex(newGrid, slotIndex);
+  const slot = findSlotById(newGrid, slotId);
   
   if (!slot) {
     return { success: false, grid, removedStack: null };
@@ -144,13 +152,12 @@ export function removeItemFromGrid(grid: InventoryNamespace.Grid, slotIndex: num
 
   // If this slot is a secondary slot, find the main slot
   if (isSecondarySlot(slot)) {
-    const mainSlotIndex = slot.mainSlotIndex;
-    const mainSlot = getSlotByIndex(newGrid, mainSlotIndex);
+    const mainSlot = findSlotById(newGrid, slot.mainSlotId);
     if (!mainSlot || !isMainSlot(mainSlot)) {
       return { success: false, grid, removedStack: null };
     }
     // Remove from the main slot
-    return removeItemFromGrid(grid, mainSlotIndex, quantity);
+    return removeItemFromGrid(grid, slot.mainSlotId, quantity);
   }
 
   if (!isMainSlot(slot)) {
@@ -171,15 +178,19 @@ export function removeItemFromGrid(grid: InventoryNamespace.Grid, slotIndex: num
     const isMultiSlot = item.size && (item.size.width > 1 || item.size.height > 1);
     
     if (isMultiSlot) {
-      const clearedGrid = clearMultiSlotItem(newGrid, slotIndex);
+      const clearedGrid = clearMultiSlotItem(newGrid, slotId);
       Object.assign(newGrid, clearedGrid);
     } else {
       // Convert main slot back to empty slot
       const emptySlot: InventoryNamespace.EmptySlot = {
-        type: 'empty'
+        type: 'empty',
+        id: slot.id,
       };
       // Replace the slot in the grid
-      newGrid[slotIndex] = emptySlot;
+      const slotIndex = findSlotIndex(newGrid, slot.id);
+      if (slotIndex !== -1) {
+        newGrid[slotIndex] = emptySlot;
+      }
     }
   }
 
@@ -190,13 +201,13 @@ export function removeItemFromGrid(grid: InventoryNamespace.Grid, slotIndex: num
   };
 }
 
-export function moveItemBetweenSlots(grid: InventoryNamespace.Grid, fromSlotIndex: number, toSlotIndex: number): {
+export function moveItemBetweenSlots(grid: InventoryNamespace.Grid, fromSlotId: string, toSlotId: string): {
   success: boolean;
   grid: InventoryNamespace.Grid;
 } {
   const newGrid = JSON.parse(JSON.stringify(grid)) as InventoryNamespace.Grid;
-  const fromSlot = getSlotByIndex(newGrid, fromSlotIndex);
-  const toSlot = getSlotByIndex(newGrid, toSlotIndex);
+  const fromSlot = findSlotById(newGrid, fromSlotId);
+  const toSlot = findSlotById(newGrid, toSlotId);
   
   if (!fromSlot || !toSlot || !isMainSlot(fromSlot)) {
     return { success: false, grid };
@@ -207,6 +218,7 @@ export function moveItemBetweenSlots(grid: InventoryNamespace.Grid, fromSlotInde
     // Create new main slot with the item
     const newMainSlot: InventoryNamespace.ItemMainSlot = {
       type: 'itemMain',
+      id: toSlot.id,
       itemStack: fromSlot.itemStack,
       hasSecondarySlots: fromSlot.hasSecondarySlots,
       secondarySlotIndices: fromSlot.secondarySlotIndices
@@ -214,12 +226,16 @@ export function moveItemBetweenSlots(grid: InventoryNamespace.Grid, fromSlotInde
     
     // Convert from slot back to empty
     const emptySlot: InventoryNamespace.EmptySlot = {
-      type: 'empty'
+      type: 'empty',
+      id: fromSlot.id,
     };
     
     // Replace slots in grid
-    newGrid[fromSlotIndex] = emptySlot;
-    newGrid[toSlotIndex] = newMainSlot;
+    const fromIndex = findSlotIndex(newGrid, fromSlot.id);
+    const toIndex = findSlotIndex(newGrid, toSlot.id);
+    
+    if (fromIndex !== -1) newGrid[fromIndex] = emptySlot;
+    if (toIndex !== -1) newGrid[toIndex] = newMainSlot;
     
     return { success: true, grid: newGrid };
   }
@@ -238,9 +254,13 @@ export function moveItemBetweenSlots(grid: InventoryNamespace.Grid, fromSlotInde
       if (fromSlot.itemStack.quantity <= 0) {
         // Convert from slot back to empty
         const emptySlot: InventoryNamespace.EmptySlot = {
-          type: 'empty'
+          type: 'empty',
+          id: fromSlot.id,
         };
-        newGrid[fromSlotIndex] = emptySlot;
+        const fromIndex = findSlotIndex(newGrid, fromSlot.id);
+        if (fromIndex !== -1) {
+          newGrid[fromIndex] = emptySlot;
+        }
       }
       
       return { success: true, grid: newGrid };
@@ -267,7 +287,8 @@ export function moveItemBetweenSlots(grid: InventoryNamespace.Grid, fromSlotInde
 
 /***** MULTI-SLOT ITEM UTILITIES *****/
 
-export function getSlotPosition(index: number): { row: number; col: number } | null {
+export function getSlotPosition(grid: InventoryNamespace.Grid, slotId: string): { row: number; col: number } | null {
+  const index = findSlotIndex(grid, slotId);
   if (index === -1) return null;
   return InventoryNamespace.indexToRowCol(index);
 }
@@ -304,9 +325,9 @@ export function canPlaceMultiSlotItem(
   return true;
 }
 
-export function clearMultiSlotItem(grid: InventoryNamespace.Grid, slotIndex: number): InventoryNamespace.Grid {
+export function clearMultiSlotItem(grid: InventoryNamespace.Grid, slotId: string): InventoryNamespace.Grid {
   const newGrid = JSON.parse(JSON.stringify(grid)) as InventoryNamespace.Grid;
-  const slot = getSlotByIndex(newGrid, slotIndex);
+  const slot = findSlotById(newGrid, slotId);
   
   if (!slot || !isMainSlot(slot)) {
     return newGrid;
@@ -314,7 +335,7 @@ export function clearMultiSlotItem(grid: InventoryNamespace.Grid, slotIndex: num
   
   const item = slot.itemStack.item;
   const size = item.size || { width: 1, height: 1 };
-  const position = getSlotPosition(slotIndex);
+  const position = getSlotPosition(newGrid, slotId);
   
   if (!position) {
     return newGrid;
@@ -325,9 +346,11 @@ export function clearMultiSlotItem(grid: InventoryNamespace.Grid, slotIndex: num
     for (let c = position.col; c < position.col + size.width; c++) {
       if (InventoryNamespace.isValidPosition(r, c)) {
         const index = InventoryNamespace.rowColToIndex(r, c);
+        const currentSlot = newGrid[index];
         // Convert all slots back to empty slots
         const emptySlot: InventoryNamespace.EmptySlot = {
-          type: 'empty'
+          type: 'empty',
+          id: currentSlot.id,
         };
         newGrid[index] = emptySlot;
       }
@@ -371,6 +394,7 @@ export function placeMultiSlotItem(
     // Create new main slot
     const mainSlot: InventoryNamespace.ItemMainSlot = {
       type: 'itemMain',
+      id: currentMainSlot.id,
       itemStack: { item, quantity },
       hasSecondarySlots: secondarySlotIndices.length > 0,
       secondarySlotIndices: secondarySlotIndices.length > 0 ? secondarySlotIndices : undefined
@@ -383,8 +407,11 @@ export function placeMultiSlotItem(
     for (let c = startCol; c < startCol + size.width; c++) {
       if ((r !== startRow || c !== startCol) && InventoryNamespace.isValidPosition(r, c)) {
         const secondaryIndex = InventoryNamespace.rowColToIndex(r, c);
+        const currentSlot = newGrid[secondaryIndex];
         const secondarySlot: InventoryNamespace.ItemSecondarySlot = {
           type: 'itemSecondary',
+          id: currentSlot.id,
+          mainSlotId: newGrid[mainIndex].id,
           mainSlotIndex: mainIndex
         };
         newGrid[secondaryIndex] = secondarySlot;

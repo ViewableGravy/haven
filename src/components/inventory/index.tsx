@@ -24,16 +24,11 @@ export const InventoryPanel = inventoryStore.withRenderWhenOpen(() => {
       </div>
       <div className="inventory-content">
         <div className="inventory-grid">
-          {grid.map((row, rowIndex) => (
-            <div key={rowIndex} className="inventory-row">
-              {row.map((_, colIndex) => (
-                <InventorySlot
-                  key={`${rowIndex}-${colIndex}`}
-                  rowIndex={rowIndex}
-                  colIndex={colIndex}
-                />
-              ))}
-            </div>
+          {grid.map((_, index) => (
+            <InventorySlot
+              key={index}
+              index={index}
+            />
           ))}
         </div>
       </div>

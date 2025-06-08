@@ -3,34 +3,32 @@ import { createElement, useEffect, type ComponentType } from "react";
 import { DuckItem } from "../../../entities/items/duck";
 import { TwigItem } from "../../../entities/items/twig";
 import { createStore, createStoreState } from "../../../utilities/store";
-import type { InventoryNamespace } from "../types";
+import { InventoryNamespace } from "../types";
 import { addItem, getSlot, moveItem, removeItem, setHoveredSlot, setSelectedSlot, toggleInventory } from "./actions";
+import { addItemToGrid } from "./_actions";
 
 function createGridWithDefaultItems(): InventoryNamespace.Grid {
-  const grid: InventoryNamespace.Grid = [];
-  for (let row = 0; row < 4; row++) {
-    grid[row] = [];
-    for (let col = 0; col < 4; col++) {
-      grid[row][col] = {
-        id: `slot-${row}-${col}`,
-        itemStack: null,
-      };
-    }
+  // Initialize as 1D array with 16 empty slots (4x4)
+  let grid: InventoryNamespace.Grid = [];
+  for (let index = 0; index < 16; index++) {
+    grid[index] = {
+      type: 'empty',
+    } as InventoryNamespace.EmptySlot;
   }
   
-  // Add twig item to first slot
+  // Add twig item to first slot (index 0) using proper grid function
   const twigItem = new TwigItem();
-  grid[0][0].itemStack = {
-    item: twigItem,
-    quantity: 3
-  };
+  const twigResult = addItemToGrid(grid, twigItem, 3);
+  if (twigResult.success) {
+    grid = twigResult.grid;
+  }
   
-  // Add duck item to second slot
+  // Add duck item using proper grid function (will handle multi-slot placement)
   const duckItem = new DuckItem();
-  grid[0][1].itemStack = {
-    item: duckItem,
-    quantity: 1
-  };
+  const duckResult = addItemToGrid(grid, duckItem, 1);
+  if (duckResult.success) {
+    grid = duckResult.grid;
+  }
   
   return grid;
 }

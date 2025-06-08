@@ -1,6 +1,6 @@
 import { createStoreAction } from "../../../utilities/store";
 import type { InventoryNamespace } from "../types";
-import { addItemToGrid, findSlotById, moveItemBetweenSlots, removeItemFromGrid } from "./_actions";
+import { addItemToGrid, getSlotByIndex, moveItemBetweenSlots, removeItemFromGrid } from "./_actions";
 
 /***** PUBLIC ACTIONS *****/
 
@@ -11,10 +11,10 @@ export const toggleInventory = createStoreAction<InventoryNamespace.State, []>((
   }));
 });
 
-export const setSelectedSlot = createStoreAction<InventoryNamespace.State, [slotId: string | null]>((store, slotId) => {
+export const setSelectedSlot = createStoreAction<InventoryNamespace.State, [slotIndex: number | null]>((store, slotIndex) => {
   store.setState((state) => ({
     ...state,
-    selectedSlot: slotId,
+    selectedSlot: slotIndex,
   }));
 });
 
@@ -32,9 +32,9 @@ export const addItem = createStoreAction<InventoryNamespace.State, [item: Invent
   return false;
 });
 
-export const removeItem = createStoreAction<InventoryNamespace.State, [slotId: string, quantity?: number]>((store, slotId, quantity = 1) => {
+export const removeItem = createStoreAction<InventoryNamespace.State, [slotIndex: number, quantity?: number]>((store, slotIndex, quantity = 1) => {
   const currentGrid = store.state.grid;
-  const result = removeItemFromGrid(currentGrid, slotId, quantity);
+  const result = removeItemFromGrid(currentGrid, slotIndex, quantity);
   
   if (result.success) {
     store.setState((state) => ({
@@ -46,9 +46,9 @@ export const removeItem = createStoreAction<InventoryNamespace.State, [slotId: s
   return null;
 });
 
-export const moveItem = createStoreAction<InventoryNamespace.State, [fromSlotId: string, toSlotId: string]>((store, fromSlotId, toSlotId) => {
+export const moveItem = createStoreAction<InventoryNamespace.State, [fromSlotIndex: number, toSlotIndex: number]>((store, fromSlotIndex, toSlotIndex) => {
   const currentGrid = store.state.grid;
-  const result = moveItemBetweenSlots(currentGrid, fromSlotId, toSlotId);
+  const result = moveItemBetweenSlots(currentGrid, fromSlotIndex, toSlotIndex);
   
   if (result.success) {
     store.setState((state) => ({
@@ -60,14 +60,14 @@ export const moveItem = createStoreAction<InventoryNamespace.State, [fromSlotId:
   return false;
 });
 
-export const setHoveredSlot = createStoreAction<InventoryNamespace.State, [slotId: string | null]>((store, slotId) => {
+export const setHoveredSlot = createStoreAction<InventoryNamespace.State, [slotIndex: number | null]>((store, slotIndex) => {
   store.setState((state) => ({
     ...state,
-    hoveredSlot: slotId,
+    hoveredSlot: slotIndex,
   }));
 });
 
-export const getSlot = createStoreAction<InventoryNamespace.State, [slotId: string]>((store, slotId) => {
+export const getSlot = createStoreAction<InventoryNamespace.State, [slotIndex: number]>((store, slotIndex) => {
   const currentGrid = store.state.grid;
-  return findSlotById(currentGrid, slotId);
+  return getSlotByIndex(currentGrid, slotIndex);
 });

@@ -1,4 +1,4 @@
-import type { InventoryNamespace } from "../../components/inventory/types";
+import { InventoryNamespace } from "../../components/inventory/types";
 import type { BaseEntity } from "../base";
 
 /***** TYPE DEFINITIONS *****/
@@ -15,14 +15,13 @@ export interface HasInventoryTrait {
 export class InventoryTrait {
   private data: InventoryData;
 
-  constructor(entity: BaseEntity, rows: number = 4, cols: number = 4) {
+  constructor(_entity: BaseEntity, rows: number = InventoryNamespace.GRID_ROWS, cols: number = InventoryNamespace.GRID_COLS) {
     const grid: InventoryNamespace.Grid = [];
     for (let row = 0; row < rows; row++) {
-      grid[row] = [];
       for (let col = 0; col < cols; col++) {
-        grid[row][col] = {
-          id: `${entity.uid}-slot-${row}-${col}`,
-          itemStack: null,
+        const index = InventoryNamespace.rowColToIndex(row, col);
+        grid[index] = {
+          type: 'empty'
         };
       }
     }
@@ -50,36 +49,36 @@ export class InventoryTrait {
     let remainingQuantity = quantity;
 
     // Try to stack in existing slots with the same item type first
-    for (let row = 0; row < grid.length && remainingQuantity > 0; row++) {
-      for (let col = 0; col < grid[row].length && remainingQuantity > 0; col++) {
-        const slot = grid[row][col];
+    for (let index = 0; index < grid.length && remainingQuantity > 0; index++) {
+      const slot = grid[index];
+      
+      if (slot.type === 'itemMain' && 
+          slot.itemStack.item.id === item.id && 
+          slot.itemStack.quantity < slot.itemStack.item.maxStackSize) {
         
-        if (slot.itemStack && 
-            slot.itemStack.item.id === item.id && 
-            slot.itemStack.quantity < slot.itemStack.item.maxStackSize) {
-          
-          const canAdd = slot.itemStack.item.maxStackSize - slot.itemStack.quantity;
-          const toAdd = Math.min(canAdd, remainingQuantity);
-          
-          slot.itemStack.quantity += toAdd;
-          remainingQuantity -= toAdd;
-        }
+        const canAdd = slot.itemStack.item.maxStackSize - slot.itemStack.quantity;
+        const toAdd = Math.min(canAdd, remainingQuantity);
+        
+        slot.itemStack.quantity += toAdd;
+        remainingQuantity -= toAdd;
       }
     }
 
     // Place remaining items in empty slots
-    for (let row = 0; row < grid.length && remainingQuantity > 0; row++) {
-      for (let col = 0; col < grid[row].length && remainingQuantity > 0; col++) {
-        const slot = grid[row][col];
-        
-        if (!slot.itemStack) {
-          const toAdd = Math.min(item.maxStackSize, remainingQuantity);
-          slot.itemStack = {
+    for (let index = 0; index < grid.length && remainingQuantity > 0; index++) {
+      const slot = grid[index];
+      
+      if (slot.type === 'empty') {
+        const toAdd = Math.min(item.maxStackSize, remainingQuantity);
+        grid[index] = {
+          type: 'itemMain',
+          itemStack: {
             item: item,
             quantity: toAdd
-          };
-          remainingQuantity -= toAdd;
-        }
+          },
+          hasSecondarySlots: false
+        };
+        remainingQuantity -= toAdd;
       }
     }
 
@@ -95,22 +94,22 @@ export class InventoryTrait {
     let removedItem: InventoryNamespace.Item | null = null;
 
     // Remove from existing stacks
-    for (let row = 0; row < grid.length && remainingToRemove > 0; row++) {
-      for (let col = 0; col < grid[row].length && remainingToRemove > 0; col++) {
-        const slot = grid[row][col];
-        
-        if (slot.itemStack && slot.itemStack.item.id === itemId) {
-          if (!removedItem) {
-            removedItem = slot.itemStack.item;
-          }
+    for (let index = 0; index < grid.length && remainingToRemove > 0; index++) {
+      const slot = grid[index];
+      
+      if (slot.type === 'itemMain' && slot.itemStack.item.id === itemId) {
+        if (!removedItem) {
+          removedItem = slot.itemStack.item;
+        }
 
-          const toRemove = Math.min(slot.itemStack.quantity, remainingToRemove);
-          slot.itemStack.quantity -= toRemove;
-          remainingToRemove -= toRemove;
+        const toRemove = Math.min(slot.itemStack.quantity, remainingToRemove);
+        slot.itemStack.quantity -= toRemove;
+        remainingToRemove -= toRemove;
 
-          if (slot.itemStack.quantity <= 0) {
-            slot.itemStack = null;
-          }
+        if (slot.itemStack.quantity <= 0) {
+          grid[index] = {
+            type: 'empty'
+          };
         }
       }
     }
@@ -126,47 +125,41 @@ export class InventoryTrait {
   }
 
   public removeFromSlot(
-    slotId: string,
+    slotIndex: number,
     quantity: number = 1
   ): InventoryNamespace.ItemStack | null {
     const grid = this.data.grid;
     
-    for (let row = 0; row < grid.length; row++) {
-      for (let col = 0; col < grid[row].length; col++) {
-        const slot = grid[row][col];
+    if (slotIndex >= 0 && slotIndex < grid.length) {
+      const slot = grid[slotIndex];
+      
+      if (slot.type === 'itemMain') {
+        const removeQuantity = Math.min(quantity, slot.itemStack.quantity);
+        const removedStack: InventoryNamespace.ItemStack = {
+          item: slot.itemStack.item,
+          quantity: removeQuantity,
+        };
+
+        slot.itemStack.quantity -= removeQuantity;
         
-        if (slot.id === slotId && slot.itemStack) {
-          const removeQuantity = Math.min(quantity, slot.itemStack.quantity);
-          const removedStack: InventoryNamespace.ItemStack = {
-            item: slot.itemStack.item,
-            quantity: removeQuantity,
+        if (slot.itemStack.quantity <= 0) {
+          grid[slotIndex] = {
+            type: 'empty'
           };
-
-          slot.itemStack.quantity -= removeQuantity;
-          
-          if (slot.itemStack.quantity <= 0) {
-            slot.itemStack = null;
-          }
-
-          return removedStack;
         }
+
+        return removedStack;
       }
     }
 
     return null;
   }
 
-  public getSlot(slotId: string): InventoryNamespace.Slot | null {
+  public getSlot(slotIndex: number): InventoryNamespace.Slot | null {
     const grid = this.data.grid;
     
-    for (let row = 0; row < grid.length; row++) {
-      for (let col = 0; col < grid[row].length; col++) {
-        const slot = grid[row][col];
-        
-        if (slot.id === slotId) {
-          return slot;
-        }
-      }
+    if (slotIndex >= 0 && slotIndex < grid.length) {
+      return grid[slotIndex];
     }
 
     return null;
@@ -176,16 +169,14 @@ export class InventoryTrait {
     const grid = this.data.grid;
     let totalQuantity = 0;
 
-    for (let row = 0; row < grid.length; row++) {
-      for (let col = 0; col < grid[row].length; col++) {
-        const slot = grid[row][col];
+    for (let index = 0; index < grid.length; index++) {
+      const slot = grid[index];
+      
+      if (slot.type === 'itemMain' && slot.itemStack.item.id === itemId) {
+        totalQuantity += slot.itemStack.quantity;
         
-        if (slot.itemStack && slot.itemStack.item.id === itemId) {
-          totalQuantity += slot.itemStack.quantity;
-          
-          if (totalQuantity >= quantity) {
-            return true;
-          }
+        if (totalQuantity >= quantity) {
+          return true;
         }
       }
     }
@@ -197,13 +188,11 @@ export class InventoryTrait {
     const grid = this.data.grid;
     let totalQuantity = 0;
 
-    for (let row = 0; row < grid.length; row++) {
-      for (let col = 0; col < grid[row].length; col++) {
-        const slot = grid[row][col];
-        
-        if (slot.itemStack && slot.itemStack.item.id === itemId) {
-          totalQuantity += slot.itemStack.quantity;
-        }
+    for (let index = 0; index < grid.length; index++) {
+      const slot = grid[index];
+      
+      if (slot.type === 'itemMain' && slot.itemStack.item.id === itemId) {
+        totalQuantity += slot.itemStack.quantity;
       }
     }
 
@@ -218,36 +207,32 @@ export class InventoryTrait {
     let remainingQuantity = quantity;
 
     // Check existing stacks
-    for (let row = 0; row < grid.length; row++) {
-      for (let col = 0; col < grid[row].length; col++) {
-        const slot = grid[row][col];
+    for (let index = 0; index < grid.length; index++) {
+      const slot = grid[index];
+      
+      if (slot.type === 'itemMain' && slot.itemStack.item.id === item.id) {
+        const canAdd = Math.min(
+          remainingQuantity,
+          item.maxStackSize - slot.itemStack.quantity
+        );
+        remainingQuantity -= canAdd;
         
-        if (slot.itemStack && slot.itemStack.item.id === item.id) {
-          const canAdd = Math.min(
-            remainingQuantity,
-            item.maxStackSize - slot.itemStack.quantity
-          );
-          remainingQuantity -= canAdd;
-          
-          if (remainingQuantity <= 0) {
-            return true;
-          }
+        if (remainingQuantity <= 0) {
+          return true;
         }
       }
     }
 
     // Check empty slots
-    for (let row = 0; row < grid.length; row++) {
-      for (let col = 0; col < grid[row].length; col++) {
-        const slot = grid[row][col];
+    for (let index = 0; index < grid.length; index++) {
+      const slot = grid[index];
+      
+      if (slot.type === 'empty' && remainingQuantity > 0) {
+        const canAdd = Math.min(remainingQuantity, item.maxStackSize);
+        remainingQuantity -= canAdd;
         
-        if (!slot.itemStack && remainingQuantity > 0) {
-          const canAdd = Math.min(remainingQuantity, item.maxStackSize);
-          remainingQuantity -= canAdd;
-          
-          if (remainingQuantity <= 0) {
-            return true;
-          }
+        if (remainingQuantity <= 0) {
+          return true;
         }
       }
     }
@@ -258,11 +243,9 @@ export class InventoryTrait {
   public isEmpty(): boolean {
     const grid = this.data.grid;
 
-    for (let row = 0; row < grid.length; row++) {
-      for (let col = 0; col < grid[row].length; col++) {
-        if (grid[row][col].itemStack) {
-          return false;
-        }
+    for (let index = 0; index < grid.length; index++) {
+      if (grid[index].type === 'itemMain') {
+        return false;
       }
     }
 
@@ -272,17 +255,15 @@ export class InventoryTrait {
   public isFull(): boolean {
     const grid = this.data.grid;
 
-    for (let row = 0; row < grid.length; row++) {
-      for (let col = 0; col < grid[row].length; col++) {
-        const slot = grid[row][col];
-        
-        if (!slot.itemStack) {
-          return false;
-        }
-        
-        if (slot.itemStack.quantity < slot.itemStack.item.maxStackSize) {
-          return false;
-        }
+    for (let index = 0; index < grid.length; index++) {
+      const slot = grid[index];
+      
+      if (slot.type === 'empty') {
+        return false;
+      }
+      
+      if (slot.type === 'itemMain' && slot.itemStack.quantity < slot.itemStack.item.maxStackSize) {
+        return false;
       }
     }
 
@@ -292,10 +273,10 @@ export class InventoryTrait {
   public clear(): void {
     const grid = this.data.grid;
 
-    for (let row = 0; row < grid.length; row++) {
-      for (let col = 0; col < grid[row].length; col++) {
-        grid[row][col].itemStack = null;
-      }
+    for (let index = 0; index < grid.length; index++) {
+      grid[index] = {
+        type: 'empty'
+      };
     }
   }
 
@@ -325,16 +306,16 @@ export class InventoryTrait {
     return null;
   }
 
-  static removeFromSlot(entity: BaseEntity, slotId: string, quantity: number = 1): InventoryNamespace.ItemStack | null {
+  static removeFromSlot(entity: BaseEntity, slotIndex: number, quantity: number = 1): InventoryNamespace.ItemStack | null {
     if (InventoryTrait.is(entity)) {
-      return entity.inventoryTrait.removeFromSlot(slotId, quantity);
+      return entity.inventoryTrait.removeFromSlot(slotIndex, quantity);
     }
     return null;
   }
 
-  static getSlot(entity: BaseEntity, slotId: string): InventoryNamespace.Slot | null {
+  static getSlot(entity: BaseEntity, slotIndex: number): InventoryNamespace.Slot | null {
     if (InventoryTrait.is(entity)) {
-      return entity.inventoryTrait.getSlot(slotId);
+      return entity.inventoryTrait.getSlot(slotIndex);
     }
     return null;
   }
