@@ -5,7 +5,7 @@ import { TwigItem } from "../../../entities/items/twig";
 import { createStore, createStoreState } from "../../../utilities/store";
 import { InventoryNamespace } from "../types";
 import { addItemToGrid } from "./_actions";
-import { addItem, getItemStack, getMainSlot, getSlot, moveItem, removeItem, setSelectedSlot, toggleInventory } from "./actions";
+import { addItem, getItemStack, getMainSlot, getSlot, moveItem, removeItem, setPosition, setSelectedSlot, toggleInventory } from "./actions";
 
 function createGridWithDefaultItems(): InventoryNamespace.Grid {
   // Initialize as 1D array with 16 empty slots (4x4)
@@ -60,16 +60,28 @@ function createWithRenderWhenOpen(store: typeof _inventoryStore) {
   }
 }
 
+// Get initial centered position safely
+function getInitialPosition(): { x: number; y: number } {
+  if (typeof window !== 'undefined') {
+    const centerX = Math.max(20, (window.innerWidth - 400) / 2);
+    const centerY = Math.max(20, (window.innerHeight - 300) / 2);
+    return { x: centerX, y: centerY };
+  }
+  return { x: 300, y: 200 }; // Safe fallback position
+}
+
 /***** STORE CREATION *****/
 const _inventoryStore = createStore({
   state: createStoreState<InventoryNamespace.State>({
     isOpen: false,
     selectedSlot: null,
-    grid: createGridWithDefaultItems()
+    grid: createGridWithDefaultItems(),
+    position: getInitialPosition()
   }),
   actions: {
     toggleInventory,
     setSelectedSlot,
+    setPosition,
     addItem,
     removeItem,
     moveItem,

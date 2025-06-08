@@ -90,3 +90,10 @@ export const getItemStack = createStoreAction((store: Store<InventoryNamespace.S
   const currentGrid = store.state.grid;
   return getItemStackFromSlot(currentGrid, slot);
 });
+
+export const setPosition = createStoreAction<InventoryNamespace.State, [position: { x: number; y: number }]>((store, position) => {
+  store.setState((state) => ({
+    ...state,
+    position,
+  }));
+});

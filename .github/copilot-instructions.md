@@ -15,7 +15,7 @@ export namespace ClientChunkNamespace {
   export type ChunkKey = ...
 }
 ```
-- Avoid running console commands, and use your judgement of the code to determine if it should work - or ask me.
+- Avoid executing the code at any cost. Once a feature is implemented, assume it works rather than attempting to build the code
 - If there are more than 1 file for a "thing", then put related files in a folder. For example, say we have "components", and in the components we made a 
 `Button.tsx` file originally. If we then need a types file or sub-components for the button, create a `Button` folder and put the files in there, renaming the original
 button.tsx component to `index.tsx` inside the folder.
