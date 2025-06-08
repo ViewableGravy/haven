@@ -1,0 +1,28 @@
+/***** DRAGGABLE COMPONENT STYLES *****/
+.DraggableComponent {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  
+  &--dragging {
+    user-select: none;
+    cursor: grabbing;
+  }
+}
+
+.DraggableComponent__DragHandle {
+  cursor: grab;
+  
+  &:active {
+    cursor: grabbing;
+  }
+  
+  &--disabled {
+    cursor: default;
+  }
+  
+  &--dragging {
+    cursor: grabbing;
+  }
+}
