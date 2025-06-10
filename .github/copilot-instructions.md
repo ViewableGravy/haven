@@ -40,3 +40,6 @@ This file should be under a `agent-summaries` folder in the root directory. This
 
 For example, if I ask you to implement a new tile system for a meadow biome, 
 you would create a file called `agent-summaries/2025-10-10/meadow-biome.md` with the above information.
+
+If there are significant changes after the initial overview, at the end of the task, replace the original overview document
+with an updated version rather than creating a new one.
