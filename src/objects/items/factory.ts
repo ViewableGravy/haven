@@ -1,6 +1,6 @@
 import { GameObject } from "../base";
 import { ItemTrait } from "../traits/item";
-import type { ItemConfig } from "./config";
+import type { InitialItemConfig, ItemConfig } from "./config";
 import { itemRegistry } from "./registry";
 
 /***** ITEM FACTORY FUNCTIONS *****/
@@ -11,16 +11,7 @@ import { itemRegistry } from "./registry";
 export function createItem(config: ItemConfig): GameObject {
   const item = new GameObject({ name: `${config.id}-item` });
   
-  item.addTrait('item', new ItemTrait({
-    id: config.id,
-    name: config.name,
-    description: config.description,
-    iconPath: config.iconPath,
-    maxStackSize: config.maxStackSize ?? 5,
-    weight: config.weight ?? 1,
-    rarity: config.rarity ?? "common",
-    size: config.size
-  }));
+  item.addTrait('item', new ItemTrait(config));
 
   return item;
 }

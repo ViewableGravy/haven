@@ -1,5 +1,5 @@
 import invariant from "tiny-invariant";
-import type { ItemConfig } from "./config";
+import type { InitialItemConfig } from "./config";
 import { duckConfig } from "./configs/duck";
 import { fishingRodConfig } from "./configs/fishingrod";
 import { largeBoxConfig } from "./configs/largebox";
@@ -8,7 +8,7 @@ import { twigConfig } from "./configs/twig";
 
 /***** ITEM CONFIGURATION REGISTRY *****/
 class ItemConfigRegistry {
-  private configs: Map<string, ItemConfig> = new Map();
+  private configs: Map<string, InitialItemConfig> = new Map();
 
   constructor() {
     try {
@@ -29,7 +29,7 @@ class ItemConfigRegistry {
   /**
    * Register a single item configuration
    */
-  private registerConfig(config: ItemConfig): void {
+  private registerConfig(config: InitialItemConfig): void {
     if (!this.validateConfig(config)) {
       throw new Error(`Invalid configuration for item: ${config.id}`);
     }
@@ -40,11 +40,11 @@ class ItemConfigRegistry {
   /**
    * Validate item configuration
    */
-  private validateConfig(config: ItemConfig): boolean {
+  private validateConfig(config: InitialItemConfig): boolean {
     const required = ['id', 'name', 'description', 'iconPath'];
     
     for (const field of required) {
-      if (!config[field as keyof ItemConfig]) {
+      if (!config[field as keyof InitialItemConfig]) {
         console.error(`Missing required field '${field}' in item config:`, config);
         return false;
       }
@@ -79,7 +79,7 @@ class ItemConfigRegistry {
   /**
    * Get item configuration by ID
    */
-  getConfig(itemId: string): ItemConfig {
+  getConfig(itemId: string): InitialItemConfig {
     const config = this.configs.get(itemId);
     invariant(config, "Item configuration not found for ID: " + itemId);
     return config;
