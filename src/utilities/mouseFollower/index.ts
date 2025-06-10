@@ -1,25 +1,10 @@
 import type { GameObject } from "../../objects/base";
-import { ContainerTrait } from "../../objects/traits/container";
-import { GhostableTrait } from "../../objects/traits/ghostable";
-import { PlaceableTrait } from "../../objects/traits/placeable";
-import { TransformTrait, type HasTransformTrait } from "../../objects/traits/transform";
+import { TransformTrait } from "../../objects/traits/transform";
 import type { Game } from "../game/game";
 import { Rectangle } from "../rectangle";
 
 /***** TYPE DEFINITIONS *****/
-interface HasContainerTrait {
-  containerTrait: ContainerTrait;
-}
-
-interface HasGhostableTrait {
-  ghostableTrait: GhostableTrait;
-}
-
-interface HasPlaceableTrait {
-  placeableTrait: PlaceableTrait;
-}
-
-type FollowableEntity = GameObject & HasGhostableTrait & HasContainerTrait & HasTransformTrait & HasPlaceableTrait;
+type FollowableEntity = GameObject;
 
 /***** MOUSE FOLLOWER CLASS *****/
 export class MouseFollower {
@@ -34,7 +19,7 @@ export class MouseFollower {
 
   public start(): () => void {
     this.bindEvents();
-    this.game.world.addChild(this.entity.containerTrait.container);
+    this.game.world.addChild(this.entity.getTrait('container').container);
     
     // Immediately position the entity at the current cursor position
     this.updateEntityPosition();
@@ -57,8 +42,8 @@ export class MouseFollower {
   /***** POSITIONING LOGIC *****/
   private updateEntityPosition(): void {
     const tileSize = this.game.consts.tileSize;
-    const entityWidth = this.entity.transformTrait.size.width;
-    const entityHeight = this.entity.transformTrait.size.height;
+    const entityWidth = this.entity.getTrait('position').size.width;
+    const entityHeight = this.entity.getTrait('position').size.height;
 
     // Get the tile coordinates under the mouse
     const tileX = Math.floor(this.game.state.worldPointer.x / tileSize) * tileSize;
@@ -92,23 +77,23 @@ export class MouseFollower {
     // Apply the appropriate offset based on the quadrant
     switch (true) {
       case isQ1: {
-        this.entity.transformTrait.position.x = tileX - this.game.consts.tileSize;
-        this.entity.transformTrait.position.y = tileY - this.game.consts.tileSize;
+        this.entity.getTrait('position').position.x = tileX - this.game.consts.tileSize;
+        this.entity.getTrait('position').position.y = tileY - this.game.consts.tileSize;
         break;
       }
       case isQ2: {
-        this.entity.transformTrait.position.x = tileX;
-        this.entity.transformTrait.position.y = tileY - this.game.consts.tileSize;
+        this.entity.getTrait('position').position.x = tileX;
+        this.entity.getTrait('position').position.y = tileY - this.game.consts.tileSize;
         break;
       }
       case isQ3: {
-        this.entity.transformTrait.position.x = tileX - this.game.consts.tileSize;
-        this.entity.transformTrait.position.y = tileY;
+        this.entity.getTrait('position').position.x = tileX - this.game.consts.tileSize;
+        this.entity.getTrait('position').position.y = tileY;
         break;
       }
       case isQ4: {
-        this.entity.transformTrait.position.x = tileX;
-        this.entity.transformTrait.position.y = tileY;
+        this.entity.getTrait('position').position.x = tileX;
+        this.entity.getTrait('position').position.y = tileY;
         break;
       }
     }
@@ -117,8 +102,8 @@ export class MouseFollower {
   /***** CENTERED POSITIONING *****/
   private centerEntityOnTile(tileX: number, tileY: number, entityWidth: number, entityHeight: number): void {
     // Center the entity on the tile under the mouse cursor
-    this.entity.transformTrait.position.x = tileX + (this.game.consts.tileSize - entityWidth) / 2;
-    this.entity.transformTrait.position.y = tileY + (this.game.consts.tileSize - entityHeight) / 2;
+    this.entity.getTrait('position').position.x = tileX + (this.game.consts.tileSize - entityWidth) / 2;
+    this.entity.getTrait('position').position.y = tileY + (this.game.consts.tileSize - entityHeight) / 2;
   }
 
   private checkCollisions(): void {
@@ -129,7 +114,7 @@ export class MouseFollower {
 
       // Check collision using the new transform system if available
       if (TransformTrait.is(_entity)) {
-        if (this.entity.transformTrait.intersects(_entity.transformTrait)) {
+        if (this.entity.getTrait('position').intersects(_entity.getTrait('position'))) {
           this.isPlaceable = false;
           document.body.style.cursor = "not-allowed";
           break;
@@ -139,7 +124,7 @@ export class MouseFollower {
         }
       } else {
         // Fallback for entities without transform - use Rectangle.intersects
-        if (Rectangle.intersects(_entity, this.entity.transformTrait.rectangle)) {
+        if (Rectangle.intersects(_entity, this.entity.getTrait('position').rectangle)) {
           this.isPlaceable = false;
           document.body.style.cursor = "not-allowed";
           break;
@@ -155,8 +140,8 @@ export class MouseFollower {
     if (!this.isPlaceable) return;
 
     // Get current global position from the entity's transform
-    const globalX = this.entity.transformTrait.position.x;
-    const globalY = this.entity.transformTrait.position.y;
+    const globalX = this.entity.getTrait('position').position.x;
+    const globalY = this.entity.getTrait('position').position.y;
 
     // Use EntityManager to handle placement
     const placementSuccess = this.game.entityManager.placeEntity(
@@ -183,6 +168,6 @@ export class MouseFollower {
     window.removeEventListener("mousemove", this.handleMouseMove);
     window.removeEventListener("keydown", this.handleKeydown);
     window.removeEventListener("mousedown", this.handleMouseDown);
-    this.game.world.removeChild(this.entity.containerTrait.container);
+    this.game.world.removeChild(this.entity.getTrait('container').container);
   }
 }

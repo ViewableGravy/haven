@@ -16,26 +16,23 @@ import { createSpruceTreeInfographicNode } from "./info";
 
 /***** BASE SPRUCE TREE *****/
 export class BaseSpruceTree extends GameObject {
-  public transformTrait: TransformTrait;
   public spruceTreeSprite: Sprite;
   public selectionSprite: Sprite;
-  public containerTrait: ContainerTrait;
-  public ghostableTrait: GhostableTrait;
-  public placeableTrait: PlaceableTrait;
 
   constructor(game: Game, position: Position) {
     super({ name: "spruce-tree" });
 
-    this.transformTrait = TransformTrait.createSmall(game, position.x, position.y, position.type);
-    this.spruceTreeSprite = BaseSpruceTree.createSpruceTreeSprite(this.transformTrait);
+    const transformTrait = TransformTrait.createSmall(game, position.x, position.y, position.type);
+    this.spruceTreeSprite = BaseSpruceTree.createSpruceTreeSprite(transformTrait);
     this.selectionSprite = BaseSpruceTree.createSelectionSprite();
 
     // Initialize traits
-    this.containerTrait = new ContainerTrait(this, this.transformTrait);
-    this.ghostableTrait = new GhostableTrait(this, false);
-    this.placeableTrait = new PlaceableTrait(this, false, () => {
-      this.ghostableTrait.ghostMode = false;
-    });
+    this.addTrait('position', transformTrait);
+    this.addTrait('container', new ContainerTrait(this, transformTrait));
+    this.addTrait('ghostable', new GhostableTrait(this, false));
+    this.addTrait('placeable', new PlaceableTrait(this, false, () => {
+      this.getTrait('ghostable').ghostMode = false;
+    }));
   }
 
   private static createSpruceTreeSprite(transform: TransformTrait): Sprite {
@@ -73,7 +70,7 @@ export class BaseSpruceTree extends GameObject {
   public setupInteractivity(): void {
     this.spruceTreeSprite.addEventListener("mouseover", () => {
       // Only show selection if not in ghost mode
-      if (this.ghostableTrait.ghostMode) return;
+      if (this.getTrait('ghostable').ghostMode) return;
 
       this.selectionSprite.renderable = true;
 
@@ -108,11 +105,11 @@ export function createStandardSpruceTree(game: Game, position: Position): Spruce
   const spruceTree = new BaseSpruceTree(game, position);
 
   // Add sprites to container
-  spruceTree.containerTrait.container.addChild(spruceTree.spruceTreeSprite);
-  spruceTree.containerTrait.container.addChild(spruceTree.selectionSprite);
+  spruceTree.getTrait('container').container.addChild(spruceTree.spruceTreeSprite);
+  spruceTree.getTrait('container').container.addChild(spruceTree.selectionSprite);
 
   // Ensure proper z-index sorting
-  spruceTree.containerTrait.container.sortableChildren = true;
+  spruceTree.getTrait('container').container.sortableChildren = true;
 
   // Setup interactivity
   spruceTree.setupInteractivity();

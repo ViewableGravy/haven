@@ -143,7 +143,7 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     // Add entities to the game
     for (const entity of entities) {
       if (ContainerTrait.is(entity)) {
-        chunk.addChild(entity.containerTrait.container);
+        chunk.addChild(entity.getTrait('container').container);
       }
       this.game.entityManager.addEntity(entity);
     }

@@ -7,10 +7,6 @@ export interface IPlaceableTrait {
   unplace(): void;
 }
 
-interface HasPlaceableTrait {
-  placeableTrait: PlaceableTrait;
-}
-
 /***** PLACEABLE TRAIT *****/
 export class PlaceableTrait {
   private _isPlaced: boolean;
@@ -42,25 +38,30 @@ export class PlaceableTrait {
   }
 
   /***** STATIC METHODS *****/
-  static is(entity: GameObject): entity is GameObject & HasPlaceableTrait {
-    return 'placeableTrait' in entity && entity.placeableTrait instanceof PlaceableTrait;
+  static is(entity: GameObject): boolean {
+    try {
+      entity.getTrait('placeable');
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   static place(entity: GameObject): void {
     if (PlaceableTrait.is(entity)) {
-      entity.placeableTrait.place();
+      entity.getTrait('placeable').place();
     }
   }
 
   static unplace(entity: GameObject): void {
     if (PlaceableTrait.is(entity)) {
-      entity.placeableTrait.unplace();
+      entity.getTrait('placeable').unplace();
     }
   }
 
   static isPlaced(entity: GameObject): boolean {
     if (PlaceableTrait.is(entity)) {
-      return entity.placeableTrait.isPlaced;
+      return entity.getTrait('placeable').isPlaced;
     }
     return false;
   }

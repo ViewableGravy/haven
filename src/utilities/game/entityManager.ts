@@ -1,25 +1,11 @@
 /***** TYPE DEFINITIONS *****/
 import type { GameObject } from "../../objects/base";
-import { ContainerTrait } from "../../objects/traits/container";
 import { GhostableTrait } from "../../objects/traits/ghostable";
 import { PlaceableTrait } from "../../objects/traits/placeable";
-import type { HasTransformTrait } from "../../objects/traits/transform";
 import type { ChunkKey } from "../tagged";
 import type { Game } from "./game";
 
-interface HasContainerTrait {
-  containerTrait: ContainerTrait;
-}
-
-interface HasGhostableTrait {
-  ghostableTrait: GhostableTrait;
-}
-
-interface HasPlaceableTrait {
-  placeableTrait: PlaceableTrait;
-}
-
-type PlaceableEntity = GameObject & HasContainerTrait & HasGhostableTrait & HasPlaceableTrait & HasTransformTrait;
+type PlaceableEntity = GameObject;
 
 interface EntityPlacementEvent {
   entity: PlaceableEntity;
@@ -79,19 +65,19 @@ export class EntityManager {
 
       // Update entity state with global coordinates
       GhostableTrait.setGhostMode(entity, false);
-      entity.transformTrait.position.position = {
+      entity.getTrait('position').position.position = {
         x: globalX,
         y: globalY,
         type: "global"
       };
 
       // Convert global position to local chunk coordinates for PIXI container positioning
-      const { x, y } = chunk.toLocalPosition(entity.transformTrait.position);
-      entity.containerTrait.container.x = x;
-      entity.containerTrait.container.y = y;
+      const { x, y } = chunk.toLocalPosition(entity.getTrait('position').position);
+      entity.getTrait('container').container.x = x;
+      entity.getTrait('container').container.y = y;
 
       // Place entity in chunk and add to tracking
-      chunk.addChild(entity.containerTrait.container);
+      chunk.addChild(entity.getTrait('container').container);
       this.addEntity(entity);
 
       // Mark as placed

@@ -1,33 +1,16 @@
 import { Store } from "@tanstack/react-store";
 import type React from "react";
 import type { GameObject } from "../../objects/base";
-import { ContainerTrait } from "../../objects/traits/container";
-import { GhostableTrait } from "../../objects/traits/ghostable";
-import { PlaceableTrait } from "../../objects/traits/placeable";
-import type { HasTransformTrait } from "../../objects/traits/transform";
 import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
 import type { Position } from "../../utilities/position";
 
 /***** TYPE DEFINITIONS *****/
-interface HasContainerTrait {
-  containerTrait: ContainerTrait;
-}
-
-interface HasGhostableTrait {
-  ghostableTrait: GhostableTrait;
-}
-
-interface HasPlaceableTrait {
-  placeableTrait: PlaceableTrait;
-}
-
-export type FollowableEntity = GameObject & HasGhostableTrait & HasContainerTrait & HasTransformTrait & HasPlaceableTrait;
 
 export type HotbarItem = {
   name: string;
   node: React.ReactNode;
-  creatorFunction: (game: Game, position: Position) => FollowableEntity;
+  creatorFunction: (game: Game, position: Position) => GameObject;
 };
 
 type HotbarStore = {

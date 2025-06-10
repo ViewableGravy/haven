@@ -3,10 +3,6 @@ import { Container } from "pixi.js";
 import type { GameObject } from "../base";
 import type { TransformTrait } from "./transform";
 
-export interface HasContainerTrait {
-  containerTrait: ContainerTrait;
-}
-
 /***** CONTAINER TRAIT *****/
 export class ContainerTrait {
   public container: Container;
@@ -26,7 +22,12 @@ export class ContainerTrait {
   }
 
   /***** STATIC METHODS *****/
-  static is(entity: GameObject): entity is GameObject & HasContainerTrait {
-    return 'containerTrait' in entity && entity.containerTrait instanceof ContainerTrait;
+  static is(entity: GameObject): entity is GameObject {
+    try {
+      entity.getTrait('container');
+      return true;
+    } catch {
+      return false;
+    }
   }
 }

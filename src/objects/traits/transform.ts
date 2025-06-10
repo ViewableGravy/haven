@@ -5,9 +5,7 @@ import { Rectangle } from "../../utilities/rectangle";
 import { Size } from "../../utilities/size";
 import type { GameObject } from "../base";
 
-export interface HasTransformTrait {
-  transformTrait: TransformTrait;
-}
+
 
 /**
  * Transform combines position, size, and rectangle into a single cohesive system
@@ -68,7 +66,12 @@ export class TransformTrait {
     return Rectangle.contains(this.rectangle, other.rectangle);
   }
 
-  public static is(entity: GameObject): entity is GameObject & HasTransformTrait {
-    return 'transformTrait' in entity && entity.transformTrait instanceof TransformTrait;
+  public static is(entity: GameObject): boolean {
+    try {
+      entity.getTrait('position');
+      return true;
+    } catch {
+      return false;
+    }
   }
 }

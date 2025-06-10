@@ -50,19 +50,6 @@ export class EntitySyncManager {
     });
   }
 
-  /***** WORLD POSITION API *****/
-  // "I don't care about chunks" API
-  public placeEntityAtWorldPosition(
-    _entityType: string, 
-    _worldX: number, 
-    _worldY: number
-  ): GameObject | null {
-    // For now, use the existing entity placement through EntityManager
-    // This would need to be implemented in EntityManager as a future enhancement
-    console.warn('placeEntityAtWorldPosition not yet implemented in EntityManager');
-    return null;
-  }
-
   /***** SERVER NOTIFICATION *****/
   private notifyServerEntityPlaced(entity: GameObject, worldX: number, worldY: number): void {
     // Calculate chunk coordinates for server
@@ -89,7 +76,7 @@ export class EntitySyncManager {
     }
 
     // Subscribe to chunk loaded events from the chunk manager
-    this.chunkLoadSubscription = this.game.controllers.chunkManager.subscribe((_chunkLoadedEvent) => {
+    this.chunkLoadSubscription = this.game.controllers.chunkManager.subscribe(() => {
       this.processQueuedEntities();
     });
   }
@@ -150,18 +137,21 @@ export class EntitySyncManager {
     invariant(TransformTrait.is(entity), "Entities must have a transform trait to set position");
     invariant(ContainerTrait.is(entity), "Entities must have a container trait to be placed in a chunk");
 
-    entity.transformTrait.position.position = {
+    const { position } = entity.getTrait('position');
+    const { container } = entity.getTrait('container');
+
+    position.position = {
       x: entityData.x,
       y: entityData.y,
       type: "global"
     };
 
     // Add to chunk and mark as placed
-    const { x, y } = chunk.toLocalPosition(entity.transformTrait.position);
-    entity.containerTrait.container.x = x;
-    entity.containerTrait.container.y = y;
+    const { x, y } = chunk.toLocalPosition(position);
+    container.x = x;
+    container.y = y;
 
-    chunk.addChild(entity.containerTrait.container);
+    chunk.addChild(container);
 
     // Mark entity as placed if it has the placeable trait
     PlaceableTrait.place(entity);
@@ -206,7 +196,7 @@ export class EntitySyncManager {
     if (entity) {
       // Remove from chunk and game
       if (ContainerTrait.is(entity)) {
-        entity.containerTrait.container.parent?.removeChild(entity.containerTrait.container);
+        entity.getTrait('container').container.parent?.removeChild(entity.getTrait('container').container);
       }
 
       this.game.entityManager.removeEntity(entity);
@@ -260,8 +250,8 @@ export class EntitySyncManager {
     for (const entity of this.game.entityManager.getEntities()) {
       // Get entity's world position to determine which chunk it belongs to
       if (TransformTrait.is(entity)) {
-        const worldX = entity.transformTrait.position.position.x;
-        const worldY = entity.transformTrait.position.position.y;
+        const worldX = entity.getTrait('position').position.position.x;
+        const worldY = entity.getTrait('position').position.position.y;
         
         // Skip if position is undefined
         if (worldX === undefined || worldY === undefined) {

@@ -1,9 +1,6 @@
 /***** TYPE DEFINITIONS *****/
 import type { GameObject } from "../base";
-
-interface HasGhostableTrait {
-  ghostableTrait: GhostableTrait;
-}
+import { ContainerTrait } from "./container";
 
 /***** GHOSTABLE TRAIT *****/
 export class GhostableTrait {
@@ -26,25 +23,30 @@ export class GhostableTrait {
   set ghostMode(value: boolean) {
     this._ghostMode = value;
     // Apply visual changes if entity has a container
-    if ('containerTrait' in this.entity && (this.entity as any).containerTrait) {
-      (this.entity as any).containerTrait.container.alpha = value ? this.ghostAlpha : this.normalAlpha;
+    if (ContainerTrait.is(this.entity)) {
+      this.entity.getTrait('container').container.alpha = value ? this.ghostAlpha : this.normalAlpha;
     }
   }
 
   /***** STATIC METHODS *****/
-  static is(entity: GameObject): entity is GameObject & HasGhostableTrait {
-    return 'ghostableTrait' in entity && entity.ghostableTrait instanceof GhostableTrait;
+  static is(entity: GameObject): entity is GameObject {
+    try {
+      entity.getTrait('ghostable');
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   static setGhostMode(entity: GameObject, ghostMode: boolean): void {
     if (GhostableTrait.is(entity)) {
-      entity.ghostableTrait.ghostMode = ghostMode;
+      entity.getTrait('ghostable').ghostMode = ghostMode;
     }
   }
 
   static getGhostMode(entity: GameObject): boolean {
     if (GhostableTrait.is(entity)) {
-      return entity.ghostableTrait.ghostMode;
+      return entity.getTrait('ghostable').ghostMode;
     }
     return false;
   }

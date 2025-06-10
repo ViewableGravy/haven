@@ -7,9 +7,7 @@ interface InventoryData {
   maxSlots: number;
 }
 
-export interface HasInventoryTrait {
-  inventoryTrait: InventoryTrait;
-}
+
 
 /***** INVENTORY TRAIT *****/
 export class InventoryTrait {
@@ -281,83 +279,88 @@ export class InventoryTrait {
   }
 
   /***** STATIC METHODS *****/
-  static is(entity: GameObject): entity is GameObject & HasInventoryTrait {
-    return 'inventoryTrait' in entity && entity.inventoryTrait instanceof InventoryTrait;
+  static is(entity: GameObject): boolean {
+    try {
+      entity.getTrait('inventory');
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   static getGrid(entity: GameObject): InventoryNamespace.Grid | null {
     if (InventoryTrait.is(entity)) {
-      return entity.inventoryTrait.getGrid();
+      return entity.getTrait('inventory').getGrid();
     }
     return null;
   }
 
   static addItem(entity: GameObject, item: InventoryNamespace.Item, quantity: number): boolean {
     if (InventoryTrait.is(entity)) {
-      return entity.inventoryTrait.addItem(item, quantity);
+      return entity.getTrait('inventory').addItem(item, quantity);
     }
     return false;
   }
 
   static removeItem(entity: GameObject, itemId: string, quantity: number): InventoryNamespace.ItemStack | null {
     if (InventoryTrait.is(entity)) {
-      return entity.inventoryTrait.removeItem(itemId, quantity);
+      return entity.getTrait('inventory').removeItem(itemId, quantity);
     }
     return null;
   }
 
   static removeFromSlot(entity: GameObject, slotIndex: number, quantity: number = 1): InventoryNamespace.ItemStack | null {
     if (InventoryTrait.is(entity)) {
-      return entity.inventoryTrait.removeFromSlot(slotIndex, quantity);
+      return entity.getTrait('inventory').removeFromSlot(slotIndex, quantity);
     }
     return null;
   }
 
   static getSlot(entity: GameObject, slotIndex: number): InventoryNamespace.Slot | null {
     if (InventoryTrait.is(entity)) {
-      return entity.inventoryTrait.getSlot(slotIndex);
+      return entity.getTrait('inventory').getSlot(slotIndex);
     }
     return null;
   }
 
   static hasItem(entity: GameObject, itemId: string, quantity: number = 1): boolean {
     if (InventoryTrait.is(entity)) {
-      return entity.inventoryTrait.hasItem(itemId, quantity);
+      return entity.getTrait('inventory').hasItem(itemId, quantity);
     }
     return false;
   }
 
   static getItemCount(entity: GameObject, itemId: string): number {
     if (InventoryTrait.is(entity)) {
-      return entity.inventoryTrait.getItemCount(itemId);
+      return entity.getTrait('inventory').getItemCount(itemId);
     }
     return 0;
   }
 
   static canAddItem(entity: GameObject, item: InventoryNamespace.Item, quantity: number): boolean {
     if (InventoryTrait.is(entity)) {
-      return entity.inventoryTrait.canAddItem(item, quantity);
+      return entity.getTrait('inventory').canAddItem(item, quantity);
     }
     return false;
   }
 
   static isEmpty(entity: GameObject): boolean {
     if (InventoryTrait.is(entity)) {
-      return entity.inventoryTrait.isEmpty();
+      return entity.getTrait('inventory').isEmpty();
     }
     return true;
   }
 
   static isFull(entity: GameObject): boolean {
     if (InventoryTrait.is(entity)) {
-      return entity.inventoryTrait.isFull();
+      return entity.getTrait('inventory').isFull();
     }
     return false;
   }
 
   static clear(entity: GameObject): void {
     if (InventoryTrait.is(entity)) {
-      entity.inventoryTrait.clear();
+      entity.getTrait('inventory').clear();
     }
   }
 }

@@ -16,26 +16,23 @@ import { createTestEntityInfographicNode } from "./info";
 
 /***** BASE ASSEMBLER *****/
 export class BaseAssembler extends GameObject {
-  public transformTrait: TransformTrait;
   public assemblerSprite: Sprite;
   public selectionSprite: Sprite;
-  public containerTrait: ContainerTrait;
-  public ghostableTrait: GhostableTrait;
-  public placeableTrait: PlaceableTrait;
 
   constructor(game: Game, position: Position) {
     super({ name: "assembler" });
 
-    this.transformTrait = TransformTrait.createLarge(game, position.x, position.y, position.type);
-    this.assemblerSprite = BaseAssembler.createAssemblerSprite(this.transformTrait);
-    this.selectionSprite = BaseAssembler.createSelectionSprite(this.transformTrait);
+    const transformTrait = TransformTrait.createLarge(game, position.x, position.y, position.type);
+    this.assemblerSprite = BaseAssembler.createAssemblerSprite(transformTrait);
+    this.selectionSprite = BaseAssembler.createSelectionSprite(transformTrait);
 
     // Initialize traits
-    this.containerTrait = new ContainerTrait(this, this.transformTrait);
-    this.ghostableTrait = new GhostableTrait(this, false);
-    this.placeableTrait = new PlaceableTrait(this, false, () => {
-      this.ghostableTrait.ghostMode = false;
-    });
+    this.addTrait('position', transformTrait);
+    this.addTrait('container', new ContainerTrait(this, transformTrait));
+    this.addTrait('ghostable', new GhostableTrait(this, false));
+    this.addTrait('placeable', new PlaceableTrait(this, false, () => {
+      this.getTrait('ghostable').ghostMode = false;
+    }));
   }
 
   private static createAssemblerSprite(transform: TransformTrait): Sprite {
@@ -61,7 +58,7 @@ export class BaseAssembler extends GameObject {
   public setupInteractivity(): void {
     this.assemblerSprite.addEventListener("mouseover", () => {
       // Only show selection if not in ghost mode
-      if (this.ghostableTrait.ghostMode) return;
+      if (this.getTrait('ghostable').ghostMode) return;
 
       this.selectionSprite.renderable = true;
 
@@ -97,8 +94,8 @@ export function createStandardAssembler(game: Game, position: Position): Assembl
   const assembler = new BaseAssembler(game, position);
 
   // Add sprites to container
-  assembler.containerTrait.container.addChild(assembler.assemblerSprite);
-  assembler.containerTrait.container.addChild(assembler.selectionSprite);
+  assembler.getTrait('container').container.addChild(assembler.assemblerSprite);
+  assembler.getTrait('container').container.addChild(assembler.selectionSprite);
 
   // Setup interactivity
   assembler.setupInteractivity();
