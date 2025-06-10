@@ -1,6 +1,6 @@
 import { GameObject } from "../base";
 import { ItemTrait } from "../traits/item";
-import type { InitialItemConfig, ItemConfig } from "./config";
+import type { ItemConfig } from "./config";
 import { itemRegistry } from "./registry";
 
 /***** ITEM FACTORY FUNCTIONS *****/

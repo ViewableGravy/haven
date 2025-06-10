@@ -1,5 +1,5 @@
 import invariant from "tiny-invariant";
-import type { InitialItemConfig } from "./config";
+import type { InitialItemConfig, ItemConfig } from "./config";
 import { duckConfig } from "./configs/duck";
 import { fishingRodConfig } from "./configs/fishingrod";
 import { largeBoxConfig } from "./configs/largebox";
@@ -8,7 +8,7 @@ import { twigConfig } from "./configs/twig";
 
 /***** ITEM CONFIGURATION REGISTRY *****/
 class ItemConfigRegistry {
-  private configs: Map<string, InitialItemConfig> = new Map();
+  private configs: Map<string, ItemConfig> = new Map();
 
   constructor() {
     try {
@@ -29,7 +29,7 @@ class ItemConfigRegistry {
   /**
    * Register a single item configuration
    */
-  private registerConfig(config: InitialItemConfig): void {
+  private registerConfig(config: ItemConfig): void {
     if (!this.validateConfig(config)) {
       throw new Error(`Invalid configuration for item: ${config.id}`);
     }
@@ -79,7 +79,7 @@ class ItemConfigRegistry {
   /**
    * Get item configuration by ID
    */
-  getConfig(itemId: string): InitialItemConfig {
+  getConfig(itemId: string): ItemConfig {
     const config = this.configs.get(itemId);
     invariant(config, "Item configuration not found for ID: " + itemId);
     return config;

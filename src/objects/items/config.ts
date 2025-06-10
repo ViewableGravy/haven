@@ -23,7 +23,7 @@ export interface ItemConfig extends InitialItemConfig {
 /**
  * Type-safe helper function for creating item configurations
  */
-export function createItemConfig(config: InitialItemConfig): InitialItemConfig {
+export function createItemConfig(config: InitialItemConfig): ItemConfig {
   return {
     maxStackSize: 5,
     weight: 1,
