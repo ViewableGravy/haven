@@ -1,10 +1,10 @@
 import { Store } from "@tanstack/react-store";
 import type React from "react";
-import type { BaseEntity } from "../../entities/base";
-import { ContainerTrait } from "../../entities/traits/container";
-import { GhostableTrait } from "../../entities/traits/ghostable";
-import { PlaceableTrait } from "../../entities/traits/placeable";
-import type { HasTransformTrait } from "../../entities/traits/transform";
+import type { GameObject } from "../../objects/base";
+import { ContainerTrait } from "../../objects/traits/container";
+import { GhostableTrait } from "../../objects/traits/ghostable";
+import { PlaceableTrait } from "../../objects/traits/placeable";
+import type { HasTransformTrait } from "../../objects/traits/transform";
 import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
 import type { Position } from "../../utilities/position";
@@ -22,7 +22,7 @@ interface HasPlaceableTrait {
   placeableTrait: PlaceableTrait;
 }
 
-export type FollowableEntity = BaseEntity & HasGhostableTrait & HasContainerTrait & HasTransformTrait & HasPlaceableTrait;
+export type FollowableEntity = GameObject & HasGhostableTrait & HasContainerTrait & HasTransformTrait & HasPlaceableTrait;
 
 export type HotbarItem = {
   name: string;

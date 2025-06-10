@@ -1,8 +1,8 @@
-import type { BaseEntity } from "../../entities/base";
-import { ContainerTrait } from "../../entities/traits/container";
-import { GhostableTrait } from "../../entities/traits/ghostable";
-import { PlaceableTrait } from "../../entities/traits/placeable";
-import { TransformTrait, type HasTransformTrait } from "../../entities/traits/transform";
+import type { GameObject } from "../../objects/base";
+import { ContainerTrait } from "../../objects/traits/container";
+import { GhostableTrait } from "../../objects/traits/ghostable";
+import { PlaceableTrait } from "../../objects/traits/placeable";
+import { TransformTrait, type HasTransformTrait } from "../../objects/traits/transform";
 import type { Game } from "../game/game";
 import { Rectangle } from "../rectangle";
 
@@ -19,7 +19,7 @@ interface HasPlaceableTrait {
   placeableTrait: PlaceableTrait;
 }
 
-type FollowableEntity = BaseEntity & HasGhostableTrait & HasContainerTrait & HasTransformTrait & HasPlaceableTrait;
+type FollowableEntity = GameObject & HasGhostableTrait & HasContainerTrait & HasTransformTrait & HasPlaceableTrait;
 
 /***** MOUSE FOLLOWER CLASS *****/
 export class MouseFollower {

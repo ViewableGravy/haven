@@ -1,6 +1,7 @@
 /***** TYPE DEFINITIONS *****/
 import { v4 as uuidv4 } from 'uuid';
 import { hasContainer, hasPosition, hasRectangle, hasSize, type HasContainer, type HasPosition, type HasRectangle } from "./interfaces";
+import type { Traits } from './traits/types';
 
 export interface EntityMeta {
   name: string;
@@ -8,7 +9,7 @@ export interface EntityMeta {
 }
 
 /***** BASE ENTITY CLASS *****/
-export class BaseEntity {
+export class GameObject {
   public readonly uid: string;
   public readonly entityMeta: EntityMeta;
   
@@ -16,6 +17,8 @@ export class BaseEntity {
   public multiplayerId?: string; // Server-assigned ID for remote entities
   public placedBy?: string; // Player ID who placed this entity
   public isRemoteEntity: boolean = false; // True if entity came from server
+
+  public traits: Traits = {};
   
   constructor(entityMeta: EntityMeta) {
     this.entityMeta = entityMeta;

@@ -3,7 +3,7 @@ import type { PositionType } from "../../utilities/position";
 import { SubscribablePosition } from "../../utilities/position/subscribable";
 import { Rectangle } from "../../utilities/rectangle";
 import { Size } from "../../utilities/size";
-import type { BaseEntity } from "../base";
+import type { GameObject } from "../base";
 
 export interface HasTransformTrait {
   transformTrait: TransformTrait;
@@ -68,7 +68,7 @@ export class TransformTrait {
     return Rectangle.contains(this.rectangle, other.rectangle);
   }
 
-  public static is(entity: BaseEntity): entity is BaseEntity & HasTransformTrait {
+  public static is(entity: GameObject): entity is GameObject & HasTransformTrait {
     return 'transformTrait' in entity && entity.transformTrait instanceof TransformTrait;
   }
 }

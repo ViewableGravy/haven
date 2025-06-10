@@ -1,5 +1,5 @@
 import { InventoryNamespace } from "../../components/inventory/types";
-import type { BaseEntity } from "../base";
+import type { GameObject } from "../base";
 
 /***** TYPE DEFINITIONS *****/
 interface InventoryData {
@@ -15,7 +15,7 @@ export interface HasInventoryTrait {
 export class InventoryTrait {
   private data: InventoryData;
 
-  constructor(_entity: BaseEntity, rows: number = InventoryNamespace.GRID_ROWS, cols: number = InventoryNamespace.GRID_COLS) {
+  constructor(_entity: GameObject, rows: number = InventoryNamespace.GRID_ROWS, cols: number = InventoryNamespace.GRID_COLS) {
     const grid: InventoryNamespace.Grid = [];
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
@@ -281,81 +281,81 @@ export class InventoryTrait {
   }
 
   /***** STATIC METHODS *****/
-  static is(entity: BaseEntity): entity is BaseEntity & HasInventoryTrait {
+  static is(entity: GameObject): entity is GameObject & HasInventoryTrait {
     return 'inventoryTrait' in entity && entity.inventoryTrait instanceof InventoryTrait;
   }
 
-  static getGrid(entity: BaseEntity): InventoryNamespace.Grid | null {
+  static getGrid(entity: GameObject): InventoryNamespace.Grid | null {
     if (InventoryTrait.is(entity)) {
       return entity.inventoryTrait.getGrid();
     }
     return null;
   }
 
-  static addItem(entity: BaseEntity, item: InventoryNamespace.Item, quantity: number): boolean {
+  static addItem(entity: GameObject, item: InventoryNamespace.Item, quantity: number): boolean {
     if (InventoryTrait.is(entity)) {
       return entity.inventoryTrait.addItem(item, quantity);
     }
     return false;
   }
 
-  static removeItem(entity: BaseEntity, itemId: string, quantity: number): InventoryNamespace.ItemStack | null {
+  static removeItem(entity: GameObject, itemId: string, quantity: number): InventoryNamespace.ItemStack | null {
     if (InventoryTrait.is(entity)) {
       return entity.inventoryTrait.removeItem(itemId, quantity);
     }
     return null;
   }
 
-  static removeFromSlot(entity: BaseEntity, slotIndex: number, quantity: number = 1): InventoryNamespace.ItemStack | null {
+  static removeFromSlot(entity: GameObject, slotIndex: number, quantity: number = 1): InventoryNamespace.ItemStack | null {
     if (InventoryTrait.is(entity)) {
       return entity.inventoryTrait.removeFromSlot(slotIndex, quantity);
     }
     return null;
   }
 
-  static getSlot(entity: BaseEntity, slotIndex: number): InventoryNamespace.Slot | null {
+  static getSlot(entity: GameObject, slotIndex: number): InventoryNamespace.Slot | null {
     if (InventoryTrait.is(entity)) {
       return entity.inventoryTrait.getSlot(slotIndex);
     }
     return null;
   }
 
-  static hasItem(entity: BaseEntity, itemId: string, quantity: number = 1): boolean {
+  static hasItem(entity: GameObject, itemId: string, quantity: number = 1): boolean {
     if (InventoryTrait.is(entity)) {
       return entity.inventoryTrait.hasItem(itemId, quantity);
     }
     return false;
   }
 
-  static getItemCount(entity: BaseEntity, itemId: string): number {
+  static getItemCount(entity: GameObject, itemId: string): number {
     if (InventoryTrait.is(entity)) {
       return entity.inventoryTrait.getItemCount(itemId);
     }
     return 0;
   }
 
-  static canAddItem(entity: BaseEntity, item: InventoryNamespace.Item, quantity: number): boolean {
+  static canAddItem(entity: GameObject, item: InventoryNamespace.Item, quantity: number): boolean {
     if (InventoryTrait.is(entity)) {
       return entity.inventoryTrait.canAddItem(item, quantity);
     }
     return false;
   }
 
-  static isEmpty(entity: BaseEntity): boolean {
+  static isEmpty(entity: GameObject): boolean {
     if (InventoryTrait.is(entity)) {
       return entity.inventoryTrait.isEmpty();
     }
     return true;
   }
 
-  static isFull(entity: BaseEntity): boolean {
+  static isFull(entity: GameObject): boolean {
     if (InventoryTrait.is(entity)) {
       return entity.inventoryTrait.isFull();
     }
     return false;
   }
 
-  static clear(entity: BaseEntity): void {
+  static clear(entity: GameObject): void {
     if (InventoryTrait.is(entity)) {
       entity.inventoryTrait.clear();
     }

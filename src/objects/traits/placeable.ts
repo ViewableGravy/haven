@@ -1,5 +1,5 @@
 /***** TYPE DEFINITIONS *****/
-import type { BaseEntity } from "../base";
+import type { GameObject } from "../base";
 
 export interface IPlaceableTrait {
   isPlaced: boolean;
@@ -17,7 +17,7 @@ export class PlaceableTrait {
   private onPlaceCallback?: () => void;
   private onUnplaceCallback?: () => void;
 
-  constructor(_entity: BaseEntity, initiallyPlaced = false, onPlace?: () => void, onUnplace?: () => void) {
+  constructor(_entity: GameObject, initiallyPlaced = false, onPlace?: () => void, onUnplace?: () => void) {
     this._isPlaced = initiallyPlaced;
     this.onPlaceCallback = onPlace;
     this.onUnplaceCallback = onUnplace;
@@ -42,23 +42,23 @@ export class PlaceableTrait {
   }
 
   /***** STATIC METHODS *****/
-  static is(entity: BaseEntity): entity is BaseEntity & HasPlaceableTrait {
+  static is(entity: GameObject): entity is GameObject & HasPlaceableTrait {
     return 'placeableTrait' in entity && entity.placeableTrait instanceof PlaceableTrait;
   }
 
-  static place(entity: BaseEntity): void {
+  static place(entity: GameObject): void {
     if (PlaceableTrait.is(entity)) {
       entity.placeableTrait.place();
     }
   }
 
-  static unplace(entity: BaseEntity): void {
+  static unplace(entity: GameObject): void {
     if (PlaceableTrait.is(entity)) {
       entity.placeableTrait.unplace();
     }
   }
 
-  static isPlaced(entity: BaseEntity): boolean {
+  static isPlaced(entity: GameObject): boolean {
     if (PlaceableTrait.is(entity)) {
       return entity.placeableTrait.isPlaced;
     }

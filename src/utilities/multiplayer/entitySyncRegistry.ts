@@ -1,12 +1,12 @@
 /***** TYPE DEFINITIONS *****/
-import type { BaseEntity } from "../../entities/base";
+import type { GameObject } from "../../objects/base";
 import type { EntityData } from "../../server/types";
 import type { Game } from "../game/game";
 import type { Position } from "../position";
 
 export interface EntitySyncCreator {
   name: string;
-  creatorFunction: (game: Game, position: Position) => BaseEntity;
+  creatorFunction: (game: Game, position: Position) => GameObject;
 }
 
 /***** ENTITY SYNC REGISTRY *****/
@@ -19,7 +19,7 @@ export class EntitySyncRegistry {
   }
 
   /***** ENTITY CREATION *****/
-  public createEntity(entityData: EntityData, game: Game): BaseEntity | null {
+  public createEntity(entityData: EntityData, game: Game): GameObject | null {
     const creator = this.creators.get(entityData.type);
     if (!creator) {
       console.warn(`No entity sync creator registered for type: ${entityData.type}`);

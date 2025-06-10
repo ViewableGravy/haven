@@ -1,10 +1,10 @@
 /***** TYPE DEFINITIONS *****/
 import invariant from "tiny-invariant";
-import type { BaseEntity } from "../../entities/base";
-import { ContainerTrait } from "../../entities/traits/container";
-import { GhostableTrait } from "../../entities/traits/ghostable";
-import { PlaceableTrait } from "../../entities/traits/placeable";
-import { TransformTrait } from "../../entities/traits/transform";
+import type { GameObject } from "../../objects/base";
+import { ContainerTrait } from "../../objects/traits/container";
+import { GhostableTrait } from "../../objects/traits/ghostable";
+import { PlaceableTrait } from "../../objects/traits/placeable";
+import { TransformTrait } from "../../objects/traits/transform";
 import type { EntityData } from "../../server/types";
 import type { Chunk } from "../../systems/chunkManager/chunk";
 import type { Game } from "../game/game";
@@ -56,7 +56,7 @@ export class EntitySyncManager {
     _entityType: string, 
     _worldX: number, 
     _worldY: number
-  ): BaseEntity | null {
+  ): GameObject | null {
     // For now, use the existing entity placement through EntityManager
     // This would need to be implemented in EntityManager as a future enhancement
     console.warn('placeEntityAtWorldPosition not yet implemented in EntityManager');
@@ -64,7 +64,7 @@ export class EntitySyncManager {
   }
 
   /***** SERVER NOTIFICATION *****/
-  private notifyServerEntityPlaced(entity: BaseEntity, worldX: number, worldY: number): void {
+  private notifyServerEntityPlaced(entity: GameObject, worldX: number, worldY: number): void {
     // Calculate chunk coordinates for server
     const chunkX = Math.floor(worldX / this.game.consts.chunkAbsolute);
     const chunkY = Math.floor(worldY / this.game.consts.chunkAbsolute);
@@ -98,7 +98,7 @@ export class EntitySyncManager {
   /**
    * Find an entity by its multiplayer ID in the unified entity system
    */
-  private findEntityById(multiplayerId: string): BaseEntity | null {
+  private findEntityById(multiplayerId: string): GameObject | null {
     for (const entity of this.game.entityManager.getEntities()) {
       if (entity.getMultiplayerId() === multiplayerId) {
         return entity;
@@ -142,7 +142,7 @@ export class EntitySyncManager {
   /**
    * Actually places an entity in a chunk
    */
-  private placeEntityInChunk(entity: BaseEntity, entityData: EntityData, chunk: Chunk): void {
+  private placeEntityInChunk(entity: GameObject, entityData: EntityData, chunk: Chunk): void {
     // Ensure entity is not in ghost mode (if it supports ghosting)
     GhostableTrait.setGhostMode(entity, false);
 

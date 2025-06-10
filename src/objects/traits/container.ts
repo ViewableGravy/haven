@@ -1,6 +1,6 @@
 /***** TYPE DEFINITIONS *****/
 import { Container } from "pixi.js";
-import type { BaseEntity } from "../base";
+import type { GameObject } from "../base";
 import type { TransformTrait } from "./transform";
 
 export interface HasContainerTrait {
@@ -11,7 +11,7 @@ export interface HasContainerTrait {
 export class ContainerTrait {
   public container: Container;
 
-  constructor(_entity: BaseEntity, transform?: TransformTrait) {
+  constructor(_entity: GameObject, transform?: TransformTrait) {
     this.container = new Container();
 
     if (transform) {
@@ -26,7 +26,7 @@ export class ContainerTrait {
   }
 
   /***** STATIC METHODS *****/
-  static is(entity: BaseEntity): entity is BaseEntity & HasContainerTrait {
+  static is(entity: GameObject): entity is GameObject & HasContainerTrait {
     return 'containerTrait' in entity && entity.containerTrait instanceof ContainerTrait;
   }
 }

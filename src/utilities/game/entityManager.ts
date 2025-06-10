@@ -1,9 +1,9 @@
 /***** TYPE DEFINITIONS *****/
-import type { BaseEntity } from "../../entities/base";
-import { ContainerTrait } from "../../entities/traits/container";
-import { GhostableTrait } from "../../entities/traits/ghostable";
-import { PlaceableTrait } from "../../entities/traits/placeable";
-import type { HasTransformTrait } from "../../entities/traits/transform";
+import type { GameObject } from "../../objects/base";
+import { ContainerTrait } from "../../objects/traits/container";
+import { GhostableTrait } from "../../objects/traits/ghostable";
+import { PlaceableTrait } from "../../objects/traits/placeable";
+import type { HasTransformTrait } from "../../objects/traits/transform";
 import type { ChunkKey } from "../tagged";
 import type { Game } from "./game";
 
@@ -19,7 +19,7 @@ interface HasPlaceableTrait {
   placeableTrait: PlaceableTrait;
 }
 
-type PlaceableEntity = BaseEntity & HasContainerTrait & HasGhostableTrait & HasPlaceableTrait & HasTransformTrait;
+type PlaceableEntity = GameObject & HasContainerTrait & HasGhostableTrait & HasPlaceableTrait & HasTransformTrait;
 
 interface EntityPlacementEvent {
   entity: PlaceableEntity;
@@ -33,8 +33,8 @@ type EntityPlacementListener = (event: EntityPlacementEvent) => void;
 
 /***** ENTITY MANAGER *****/
 export class EntityManager {
-  private entities: Set<BaseEntity> = new Set();
-  private entitiesByChunk: Map<ChunkKey, Set<BaseEntity>> = new Map();
+  private entities: Set<GameObject> = new Set();
+  private entitiesByChunk: Map<ChunkKey, Set<GameObject>> = new Map();
   private placementListeners: Set<EntityPlacementListener> = new Set();
   private game: Game;
 
@@ -43,24 +43,24 @@ export class EntityManager {
   }
 
   /***** ENTITY TRACKING *****/
-  public addEntity(entity: BaseEntity): void {
+  public addEntity(entity: GameObject): void {
     this.entities.add(entity);
   }
 
-  public removeEntity(entity: BaseEntity): void {
+  public removeEntity(entity: GameObject): void {
     this.entities.delete(entity);
   }
 
-  public getEntities(): Set<BaseEntity> {
+  public getEntities(): Set<GameObject> {
     return this.entities;
   }
 
   /***** CHUNK-BASED ENTITY MANAGEMENT *****/
-  public setEntitiesForChunk(chunkKey: ChunkKey, entities: Set<BaseEntity>): void {
+  public setEntitiesForChunk(chunkKey: ChunkKey, entities: Set<GameObject>): void {
     this.entitiesByChunk.set(chunkKey, entities);
   }
 
-  public getEntitiesForChunk(chunkKey: ChunkKey): Set<BaseEntity> | undefined {
+  public getEntitiesForChunk(chunkKey: ChunkKey): Set<GameObject> | undefined {
     return this.entitiesByChunk.get(chunkKey);
   }
 
@@ -140,7 +140,7 @@ export class EntityManager {
   }
 
   /***** UTILITY METHODS *****/
-  private getEntityType(entity: BaseEntity): string {
+  private getEntityType(entity: GameObject): string {
     // Use the entity's built-in type identification
     return entity.getEntityType();
   }

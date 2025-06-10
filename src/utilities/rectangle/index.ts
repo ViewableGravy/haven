@@ -1,4 +1,4 @@
-import { hasPosition, hasRectangle, hasSize } from "../../entities/interfaces";
+import { hasPosition, hasRectangle, hasSize } from "../../objects/interfaces";
 import type { Position } from "../position";
 import type { Size } from "../size";
 

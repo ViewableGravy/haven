@@ -1,6 +1,6 @@
 import { useStore } from "@tanstack/react-store";
 import React, { createElement, useEffect, type CSSProperties } from "react";
-import { GhostableTrait } from "../../entities/traits/ghostable";
+import { GhostableTrait } from "../../objects/traits/ghostable";
 import { useCleanupCallback } from "../../utilities/hooks";
 import { MouseFollower } from "../../utilities/mouseFollower";
 import { Position } from "../../utilities/position";

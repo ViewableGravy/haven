@@ -1,7 +1,7 @@
 import { useStore } from "@tanstack/react-store";
 import { createElement, useEffect } from "react";
-import { DuckItem } from "../../../entities/items/duck";
-import { TwigItem } from "../../../entities/items/twig";
+import { DuckItem } from "../../../objects/items/duck";
+import { TwigItem } from "../../../objects/items/twig";
 import { InventoryNamespace } from "../types";
 
 /***** PRIVATE UTILITY FUNCTIONS *****/

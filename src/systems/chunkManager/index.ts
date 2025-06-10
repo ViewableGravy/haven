@@ -1,7 +1,7 @@
 import { Container, Graphics, Sprite, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
-import type { BaseEntity } from "../../entities/base";
-import { ContainerTrait } from "../../entities/traits/container";
+import type { GameObject } from "../../objects/base";
+import { ContainerTrait } from "../../objects/traits/container";
 import type { LoadChunkEvent } from "../../server/types/events/load_chunk";
 import { EventEmitter } from "../../utilities/eventEmitter";
 import type { Game } from "../../utilities/game/game";
@@ -122,7 +122,7 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
   public registerChunkWithEntities(
     chunkKey: ChunkKey, 
     chunk: Chunk, 
-    entities: BaseEntity[]
+    entities: GameObject[]
   ): void {
     // Get chunk position for debugging
     const chunkContainer = chunk.getContainer();
