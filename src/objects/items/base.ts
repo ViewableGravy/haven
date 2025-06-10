@@ -7,7 +7,12 @@ export interface BaseItemOptions {
   size?: InventoryNamespace.ItemSize;
 }
 
-/***** BASE ITEM CLASS *****/
+/***** LEGACY COMPATIBILITY *****/
+
+/**
+ * @deprecated Use factory functions from ./factory.ts instead
+ * This is kept for backward compatibility during migration
+ */
 export abstract class BaseItem implements InventoryNamespace.Item {
   constructor(
     public readonly id: string,
@@ -19,14 +24,7 @@ export abstract class BaseItem implements InventoryNamespace.Item {
     public readonly rarity: "common" | "uncommon" | "rare" | "epic" | "legendary" = "common",
     public readonly size?: InventoryNamespace.ItemSize
   ) {
-    this.id = id;
-    this.name = name;
-    this.description = description;
-    this.iconPath = iconPath;
-    this.maxStackSize = maxStackSize;
-    this.weight = weight;
-    this.rarity = rarity;
-    this.size = size;
+    console.warn('BaseItem is deprecated. Use factory functions from ./factory.ts instead');
   }
 
   /***** ABSTRACT METHODS *****/

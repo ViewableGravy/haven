@@ -1,7 +1,7 @@
 import { useStore } from "@tanstack/react-store";
 import { createElement, useEffect } from "react";
-import { DuckItem } from "../../../objects/items/duck";
-import { TwigItem } from "../../../objects/items/twig";
+import { createDuckItem, createTwigItem } from "../../../objects/items/factory";
+import { ItemTrait } from "../../../objects/traits/item";
 import { InventoryNamespace } from "../types";
 
 /***** PRIVATE UTILITY FUNCTIONS *****/
@@ -276,7 +276,7 @@ export function addItemToGrid(grid: InventoryNamespace.Grid, item: InventoryName
 // These functions are used to initialize and configure the store
 
 export function createGridWithDefaultItems(): InventoryNamespace.Grid {
-  // Use imported items (ES6 imports at top of file)
+  // Use factory functions to create items
   
   // Initialize as 1D array with 16 empty slots (4x4)
   let grid: InventoryNamespace.Grid = [];
@@ -287,17 +287,23 @@ export function createGridWithDefaultItems(): InventoryNamespace.Grid {
   }
   
   // Add twig item to first slot (index 0) using proper grid function
-  const twigItem = new TwigItem();
-  const twigResult = addItemToGrid(grid, twigItem, 3);
-  if (twigResult.success) {
-    grid = twigResult.grid;
+  const twigGameObject = createTwigItem();
+  const twigItem = ItemTrait.getInventoryItem(twigGameObject);
+  if (twigItem) {
+    const twigResult = addItemToGrid(grid, twigItem, 3);
+    if (twigResult.success) {
+      grid = twigResult.grid;
+    }
   }
   
   // Add duck item using proper grid function (will handle multi-slot placement)
-  const duckItem = new DuckItem();
-  const duckResult = addItemToGrid(grid, duckItem, 1);
-  if (duckResult.success) {
-    grid = duckResult.grid;
+  const duckGameObject = createDuckItem();
+  const duckItem = ItemTrait.getInventoryItem(duckGameObject);
+  if (duckItem) {
+    const duckResult = addItemToGrid(grid, duckItem, 1);
+    if (duckResult.success) {
+      grid = duckResult.grid;
+    }
   }
   
   return grid;
@@ -306,7 +312,7 @@ export function createGridWithDefaultItems(): InventoryNamespace.Grid {
 export function createWithRenderWhenOpen(store: any) {
   // Use imported React components (ES6 imports at top of file)
   
-  return <T extends object = {}>(component: any) => {
+  return <T extends object = object>(component: any) => {
     return ((props: T) => {
       const isOpen = useStore(store, (state: any) => state.isOpen);
 
