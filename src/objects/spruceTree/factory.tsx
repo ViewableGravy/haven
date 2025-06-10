@@ -2,6 +2,7 @@
 import { Sprite, Texture } from "pixi.js";
 import Selection from "../../assets/selection.png";
 import { infographicStore } from "../../components/infographic/store";
+import { GameConstants } from "../../shared/constants";
 import { SpruceTreeSprite } from "../../spriteSheets/spruceTree";
 import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
@@ -57,10 +58,10 @@ export class BaseSpruceTree extends GameObject {
   private static createSelectionSprite(): Sprite {
     const sprite = new Sprite(Texture.from(Selection));
     // Make selection sprite 2x3 tiles (128x192 pixels) to match the tree size
-    sprite.width = 96;
-    sprite.height = 128;
-    sprite.x = -16;
-    sprite.y = -96; // Offset up by 2 tiles since tree is 3 tiles tall
+    sprite.width = GameConstants.TILE_SIZE * 1.5; // 2 tiles wide
+    sprite.height = GameConstants.TILE_SIZE * 2; // 3 tiles tall
+    sprite.x = -GameConstants.TILE_SIZE / 4;
+    sprite.y = -GameConstants.TILE_SIZE * 1.5; // Offset to position above the tree
     sprite.renderable = false;
     // Set z-index higher than the tree sprite to ensure it's always on top
     sprite.zIndex = 100;
@@ -104,12 +105,14 @@ export type SpruceTree = BaseSpruceTree;
 export function createStandardSpruceTree(game: Game, position: Position): SpruceTree {
   const spruceTree = new BaseSpruceTree(game, position);
 
+  const { container } = spruceTree.getTrait('container');
+
   // Add sprites to container
-  spruceTree.getTrait('container').container.addChild(spruceTree.spruceTreeSprite);
-  spruceTree.getTrait('container').container.addChild(spruceTree.selectionSprite);
+  container.addChild(spruceTree.spruceTreeSprite);
+  container.addChild(spruceTree.selectionSprite);
 
   // Ensure proper z-index sorting
-  spruceTree.getTrait('container').container.sortableChildren = true;
+  container.sortableChildren = true;
 
   // Setup interactivity
   spruceTree.setupInteractivity();
