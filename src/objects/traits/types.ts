@@ -1,4 +1,5 @@
 import type { ContainerTrait } from "./container";
+import type { ContextMenuTrait } from './contextMenu';
 import type { GhostableTrait } from './ghostable';
 import type { InventoryTrait } from './inventory';
 import type { ItemTrait } from './item';
@@ -12,6 +13,7 @@ export type Traits = {
   ghostable: InstanceType<typeof GhostableTrait>;
   inventory: InstanceType<typeof InventoryTrait>;
   item: InstanceType<typeof ItemTrait>;
+  contextMenu: InstanceType<typeof ContextMenuTrait>;
 }
 
 export type TraitNames = keyof Traits;

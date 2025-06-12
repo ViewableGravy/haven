@@ -120,6 +120,10 @@ export class Game {
   }
 
   private setupInteractivity() {
+    document.addEventListener("contextmenu", (event) => {
+      event.preventDefault();
+    })
+
     // Enable interactivity
     this.state.app.stage.eventMode = 'static';
     this.state.app.stage.hitArea = { contains: () => true };

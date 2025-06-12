@@ -16,6 +16,7 @@ export namespace ClientChunkNamespace {
 }
 ```
 - Avoid executing the code at any cost. Once a feature is implemented, assume it works rather than attempting to build the code
+- ALWAYS use tanstack store over any other state management library. DO NOT USE Zustand!!!
 - If there are more than 1 file for a "thing", then put related files in a folder. For example, say we have "components", and in the components we made a 
 `Button.tsx` file originally. If we then need a types file or sub-components for the button, create a `Button` folder and put the files in there, renaming the original
 button.tsx component to `index.tsx` inside the folder.
