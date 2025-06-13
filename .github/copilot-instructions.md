@@ -7,7 +7,7 @@
 - Always write arrow functions using `() => ` syntax, even if unnecessary. For example `withCallback((x) => x)` instead of `withCallback(x => x)`
 - In most cases where a type is needed, always check for an existing type that matches our needs rather than creating a new one inline.
 - If many types need to be created, or exported from a file or area of the code, create a types.ts file in that folder. 
-- Always try and use types over interfaces where possible
+- Always try and use types over interfaces where possible, even if it's a static interface. NEVER USE INTERFACES!!
 - Opt for namespaces when there are a collection of types that are related to one "area", for example
 ```ts
 export namespace ClientChunkNamespace {
@@ -20,6 +20,7 @@ export namespace ClientChunkNamespace {
 - If there are more than 1 file for a "thing", then put related files in a folder. For example, say we have "components", and in the components we made a 
 `Button.tsx` file originally. If we then need a types file or sub-components for the button, create a `Button` folder and put the files in there, renaming the original
 button.tsx component to `index.tsx` inside the folder.
+- When working on a feature, consider if it can be done locally, and prefer this over using a global state solution.
 
 ## Software
 - use bun for all package management and running of commands

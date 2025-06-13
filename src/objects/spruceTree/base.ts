@@ -108,20 +108,20 @@ export class BaseSpruceTree extends GameObject {
 
       infographicStore.setState(() => ({ active: false }));
     });
-
-    // this.spruceTreeSprite.addEventListener("mouseout", () => {
-    //   this.selectionSprite.renderable = false;
-
-    //   infographicStore.setState(() => ({ active: false }));
-    // });
   }
 
   public destroy(): void {
-    // Clean up traits
-    this.getTrait('container').container.removeChild(this.spruceTreeSprite);
-    this.getTrait('container').container.removeChild(this.selectionSprite);
+    // Clean up spruce tree specific resources before calling super.destroy()
+    if (ContainerTrait.is(this)) {
+      const container = this.getTrait('container').container;
+      container.removeChild(this.spruceTreeSprite);
+      container.removeChild(this.selectionSprite);
+    }
     
     // Remove all event listeners
     this.spruceTreeSprite.removeAllListeners();
+    
+    // Call the generic GameObject destroy to clean up all traits
+    super.destroy();
   }
 }

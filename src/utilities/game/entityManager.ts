@@ -34,6 +34,13 @@ export class EntityManager {
   }
 
   public removeEntity(entity: GameObject): void {
+    // Clean up entity traits before removing from tracking
+    try {
+      entity.destroy();
+    } catch (error) {
+      console.error('Error destroying entity:', error);
+    }
+    
     this.entities.delete(entity);
   }
 
@@ -51,6 +58,14 @@ export class EntityManager {
   }
 
   public removeEntitiesForChunk(chunkKey: ChunkKey): void {
+    const entities = this.entitiesByChunk.get(chunkKey);
+    if (entities) {
+      for (const entity of entities) {
+        this.removeEntity(entity);
+      }
+    }
+    
+    // Remove the chunk mapping
     this.entitiesByChunk.delete(chunkKey);
   }
 

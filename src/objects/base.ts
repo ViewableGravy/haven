@@ -63,4 +63,13 @@ export class GameObject extends Traitable {
   public hasPosition = (): this is HasPosition => hasPosition(this);
   public hasSize = (): this is hasSize => hasSize(this);
   public hasRectangle = (): this is HasRectangle => hasRectangle(this);
+
+  /***** CLEANUP *****/
+  /**
+   * Generic destroy method that cleans up all traits
+   * This should be called when an entity is being removed from the game
+   */
+  public destroy(): void {
+    this.cleanupTraits();
+  }
 }

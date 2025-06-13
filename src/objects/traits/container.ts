@@ -6,6 +6,7 @@ import type { TransformTrait } from "./transform";
 /***** CONTAINER TRAIT *****/
 export class ContainerTrait {
   public container: Container;
+  private positionUnsubscribe?: () => void;
 
   constructor(_entity: GameObject, transform?: TransformTrait) {
     this.container = new Container();
@@ -14,11 +15,23 @@ export class ContainerTrait {
       this.container.width = transform.size.width;
       this.container.height = transform.size.height;
 
-      transform.position.subscribeImmediately(({ x, y }) => {
+      this.positionUnsubscribe = transform.position.subscribeImmediately(({ x, y }) => {
         this.container.x = x;
         this.container.y = y;
       });
     }
+  }
+
+  /***** CLEANUP *****/
+  public destroy(): void {
+    // Unsubscribe from position changes
+    if (this.positionUnsubscribe) {
+      this.positionUnsubscribe();
+      this.positionUnsubscribe = undefined;
+    }
+    
+    // Destroy the PIXI container
+    this.container.destroy({ children: true });
   }
 
   /***** STATIC METHODS *****/

@@ -26,7 +26,7 @@ const decrement = createStoreAction<CounterState, [amount?: number]>((store, amo
   }));
 });
 
-const reset = createStoreAction<CounterState, []>((store) => {
+const reset = createStoreAction<CounterState>((store) => {
   store.setState((state) => ({
     ...state,
     count: 0,

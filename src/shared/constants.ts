@@ -48,4 +48,5 @@ export namespace GameConstants {
   export const DEBUG = false;
   export const DEBUG_CLIENT = false; // Enable client-side debug logging
   export const DEBUG_SERVER = true; // Enable server-side debug logging
+  export const MEMORY_STATS_ENABLED = true; // Enable memory stats tracking
 }

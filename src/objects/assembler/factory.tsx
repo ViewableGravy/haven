@@ -85,6 +85,14 @@ export class BaseAssembler extends GameObject {
     });
   }
 
+  public destroy(): void {
+    // Call the generic GameObject destroy first to clean up all traits
+    super.destroy();
+    
+    // Clean up assembler specific resources
+    this.assemblerSprite.removeAllListeners();
+  }
+
 }
 
 /***** FACTORY FUNCTION *****/

@@ -14,15 +14,23 @@ A utility for creating type-safe Tanstack stores with predefined actions.
 ### 1. Define Actions
 
 ```typescript
-import { createStoreAction } from "@/utilities/store";
+import { createStoreAction } from "src/utilities/store";
 
 // Action with no arguments
-const reset = createStoreAction<MyState, []>((store) => {
-  store.setState(() => initialState);
+const reset = createStoreAction<CounterState, []>((store) => {
+  store.setState(() => store.initialState);
 });
 
-// Action with arguments
-const increment = createStoreAction<CounterState, [amount?: number]>((store, amount = 1) => {
+// Action with argument
+const increment = createStoreAction<CounterState, [amount: number]>((store, amount = 1) => {
+  store.setState((state) => ({
+    ...state,
+    count: state.count + amount,
+  }));
+});
+
+// Types can also be inferred by typing the arguments directly
+const increment = createStoreAction((store: Store<CounterState>, amount: number = 1) => {
   store.setState((state) => ({
     ...state,
     count: state.count + amount,
@@ -35,11 +43,14 @@ const increment = createStoreAction<CounterState, [amount?: number]>((store, amo
 ```typescript
 import { createStore } from "@/utilities/store";
 
+// Note: We can use the `createStoreState` utility to define the type on the state, such that 
+// `createStore` will automatically infer the state as well as the actions. Without this, you would
+// need to define the type of the state and actions in the createStore function
 export const myStore = createStore({
-  state: {
+  state: createStoreState<CounterState>({
     count: 0,
     name: "My Store",
-  },
+  }),
   actions: {
     increment,
     reset,
@@ -55,7 +66,7 @@ import { useStore } from "@tanstack/react-store";
 import { myStore } from "./store";
 
 function MyComponent() {
-  // Subscribe to entire state
+  // Subscribe to entire state (Works identical to tanstack store by default)
   const { count, name } = useStore(myStore);
   
   // Subscribe to specific value
@@ -89,7 +100,7 @@ function MyComponent() {
 
 ### Clean Separation
 - Actions are defined separately from the store
-- Easy to test actions in isolation
+- Easy to test actions in isolation or with custom stores
 - Clear separation of concerns
 
 ### Performance

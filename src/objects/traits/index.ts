@@ -22,4 +22,19 @@ export class Traitable {
     invariant(!this.traits[traitName], `Trait "${traitName}" already exists on ${this.constructor.name}`);
     this.traits[traitName] = traitInstance;
   }
+
+  protected cleanupTraits = (): void => {
+    for (const trait of Object.values(this.traits)) {
+      if (trait && "destroy" in trait && typeof trait.destroy === 'function') {
+        try {
+          trait.destroy();
+        } catch (error) {
+          console.error(`Error destroying trait on ${this.constructor.name}:`, error);
+        }
+      }
+    }
+    
+    // Clear trait references to help with garbage collection
+    this.traits = {};
+  }
 }
