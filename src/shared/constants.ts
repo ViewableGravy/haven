@@ -27,7 +27,7 @@ export namespace GameConstants {
 
   /***** RENDER TEXTURE POOL CONFIGURATION *****/
   /** Maximum number of render textures to keep in the pool */
-  export const MAX_RENDER_TEXTURE_POOL_SIZE = 20;
+  export const MAX_RENDER_TEXTURE_POOL_SIZE = 30;
 
   /***** NOISE GENERATION CONFIGURATION *****/
   /** Divisor for noise generation to control terrain scale */

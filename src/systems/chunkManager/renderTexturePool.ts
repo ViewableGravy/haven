@@ -69,7 +69,7 @@ export class RenderTexturePool {
       // Remove oldest texture (LRU eviction)
       const oldestTexture = this.pool.shift();
       if (oldestTexture) {
-        oldestTexture.destroy();
+        oldestTexture.destroy(true);
         logger.log(`RenderTexturePool: Evicted oldest texture (pool at capacity: ${this.maxPoolSize})`);
       }
     }
@@ -124,7 +124,7 @@ export class RenderTexturePool {
     logger.log(`RenderTexturePool: Destroying pool with ${this.pool.length} textures`);
     
     for (const texture of this.pool) {
-      texture.destroy();
+      texture.destroy(true);
     }
     
     this.pool.length = 0;

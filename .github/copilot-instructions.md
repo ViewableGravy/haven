@@ -1,3 +1,4 @@
+# ONLY APPLY THE BELOW CONDITIONS WHEN RUNNING IN AGENT MODE
 ## Code Style
 - Generally keep components/classes less than 150 lines
 - Attempt to utilize single responsibility principle at all times
