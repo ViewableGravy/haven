@@ -21,6 +21,7 @@ import { Player } from "../player";
 import { Position } from "../position";
 import { SubscribablePosition } from "../position/subscribable";
 import { EntityManager } from "./entityManager";
+import { World } from "./world";
 
 /***** TYPE DEFINITIONS *****/
 type GlobalControllers = {
@@ -63,6 +64,7 @@ export class Game {
 
   // Managers
   public readonly entityManager: EntityManager;
+  public readonly worldManager: World;
 
   // Controllers
   public controllers: GlobalControllers = {
@@ -82,6 +84,7 @@ export class Game {
     };
     
     this.entityManager = new EntityManager(this);
+    this.worldManager = new World(this);
   }
 
   public initialize = async (el: HTMLElement) => {
