@@ -22,6 +22,7 @@ export namespace ClientChunkNamespace {
 `Button.tsx` file originally. If we then need a types file or sub-components for the button, create a `Button` folder and put the files in there, renaming the original
 button.tsx component to `index.tsx` inside the folder.
 - When working on a feature, consider if it can be done locally, and prefer this over using a global state solution.
+- Always use a standard `for(const key (of|in) (object|array))` loop for iterating over objects or arrays over standard foreach loops. methods like reduce, map, filter, etc. are fine to use.
 
 ## Software
 - use bun for all package management and running of commands
