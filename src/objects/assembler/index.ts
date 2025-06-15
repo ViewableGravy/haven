@@ -24,20 +24,6 @@ export function createStandardAssembler(game: Game, opts: { position: Position }
   return assembler;
 }
 
-/***** LEGACY FACTORY METHODS - DEPRECATED *****/
-// These are maintained for backward compatibility but should be migrated to GameObjects.assembler.*
-
-export async function createNetworkedAssembler(game: Game, position: Position): Promise<Assembler> {
-  return await game.worldManager.createNetworkedEntity({
-    factoryFn: () => createStandardAssembler(game, { position }),
-    syncTraits: ['position', 'placeable'],
-    autoPlace: {
-      x: position.x,
-      y: position.y
-    }
-  });
-}
-
 export function createLocalAssembler(game: Game, position: Position): Assembler {
   return game.worldManager.createLocalEntity(
     () => createStandardAssembler(game, { position }),
@@ -49,15 +35,6 @@ export function createLocalAssembler(game: Game, position: Position): Assembler 
     }
   );
 }
-
-/***** INFOGRAPHIC REGISTRATION *****/
-// Register the assembler infographic when this module loads
-infographicsRegistry.register("assembler", (entity: Assembler) => ({
-  name: "Assembler",
-  component: createTestEntityInfographicNode(entity),
-  creatorFunction: createNetworkedAssembler,
-  previewCreatorFunction: (game: Game, position: Position) => createStandardAssembler(game, { position })
-}));
 
 /***** UNIFIED FACTORY *****/
 const AssemblerNetworkConfig: NetworkSyncConfig = {
@@ -71,6 +48,15 @@ export const assemblerFactory = createFactory({
   factoryFn: createStandardAssembler,
   network: AssemblerNetworkConfig
 });
+
+/***** INFOGRAPHIC REGISTRATION *****/
+// Register the assembler infographic when this module loads
+infographicsRegistry.register("assembler", (entity: Assembler) => ({
+  name: "Assembler",
+  component: createTestEntityInfographicNode(entity),
+  creatorFunction: (game: Game, position: Position) => createStandardAssembler(game, { position }),
+  previewCreatorFunction: (game: Game, position: Position) => createStandardAssembler(game, { position })
+}));
 
 /***** EXPORTS *****/
 export { BaseAssembler } from "./base";

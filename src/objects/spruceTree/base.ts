@@ -6,6 +6,7 @@ import { GameConstants } from "../../shared/constants";
 import { SpruceTreeSprite } from "../../spriteSheets/spruceTree";
 import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
+import { Logger } from "../../utilities/logger";
 import type { Position } from "../../utilities/position";
 import { GameObject } from "../base";
 import { ContainerTrait } from "../traits/container";
@@ -13,7 +14,6 @@ import { ContextMenuTrait } from "../traits/contextMenu";
 import { GhostableTrait } from "../traits/ghostable";
 import { PlaceableTrait } from "../traits/placeable";
 import { TransformTrait } from "../traits/transform";
-import { Logger } from "../../utilities/Logger";
 
 
 /***** BASE SPRUCE TREE *****/
