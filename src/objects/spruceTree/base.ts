@@ -5,7 +5,6 @@ import { infographicStore } from "../../components/infographic/store";
 import { GameConstants } from "../../shared/constants";
 import { SpruceTreeSprite } from "../../spriteSheets/spruceTree";
 import type { Game } from "../../utilities/game/game";
-import { infographicsRegistry } from "../../utilities/infographics";
 import { Logger } from "../../utilities/logger";
 import type { Position } from "../../utilities/position";
 import { GameObject } from "../base";
@@ -86,29 +85,14 @@ export class BaseSpruceTree extends GameObject {
 
       this.selectionSprite.renderable = true;
       this.selectionSprite.interactive = false;
-      this.selectionSprite.eventMode = "none";
-
-      // Get spruce tree infographic from the registry, passing this entity instance
-      const spruceTreeInfographic = infographicsRegistry.get("spruce-tree", this);
-
-      if (spruceTreeInfographic) {
-        infographicStore.setState(() => ({
-          active: true,
-          component: spruceTreeInfographic.component,
-          item: {
-            name: spruceTreeInfographic.name,
-            node: spruceTreeInfographic.name,
-            creatorFunction: spruceTreeInfographic.createNetworked,
-            previewCreatorFunction: spruceTreeInfographic.previewCreatorFunction
-          }
-        }));
-      }
+      this.selectionSprite.eventMode = "none";      // Get spruce tree infographic from the registry, passing this entity instance
+      infographicStore.setFromRegistry("spruce-tree", this);
     });
 
     this.getTrait("container").container.addEventListener("mouseout", () => {
       this.selectionSprite.renderable = false;
 
-      infographicStore.setState(() => ({ active: false }));
+      infographicStore.setInactive();
     });
   }
 

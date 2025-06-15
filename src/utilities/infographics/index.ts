@@ -4,6 +4,10 @@ import invariant from "tiny-invariant";
 import type { Game } from "../game/game";
 import type { Position } from "../position";
 
+export type RegisteredInfographics = 
+  | "spruce-tree"
+  | "assembler"
+
 export type InfographicDefinition = {
   name: string;
   component: React.FC;
@@ -23,23 +27,23 @@ export type InfographicDefinition = {
 };
 
 type InfographicFactory<TEntity = any> = (entity: TEntity) => InfographicDefinition;
-type InfographicRegistry = Record<string, InfographicFactory>;
+type InfographicRegistry = Record<RegisteredInfographics, InfographicFactory>;
 
 /***** INFOGRAPHICS REGISTRY *****/
 class InfographicsRegistry {
-  private registry: InfographicRegistry = {};
+  private registry: InfographicRegistry = {} as InfographicRegistry;
 
   /**
    * Register an infographic factory for a specific entity type
    */
-  public register<TEntity>(entityType: string, factory: InfographicFactory<TEntity>): void {
+  public register<TEntity>(entityType: RegisteredInfographics, factory: InfographicFactory<TEntity>): void {
     this.registry[entityType] = factory;
   }
 
   /**
    * Get an infographic definition by entity type and create it with entity instance
    */
-  public get<TEntity>(entityType: string, entity: TEntity): InfographicDefinition {
+  public get<TEntity>(entityType: RegisteredInfographics, entity: TEntity): InfographicDefinition {
     const factory = this.registry[entityType];
     invariant(factory, `Infographic factory for entity type "${entityType}" is not registered.`);
 
@@ -49,7 +53,7 @@ class InfographicsRegistry {
   /**
    * Check if an infographic is registered for an entity type
    */
-  public has(entityType: string): boolean {
+  public has(entityType: RegisteredInfographics): boolean {
     return entityType in this.registry;
   }
 

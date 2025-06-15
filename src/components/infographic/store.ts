@@ -1,8 +1,10 @@
-import { Store } from "@tanstack/react-store";
 import type React from "react";
+import { createStore, createStoreState } from "../../utilities/store";
 import type { HotbarItem } from "../hotbar/store";
+import { setFromRegistry, setInactive } from "./actions";
 
-type Infographic = {
+/***** TYPE DEFINITIONS *****/
+export type Infographic = {
   active: false;
 } | {
   active: true;
@@ -10,6 +12,13 @@ type Infographic = {
   item?: HotbarItem;
 }
 
-export const infographicStore = new Store<Infographic>({
-  active: false
-})
+/***** STORE CREATION *****/
+export const infographicStore = createStore({
+  state: createStoreState<Infographic>({
+    active: false
+  }),
+  actions: {
+    setFromRegistry,
+    setInactive
+  }
+});
