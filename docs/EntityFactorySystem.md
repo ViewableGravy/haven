@@ -40,7 +40,7 @@ All factories are exposed through the `WorldObjects` registry:
 
 ```typescript
 // src/worldObjects.ts
-import { assemblerFactory } from "./objects/assembler/factory";
+import { assemblerFactory } from "./objects/assembler";
 import { spruceTreeFactory } from "./objects/spruceTree/factory";
 
 export const WorldObjects = {

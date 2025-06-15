@@ -7,7 +7,7 @@ import { MeadowSprite } from "../../spriteSheets/meadow/meadow";
 import { RunningSprite } from "../../spriteSheets/running";
 import { SpruceTreeSprite } from "../../spriteSheets/spruceTree";
 // Import assembler factory to ensure infographic registration happens
-import "../../objects/assembler/factory";
+import "../../objects/assembler";
 // Import spruce tree factory to ensure infographic registration happens
 import "../../objects/spruceTree/factory";
 import { GameConstants } from "../../shared/constants";

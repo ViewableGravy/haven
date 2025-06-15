@@ -1,21 +1,12 @@
-/***** TYPE DEFINITIONS *****/
-import { createObjectFactory } from "./createWorldObject";
-
-// Import existing factory functions
-import { createStandardAssembler } from "../../objects/assembler/factory";
-import { createStandardSpruceTree } from "../../objects/spruceTree/factory";
+import { assemblerFactory } from "../../objects/assembler";
+import { spruceTreeFactory } from "../../objects/spruceTree/factory";
 
 /***** WORLD OBJECTS REGISTRY *****/
 export const WorldObjects = {
-  /**
-   * Assembler entity factory
-   * Provides createLocal, createNetworked, and castToNetworked methods
-   */
-  assembler: createObjectFactory(createStandardAssembler, "assembler"),
+  assembler: assemblerFactory,
+  spruceTree: spruceTreeFactory,
+} as const;
 
-  /**
-   * Spruce Tree entity factory  
-   * Provides createLocal, createNetworked, and castToNetworked methods
-   */
-  spruceTree: createObjectFactory(createStandardSpruceTree, "spruce-tree"),
-};
+/***** TYPE EXPORTS *****/
+export type WorldObjectsType = typeof WorldObjects;
+export type WorldObjectKey = keyof WorldObjectsType;

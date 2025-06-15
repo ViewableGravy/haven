@@ -61,7 +61,9 @@ export function createObjectFactory<T extends GameObject>(
       });
       
       return entity;
-    },    createFromServer: (options: FactoryOptions) => {
+    },    
+    
+    createFromServer: (options: FactoryOptions) => {
       const position: Position = {
         x: options.x,
         y: options.y,

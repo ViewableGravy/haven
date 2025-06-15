@@ -7,7 +7,7 @@ import { PlaceableTrait } from "../../objects/traits/placeable";
 import { TransformTrait } from "../../objects/traits/transform";
 import type { EntityData } from "../../server/types";
 import type { Game } from "../game/game";
-import { WorldObjects } from "../../worldObjects";
+import { WorldObjects } from "../world/WorldObjects";
 import { Logger } from "../Logger";
 
 /***** ENTITY TYPE MAPPING *****/

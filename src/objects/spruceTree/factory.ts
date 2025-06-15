@@ -2,7 +2,6 @@
 import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
 import type { Position } from "../../utilities/position";
-import type { NetworkSyncConfig } from "../../objects/traits/network";
 import { createFactory } from "../../utilities/createFactory";
 import { BaseSpruceTree } from "./base";
 import { createSpruceTreeInfographicNode } from "./info";
@@ -43,18 +42,6 @@ export async function createNetworkedSpruceTree(game: Game, position: Position):
   });
 }
 
-export function createLocalSpruceTree(game: Game, position: Position): SpruceTree {
-  return game.worldManager.createLocalEntity(
-    () => createStandardSpruceTree(game, { position }),
-    {
-      autoPlace: {
-        x: position.x,
-        y: position.y
-      }
-    }
-  );
-}
-
 /***** INFOGRAPHIC REGISTRATION *****/
 // Register the spruce tree infographic when this module loads
 infographicsRegistry.register("spruce-tree", (entity: SpruceTree) => ({
@@ -65,16 +52,14 @@ infographicsRegistry.register("spruce-tree", (entity: SpruceTree) => ({
 }));
 
 /***** UNIFIED FACTORY *****/
-const SpruceTreeNetworkConfig: NetworkSyncConfig = {
-  syncTraits: ['position', 'placeable'],
-  syncFrequency: 'batched',
-  priority: 'normal',
-  persistent: true
-};
-
 export const spruceTreeFactory = createFactory({
   factoryFn: createStandardSpruceTree,
-  network: SpruceTreeNetworkConfig
+  network: {
+    syncTraits: ['position', 'placeable'],
+    syncFrequency: 'batched',
+    priority: 'normal',
+    persistent: true
+  }
 });
 
 
