@@ -58,7 +58,7 @@ The implementation includes creating a Logger utility class with conditional log
 ┌─────────────────────────────────────────┐
 │      Application Components             │
 │  ┌─────────────────────────────────────┐ │
-│  │  import { Logger } from '../Logger' │ │
+│  │  import { Logger } from '../logger' │ │
 │  │                                     │ │
 │  │  // Before:                         │ │
 │  │  console.log('Debug message');      │ │

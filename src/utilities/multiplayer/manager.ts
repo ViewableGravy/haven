@@ -1,6 +1,7 @@
 /***** TYPE DEFINITIONS *****/
 import type { EntityData } from "../../server/types";
 import type { Game } from "../game/game";
+import { Logger } from "../logger";
 import type { Player } from "../player";
 import { MultiplayerClient, type RemotePlayer as RemotePlayerData } from "./client";
 import { EntitySyncManager } from "./entitySync";
@@ -14,7 +15,6 @@ import { PlayerUpdateHandler } from "./events/player_update";
 import { PlayersListHandler } from "./events/players_list";
 import type { ServerEventHandler } from "./events/types";
 import { RemotePlayer } from "./remotePlayer";
-import { Logger } from "../Logger";
 
 /***** MULTIPLAYER MANAGER *****/
 export class MultiplayerManager {

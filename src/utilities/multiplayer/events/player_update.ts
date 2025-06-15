@@ -1,5 +1,5 @@
 import type { MultiplayerClient } from "../../../server/types";
-import { Logger } from "../../Logger";
+import { Logger } from "../../logger";
 import type { MultiplayerManager } from "../manager";
 import type { ServerEventHandler } from "./types";
 

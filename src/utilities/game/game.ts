@@ -15,7 +15,7 @@ import { DesertSprite } from "../../spriteSheets/desert/desert";
 import { ChunkManager } from "../../systems/chunkManager";
 import { globalRenderTexturePool } from "../../systems/chunkManager/renderTexturePool";
 import { KeyboardController } from "../keyboardController";
-import { Logger } from "../Logger";
+import { Logger } from "../logger";
 import { MultiplayerManager } from "../multiplayer/manager";
 import { Player } from "../player";
 import { Position } from "../position";

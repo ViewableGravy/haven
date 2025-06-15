@@ -1,5 +1,6 @@
 /***** TYPE DEFINITIONS *****/
 import invariant from "tiny-invariant";
+import { WorldObjects } from "utilities/world/worldObjects";
 import type { GameObject } from "../../objects/base";
 import { ContainerTrait } from "../../objects/traits/container";
 import { GhostableTrait } from "../../objects/traits/ghostable";
@@ -7,8 +8,7 @@ import { PlaceableTrait } from "../../objects/traits/placeable";
 import { TransformTrait } from "../../objects/traits/transform";
 import type { EntityData } from "../../server/types";
 import type { Game } from "../game/game";
-import { WorldObjects } from "../world/WorldObjects";
-import { Logger } from "../Logger";
+import { Logger } from "../logger";
 
 /***** ENTITY TYPE MAPPING *****/
 const ENTITY_TYPE_MAP = {
@@ -32,7 +32,6 @@ export class EntitySyncManager {
     if (this.isReady) return;
     
     this.setupChunkLoadListener();
-    this.setupEntityPlacementListener();
     this.isReady = true;
     
     // Process any entities that were queued before initialization
@@ -42,14 +41,6 @@ export class EntitySyncManager {
       });
     }
   }
-  /***** ENTITY PLACEMENT INTEGRATION *****/
-  private setupEntityPlacementListener(): void {
-    // Entity placement notifications are handled by World.createNetworkedEntity
-    // No need to listen for placement events here to avoid duplicate entity_placed events
-  }
-  /***** SERVER NOTIFICATION *****/
-  // Entity creation notifications are handled by World.createNetworkedEntity
-  // to avoid duplicate entity_placed events
 
   /**
    * Set up listener for chunk loading to process queued entities

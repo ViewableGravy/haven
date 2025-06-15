@@ -1,6 +1,6 @@
 /***** TYPE DEFINITIONS *****/
 import type { LoadChunkEvent } from "../../../server/types/events/load_chunk";
-import { Logger } from "../../Logger";
+import { Logger } from "../../logger";
 import { parseChunkKey } from "../../tagged";
 import type { MultiplayerManager } from "../manager";
 import type { ServerEventHandler } from "./types";

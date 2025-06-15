@@ -1,4 +1,5 @@
 /***** TYPE DEFINITIONS *****/
+import type { TraitNames } from "objects/traits/types";
 import type { GameObject } from "../objects/base";
 import type { Game } from "./game/game";
 import type { Position } from "./position";
@@ -21,7 +22,7 @@ export type BaseFactoryFunction<T extends GameObject> = (game: Game, position: P
 /***** OBJECT FACTORY CREATOR *****/
 export function createObjectFactory<T extends GameObject>(
   factoryFn: BaseFactoryFunction<T>,
-  syncTraits: Array<string> = ['position', 'placeable']
+  syncTraits: Array<TraitNames> = ['position', 'placeable']
 ): ObjectFactory<T> {
   return {
     /**
@@ -45,9 +46,14 @@ export function createObjectFactory<T extends GameObject>(
           }
         }
       );
-    },    /**
-     * Create a networked entity that is synced with the server
-     * This sends a request to the server and waits for confirmation
+    },    
+    
+    /**
+     * Create a networked entity that is synced with the server. Consider this the same as making a POST request to an endpoint.
+     * This sends a request to the server and waits for confirmation - note: the returned entity is automatically rendered
+     * in the world once the server confirms creation.
+     * 
+     * The returned entity can be used immediately to apply post creation logic if necessary.
      */
     createNetworked: async (options: FactoryOptions): Promise<T> => {
       const position: Position = {
@@ -60,7 +66,7 @@ export function createObjectFactory<T extends GameObject>(
       // The World manager will handle entity creation sync
       return await options.game.worldManager.createNetworkedEntity({
         factoryFn: () => factoryFn(options.game, position),
-        syncTraits: syncTraits as any,
+        syncTraits,
         autoPlace: {
           x: options.x,
           y: options.y

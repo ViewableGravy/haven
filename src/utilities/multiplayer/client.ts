@@ -1,7 +1,7 @@
 /***** TYPE DEFINITIONS *****/
 import type { EntityData, ServerEvents } from "../../server/types";
 import type { LoadChunkEvent } from "../../server/types/events/load_chunk";
-import { Logger } from "../Logger";
+import { Logger } from "../logger";
 
 export interface RemotePlayer {
   id: string;

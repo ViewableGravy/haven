@@ -1,11 +1,11 @@
 /***** TYPE DEFINITIONS *****/
+import { Container } from 'pixi.js';
 import type { GameObject } from "../../objects/base";
 import { NetworkTrait, type NetworkSyncConfig } from "../../objects/traits/network";
 import type { TraitNames } from "../../objects/traits/types";
-import type { Game } from "./game";
-import { Container } from 'pixi.js';
 import type { LayerManager, LayerType, LayeredEntity } from "../../types/rendering";
-import { Logger } from "../Logger";
+import { Logger } from "../logger";
+import type { Game } from "./game";
 
 /***** ENTITY CREATION OPTIONS *****/
 export interface EntityCreationOptions {
