@@ -1,5 +1,7 @@
-import { AnimatedSprite, type Ticker } from "pixi.js";
+import { AnimatedSprite, Point, type Ticker } from "pixi.js";
 import type { SetOptional } from "type-fest";
+import { Rectangle } from "utilities/rectangle";
+import { TransformTrait } from "../../objects/traits/transform";
 import { CharacterSprite } from "../../spriteSheets/character";
 import { RunningSprite } from "../../spriteSheets/running";
 import type { Game } from "../game/game";
@@ -118,6 +120,31 @@ export class Player {
     }
 
     this.currentSprite.play();
+  }  /***** COLLISION DETECTION *****/
+  /**
+   * Check if moving to a new position would collide with any solid entities
+   * Treats the player as a point (10px from bottom of sprite) for collision
+   */
+  private checkCollision = (game: Game, newX: number, newY: number): boolean => {
+    // Player sprite is 80px tall and anchored at center (0.5, 0.5)
+    // So the bottom of the sprite is at position.y + 40px
+    // We want our collision point to be 10px from the bottom
+    const playerCollisionPoint = new Point(newX, newY);
+
+    // Check collision with all entities that have collision
+    for (const entity of game.entityManager.getEntities()) {
+      // Skip if entity doesn't have transform trait (position + size)
+      if (!TransformTrait.is(entity)) continue;
+      
+      const entityTransform = entity.getTrait('position');
+      const rect = entityTransform.rectangle;
+      
+      if (Rectangle.contains(rect, playerCollisionPoint)) {
+        return true; // Collision detected
+      }
+    }
+
+    return false; // No collision
   }
 
   /***** MULTIPLAYER INTEGRATION *****/
@@ -203,8 +230,6 @@ export class Player {
     if (this.controller.keys.down.pressed) {
       deltaY += 1;
     }
-
-    // Normalize diagonal movement to prevent faster speed
     if (deltaX !== 0 && deltaY !== 0) {
       // Apply diagonal normalization factor (1/√2 ≈ 0.707)
       const diagonalFactor = Math.sqrt(2) / 2;
@@ -212,8 +237,37 @@ export class Player {
       deltaY *= diagonalFactor;
     }
 
-    // Apply movement
-    this.position.x += deltaX * baseSpeed;
-    this.position.y += deltaY * baseSpeed;
+    // Calculate the final movement deltas
+    const finalDeltaX = deltaX * baseSpeed;
+    const finalDeltaY = deltaY * baseSpeed;
+
+    // Get current position
+    const currentX = this.position.x;
+    const currentY = this.position.y;
+
+    // Check collision for the new position
+    const newX = currentX + finalDeltaX;
+    const newY = currentY + finalDeltaY;    // Only apply movement if no collision detected
+    const hasCollision = this.checkCollision(game, newX, newY);
+    
+    if (!hasCollision) {
+      this.position.x = newX;
+      this.position.y = newY;
+    } else {
+      // Try moving on individual axes to allow sliding along walls
+      const tryMoveX = currentX + finalDeltaX;
+      const tryMoveY = currentY + finalDeltaY;
+
+      // Try moving only on X axis
+      if (finalDeltaX !== 0 && !this.checkCollision(game, tryMoveX, currentY)) {
+        this.position.x = tryMoveX;
+      }
+      // Try moving only on Y axis  
+      else if (finalDeltaY !== 0 && !this.checkCollision(game, currentX, tryMoveY)) {
+        this.position.y = tryMoveY;
+      }
+      
+      // If both axes blocked, don't move at all
+    }
   }
 }
