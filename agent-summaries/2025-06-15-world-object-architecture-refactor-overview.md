@@ -46,43 +46,45 @@ The refactor addresses three core architectural concerns: chunk-entity decouplin
 
 ## Architectural Diagram
 
+```mermaid-js
+graph TD
+    subgraph "Current Architecture"
+        A1[Chunk A] --> B1[Entity1, Entity4]
+        A2[Chunk B] --> B2[Entity2, Entity5]
+        A3[Chunk C] --> B3[Entity3, Entity6]
+    end
+    
+    subgraph "New Architecture"
+        C[Main Stage] --> D[Entity1 - Network Trait]
+        C --> E[Entity2 - Network Trait]
+        C --> F[Entity3 - Network Trait]
+        C --> G[Entity4 - Network Trait]
+        C --> H[Entity5 - Network Trait]
+        
+        I[Chunk A - Terrain Only]
+        J[Chunk B - Terrain Only]
+        K[Chunk C - Terrain Only]
+    end
 ```
-Current Architecture:
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   Chunk A   │    │   Chunk B   │    │   Chunk C   │
-│  ┌───────┐  │    │  ┌───────┐  │    │  ┌───────┐  │
-│  │Entity1│  │    │  │Entity2│  │    │  │Entity3│  │
-│  │Entity4│  │    │  │Entity5│  │    │  │Entity6│  │
-│  └───────┘  │    │  └───────┘  │    │  └───────┘  │
-└─────────────┘    └─────────────┘    └─────────────┘
 
-New Architecture:
-┌─────────────────────────────────────────────────────────┐
-│                    Main Stage                            │
-│  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐ │
-│  │Entity1│  │Entity2│  │Entity3│  │Entity4│  │Entity5│ │
-│  │       │  │       │  │       │  │       │  │       │ │
-│  │Network│  │Network│  │Network│  │Network│  │Network│ │
-│  │ Trait │  │ Trait │  │ Trait │  │ Trait │  │ Trait │ │
-│  └───────┘  └───────┘  └───────┘  └───────┘  └───────┘ │
-└─────────────────────────────────────────────────────────┘
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   Chunk A   │    │   Chunk B   │    │   Chunk C   │
-│  (Terrain   │    │  (Terrain   │    │  (Terrain   │
-│   Only)     │    │   Only)     │    │   Only)     │
-└─────────────┘    └─────────────┘    └─────────────┘
+**Factory Pattern Flow:**
 
-Factory Pattern Flow:
-WorldObjects.spruceTree.createLocal(opts) ──────┐
-                                                  │
-WorldObjects.spruceTree.createNetworked(opts) ──┼──► Entity Creation
-                                                  │
-WorldObjects.spruceTree.castToNetworked(entity)─┘
+```mermaid-js
+graph TD
+    A[WorldObjects.spruceTree.createLocal opts] --> D[Entity Creation]
+    B[WorldObjects.spruceTree.createNetworked opts] --> D
+    C[WorldObjects.spruceTree.castToNetworked entity] --> D
+```
 
-Networking Flow:
-Entity State Change ──► NetworkedTrait ──► multiplayer.sendAsync() ──► Server
-                                                                          │
-Server Response ──────── multiplayer.onMessage() ◄─────────────────────┘
+**Networking Flow:**
+
+```mermaid-js
+graph LR
+    A[Entity State Change] --> B[NetworkedTrait]
+    B --> C[multiplayer.sendAsync]
+    C --> D[Server]
+    D --> E[Server Response]
+    E --> F[multiplayer.onMessage]
 ```
 
 ## Implementation Steps

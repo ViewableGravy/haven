@@ -35,28 +35,23 @@ The change simplifies position management, eliminates coordinate conversion comp
 
 ## Position Conversion Architecture
 
-```
-BEFORE (Mixed Local/Global):
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Global Pos    │───▶│ Convert to Local│───▶│  Store in Chunk │
-│   (World Space) │    │  (Chunk Space)  │    │  (Local Coords) │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-        │                       │                       │
-        ▼                       ▼                       ▼
-   Mouse/Input            Entity Manager            Chunk Storage
-   Collision Det.         Position Logic           Entity Placement
-                              
-AFTER (Global Only):
-┌─────────────────┐                               ┌─────────────────┐
-│   Global Pos    │──────────────────────────────▶│  Store Globally │
-│   (World Space) │                               │  (World Coords) │
-└─────────────────┘                               └─────────────────┘
-        │                                                 │
-        ▼                                                 ▼
-   Mouse/Input                                      Chunk Storage
-   Collision Det.                                   Entity Placement
-   Entity Manager                                   Multiplayer Sync
-   Position Logic
+```mermaid-js
+graph TD
+    subgraph "BEFORE - Mixed Local/Global"
+        A[Global Pos - World Space] --> B[Convert to Local - Chunk Space]
+        B --> C[Store in Chunk - Local Coords]
+        
+        A --> D[Mouse/Input<br/>Collision Det.]
+        B --> E[Entity Manager<br/>Position Logic]
+        C --> F[Chunk Storage<br/>Entity Placement]
+    end
+    
+    subgraph "AFTER - Global Only"
+        G[Global Pos - World Space] --> H[Store Globally - World Coords]
+        
+        G --> I[Mouse/Input<br/>Collision Det.<br/>Entity Manager<br/>Position Logic]
+        H --> J[Chunk Storage<br/>Entity Placement<br/>Multiplayer Sync]
+    end
 ```
 
 ## Key Changes Summary

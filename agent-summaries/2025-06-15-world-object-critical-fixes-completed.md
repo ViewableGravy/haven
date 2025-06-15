@@ -36,21 +36,21 @@ The key architectural fix involved correcting the PIXI.js scene graph hierarchy 
 **Solution**: Modified entity placement to use `game.world` instead of `game.entityStage`
 
 **Before:**
-```
-app.stage
-├── world (Container) - zoom transforms applied here
-│   └── chunks (terrain only)
-└── entityStage (Container) - entities here DON'T inherit zoom ❌
-    └── entities (trees, objects) - WRONG LAYER
+```mermaid-js
+graph TD
+    A[app.stage] --> B[world Container - zoom transforms applied here]
+    A --> C[entityStage Container - entities here DON'T inherit zoom ❌]
+    B --> D[chunks - terrain only]
+    C --> E[entities - trees, objects - WRONG LAYER]
 ```
 
 **After:**
-```
-app.stage
-├── world (Container) - zoom transforms applied ✅
-│   ├── chunks (terrain)
-│   └── entities (trees, objects) - NOW INHERIT ZOOM ✅
-└── entityStage (Container) - kept for legacy compatibility
+```mermaid-js
+graph TD
+    A[app.stage] --> B[world Container - zoom transforms applied ✅]
+    A --> C[entityStage Container - kept for legacy compatibility]
+    B --> D[chunks - terrain]
+    B --> E[entities - trees, objects - NOW INHERIT ZOOM ✅]
 ```
 
 ### 2. File Structure Completion ✅ FIXED

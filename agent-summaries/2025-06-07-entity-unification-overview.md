@@ -46,45 +46,34 @@ This refactor will eliminate the remote/local entity distinction by unifying all
 
 ## Entity Management Unification Diagram
 
-```
-CURRENT SYSTEM (COMPLEX):
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        EntityManager                                   │
-├─────────────────────────────────────────────────────────────────────────┤
-│ entities: Set<BaseEntity>          ┌─────────────────────────────────────┤
-│ entitiesByChunk: Map<...>          │        EntitySyncManager            │
-└─────────────────────────────────────┼─────────────────────────────────────┤
-                                     │ remoteEntities: Map<string, Entity> │
-                                     │ queuedEntities: EntityData[]        │
-                                     └─────────────────────────────────────┤
-                                                                           │
-┌──────────────────────────┬─────────────────────────────────────────────┤
-│    BaseEntity            │                                             │
-├──────────────────────────┤              PROBLEMS:                      │
-│ isRemoteEntity: boolean  │        • Dual tracking systems              │
-│ multiplayerId?: string   │        • Complex sync logic                 │
-│ placedBy?: string        │        • Chunk unload edge cases            │
-└──────────────────────────┤        • Memory leak potential              │
-                           └─────────────────────────────────────────────┤
-
-UNIFIED SYSTEM (SIMPLE):
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        EntityManager                                   │
-├─────────────────────────────────────────────────────────────────────────┤
-│ entities: Set<BaseEntity>                                               │
-│ entitiesByChunk: Map<ChunkKey, Set<BaseEntity>>                         │
-│ entityMetadata: Map<string, EntityMetadata>  // Optional tracking       │
-└─────────────────────────────────────────────────────────────────────────┤
-                                                                           │
-┌──────────────────────────┬─────────────────────────────────────────────┤
-│    BaseEntity            │                                             │
-├──────────────────────────┤              BENEFITS:                      │
-│ uid: string              │        • Single source of truth             │
-│ multiplayerId?: string   │        • Simplified sync logic              │
-│ placedBy?: string        │        • Easier chunk management            │
-│ (no isRemoteEntity)      │        • Reduced memory overhead            │
-└──────────────────────────┤        • Cleaner API surface                │
-                           └─────────────────────────────────────────────┤
+```mermaid-js
+graph TD
+    subgraph "CURRENT SYSTEM - COMPLEX"
+        A[EntityManager] --> B[entities: Set&lt;BaseEntity&gt;]
+        A --> C[entitiesByChunk: Map&lt;...&gt;]
+        
+        D[EntitySyncManager] --> E[remoteEntities: Map&lt;string, Entity&gt;]
+        D --> F[queuedEntities: EntityData[]]
+        
+        G[BaseEntity] --> H[isRemoteEntity: boolean]
+        G --> I[multiplayerId?: string]
+        G --> J[placedBy?: string]
+        
+        K[PROBLEMS:<br/>• Dual tracking systems<br/>• Complex sync logic<br/>• Chunk unload edge cases<br/>• Memory leak potential]
+    end
+    
+    subgraph "UNIFIED SYSTEM - SIMPLE"
+        L[EntityManager] --> M[entities: Set&lt;BaseEntity&gt;]
+        L --> N[entitiesByChunk: Map&lt;ChunkKey, Set&lt;BaseEntity&gt;&gt;]
+        L --> O[entityMetadata: Map&lt;string, EntityMetadata&gt; - Optional tracking]
+        
+        P[BaseEntity] --> Q[uid: string]
+        P --> R[multiplayerId?: string]
+        P --> S[placedBy?: string]
+        P --> T[no isRemoteEntity]
+        
+        U[BENEFITS:<br/>• Single source of truth<br/>• Simplified sync logic<br/>• Easier chunk management<br/>• Reduced memory overhead<br/>• Cleaner API surface]
+    end
 ```
 
 ## Implementation Strategy

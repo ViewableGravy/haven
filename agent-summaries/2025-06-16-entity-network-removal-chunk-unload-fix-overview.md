@@ -32,25 +32,26 @@ The core issue was that chunk unloading would remove entities locally but also s
 
 ## Change Flow Diagram
 
-```
-Chunk Unloading:
-ChunkManager.unloadChunk() 
-    → EntityManager.removeEntitiesForChunk(chunkKey)
-        → EntityManager.removeEntity(entity, notifyServer: false)
-            → entity.destroy(notifyServer: false)
-                → cleanupTraits(notifyServer: false)
-                    → NetworkTrait.destroy(notifyServer: false)
-                        → handleEntityDestroy(notifyServer: false)
-                            → [NO server notification]
-
-User Entity Removal:
-World.destroyEntity() 
-    → EntityManager.removeEntity(entity) // defaults to notifyServer: true
-        → entity.destroy(notifyServer: true)
-            → cleanupTraits(notifyServer: true)
-                → NetworkTrait.destroy(notifyServer: true)
-                    → handleEntityDestroy(notifyServer: true)
-                        → [SENDS entity_remove to server]
+```mermaid-js
+graph TD
+    subgraph "Chunk Unloading Flow"
+        A[ChunkManager.unloadChunk] --> B[EntityManager.removeEntitiesForChunk chunkKey]
+        B --> C[EntityManager.removeEntity entity, notifyServer: false]
+        C --> D[entity.destroy notifyServer: false]
+        D --> E[cleanupTraits notifyServer: false]
+        E --> F[NetworkTrait.destroy notifyServer: false]
+        F --> G[handleEntityDestroy notifyServer: false]
+        G --> H[NO server notification]
+    end
+    
+    subgraph "User Entity Removal Flow"
+        I[World.destroyEntity] --> J[EntityManager.removeEntity entity - defaults to notifyServer: true]
+        J --> K[entity.destroy notifyServer: true]
+        K --> L[cleanupTraits notifyServer: true]
+        L --> M[NetworkTrait.destroy notifyServer: true]
+        M --> N[handleEntityDestroy notifyServer: true]
+        N --> O[SENDS entity_remove to server]
+    end
 ```
 
 ## Technical Implementation Details

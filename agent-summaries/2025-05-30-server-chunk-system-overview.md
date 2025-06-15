@@ -139,26 +139,30 @@ The client already has the infrastructure to handle server-generated chunks:
 
 ## Message Flow
 
-```
-Server                                    Client
-  │                                         │
-  │ ◄─────── WebSocket Connection ────────── │
-  │                                         │
-  │ ────── players_list message ──────────► │
-  │ ────── entities_list message ─────────► │
-  │                                         │
-  │ ┌─ Generate 5x5 chunks ─┐               │
-  │ │ - Check database      │               │
-  │ │ - Generate if missing │               │
-  │ │ - Store in database   │               │
-  │ └───────────────────────┘               │
-  │                                         │
-  │ ────── load_chunk message ────────────► │ ┌─ Process chunk ─┐
-  │ ────── load_chunk message ────────────► │ │ - Create tiles  │
-  │ ────── load_chunk message ────────────► │ │ - Place entities│
-  │           ... (25 total) ...            │ │ - Add to world  │
-  │ ────── load_chunk message ────────────► │ └─────────────────┘
-  │                                         │
+```mermaid-js
+sequenceDiagram
+    participant Server
+    participant Client
+    
+    Client->>Server: WebSocket Connection
+    Server->>Client: players_list message
+    Server->>Client: entities_list message
+    
+    Note over Server: Generate 5x5 chunks
+    Note over Server: - Check database
+    Note over Server: - Generate if missing
+    Note over Server: - Store in database
+    
+    Server->>Client: load_chunk message
+    Server->>Client: load_chunk message
+    Server->>Client: load_chunk message
+    Note over Server,Client: ... (25 total)
+    Server->>Client: load_chunk message
+    
+    Note over Client: Process chunk
+    Note over Client: - Create tiles
+    Note over Client: - Place entities
+    Note over Client: - Add to world
 ```
 
 ## Entity Management

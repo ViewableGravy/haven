@@ -40,27 +40,31 @@ The first issue involves empty core files that should contain the world object f
 
 ## Architectural Changes Diagram
 
-```
-CURRENT PROBLEMATIC STRUCTURE:
-app.stage
-├── world (Container) - zoom transforms applied here
-│   └── chunks (terrain only)
-└── entityStage (Container) - entities here DON'T inherit zoom
-    └── entities (trees, objects) - WRONG LAYER
-
-PROPOSED FIX:
-app.stage
-├── world (Container) - zoom transforms applied
-│   ├── chunks (terrain)
-│   └── entities (trees, objects) - NOW INHERIT ZOOM
-└── ui (Container) - UI elements that shouldn't zoom
+```mermaid-js
+graph TD
+    subgraph "CURRENT PROBLEMATIC STRUCTURE"
+        A[app.stage] --> B[world Container - zoom transforms applied here]
+        A --> C[entityStage Container - entities here DON'T inherit zoom]
+        B --> D[chunks - terrain only]
+        C --> E[entities - trees, objects - WRONG LAYER]
+    end
+    
+    subgraph "PROPOSED FIX"
+        F[app.stage] --> G[world Container - zoom transforms applied]
+        F --> H[ui Container - UI elements that shouldn't zoom]
+        G --> I[chunks - terrain]
+        G --> J[entities - trees, objects - NOW INHERIT ZOOM]
+    end
 ```
 
 **Network Flow Fix:**
-```
-Client Request → NetworkTrait.createEntity() → sendAsync() → Server Response
-                    ↓ (TIMEOUT ISSUE)
-                Fix timeout configuration & error handling
+
+```mermaid-js
+graph LR
+    A[Client Request] --> B[NetworkTrait.createEntity]
+    B --> C[sendAsync]
+    C --> D[Server Response]
+    C --> E[TIMEOUT ISSUE - Fix timeout configuration & error handling]
 ```
 
 ## Critical Implementation Details
