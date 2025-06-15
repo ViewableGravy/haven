@@ -34,12 +34,20 @@ export class EntityManager {
   public addEntity(entity: GameObject): void {
     this.entities.add(entity);
   }
-
   public removeEntity(entity: GameObject): void {
     // Call any registered destroy callbacks first
     this.executeDestroyCallbacks(entity);
     
-    // Clean up entity traits before removing from tracking
+    // Remove from layer system before destroying
+    try {
+      const container = entity.getTrait('container').container;
+      const layerManager = this.game.worldManager.getLayerManager();
+      layerManager.removeFromLayer(container);
+    } catch (error) {
+      // Entity might not have container trait, that's ok
+    }
+    
+    // Clean up entity traits after removing from display
     try {
       entity.destroy();
     } catch (error) {
@@ -125,10 +133,9 @@ export class EntityManager {
       // Place entity directly on main entity stage with global coordinates
       const container = entity.getTrait('container').container;
       container.x = globalX;
-      container.y = globalY;
-
-      // Add to world container so entity inherits zoom transforms
-      this.game.world.addChild(container);
+      container.y = globalY;      // Add to entity layer for proper depth sorting
+      const layerManager = this.game.worldManager.getLayerManager();
+      layerManager.addToLayer(container, 'entity');
       this.addEntity(entity);
 
       // Mark as placed

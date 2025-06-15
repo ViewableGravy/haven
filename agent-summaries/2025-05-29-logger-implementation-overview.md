@@ -12,14 +12,14 @@
 
 ## High Level Overview
 
-This task involves implementing a centralized logging system to replace all console.log instances throughout the application. The logger will provide controlled debug output based on a global debug configuration setting.
+This task involves implementing a centralized logging system to replace all console.log instances throughout the application. The Logger will provide controlled debug output based on a global debug configuration setting.
 
-The implementation includes creating a logger utility class with conditional logging capabilities and systematically replacing all existing console.log calls with the new logger method using regex find-and-replace operations.
+The implementation includes creating a Logger utility class with conditional logging capabilities and systematically replacing all existing console.log calls with the new Logger method using regex find-and-replace operations.
 
 ## Files to be Modified
 
 ### New Files:
-- `src/utilities/logger/index.ts` - Logger utility implementation
+- `src/utilities/Logger/index.ts` - Logger utility implementation
 
 ### Modified Files:
 - `src/shared/constants.ts` - Add debug configuration constant
@@ -58,13 +58,13 @@ The implementation includes creating a logger utility class with conditional log
 ┌─────────────────────────────────────────┐
 │      Application Components             │
 │  ┌─────────────────────────────────────┐ │
-│  │  import { logger } from '../logger' │ │
+│  │  import { Logger } from '../Logger' │ │
 │  │                                     │ │
 │  │  // Before:                         │ │
 │  │  console.log('Debug message');      │ │
 │  │                                     │ │
 │  │  // After:                          │ │
-│  │  logger.log('Debug message');       │ │
+│  │  Logger.log('Debug message');       │ │
 │  └─────────────────────────────────────┘ │
 └─────────────────────────────────────────┘
 ```
@@ -74,6 +74,6 @@ The implementation includes creating a logger utility class with conditional log
 **Total Files to Update:** 9 files  
 **Total console.log Replacements:** ~30 instances  
 **Configuration Location:** `src/shared/constants.ts`  
-**Logger Location:** `src/utilities/logger/index.ts`  
+**Logger Location:** `src/utilities/Logger/index.ts`  
 
-The logger implementation follows the single responsibility principle and uses a class-based approach consistent with the existing codebase architecture. The debug flag will be centrally configurable and can be easily toggled for development vs production environments.
+The Logger implementation follows the single responsibility principle and uses a class-based approach consistent with the existing codebase architecture. The debug flag will be centrally configurable and can be easily toggled for development vs production environments.

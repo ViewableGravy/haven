@@ -32,9 +32,7 @@ export class BaseAssembler extends GameObject {
     this.addTrait('placeable', new PlaceableTrait(this, false, () => {
       this.getTrait('ghostable').ghostMode = false;
     }));
-  }
-
-  private static createAssemblerSprite(transform: TransformTrait): Sprite {
+  }  private static createAssemblerSprite(transform: TransformTrait): Sprite {
     const sprite = AssemblerSprite.createSprite("assembling-machine-1");
     sprite.interactive = true;
     sprite.width = transform.size.width;
@@ -43,12 +41,10 @@ export class BaseAssembler extends GameObject {
     sprite.y = 0;
     return sprite;
   }
-
   private static createSelectionSprite(transform: TransformTrait): Sprite {
     const sprite = new Sprite(Texture.from(Selection));
     sprite.width = transform.size.width;
-    sprite.height = transform.size.height;
-    sprite.x = 0;
+    sprite.height = transform.size.height;    sprite.x = 0;
     sprite.y = 0;
     sprite.renderable = false;
     return sprite;
@@ -111,8 +107,8 @@ export function createStandardAssembler(game: Game, position: Position): Assembl
 }
 
 /***** NEW NETWORKED ASSEMBLER FACTORY *****/
-export function createNetworkedAssembler(game: Game, position: Position): Assembler {
-  return game.worldManager.createNetworkedEntity({
+export async function createNetworkedAssembler(game: Game, position: Position): Promise<Assembler> {
+  return await game.worldManager.createNetworkedEntity({
     factoryFn: () => createStandardAssembler(game, position),
     syncTraits: ['position', 'placeable'],
     autoPlace: {
@@ -140,6 +136,7 @@ export function createLocalAssembler(game: Game, position: Position): Assembler 
 infographicsRegistry.register("assembler", (entity: Assembler) => ({
   name: "Assembler",
   component: createTestEntityInfographicNode(entity),
-  creatorFunction: createNetworkedAssembler
+  creatorFunction: createNetworkedAssembler,
+  previewCreatorFunction: createStandardAssembler
 }));
 

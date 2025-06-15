@@ -1,5 +1,6 @@
 import type { InventoryNamespace } from "../../components/inventory/types";
 import type { GameObject } from "../base";
+import { Logger } from "../../utilities/Logger";
 
 /***** TYPE DEFINITIONS *****/
 interface ItemTraitData {
@@ -37,7 +38,7 @@ export class ItemTrait implements InventoryNamespace.Item {
 
   /***** ITEM FUNCTIONALITY *****/
   public use(): void {
-    console.log(`Used item: ${this.name}`);
+    Logger.log(`Used item: ${this.name}`);
   }
 
   public canStackWith(otherItem: InventoryNamespace.Item): boolean {

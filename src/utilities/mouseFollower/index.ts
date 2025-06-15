@@ -1,25 +1,32 @@
 import type { GameObject } from "../../objects/base";
 import { TransformTrait } from "../../objects/traits/transform";
 import type { Game } from "../game/game";
+import type { Position } from "../position";
 import { Rectangle } from "../rectangle";
+import { Logger } from "../Logger";
 
 /***** TYPE DEFINITIONS *****/
 type FollowableEntity = GameObject;
+type CreatorFunction = (game: Game, position: Position) => any;
 
 /***** MOUSE FOLLOWER CLASS *****/
 export class MouseFollower {
   private isPlaceable = true;
   private entity: FollowableEntity;
   private game: Game;
+  private actualCreatorFunction?: CreatorFunction;
 
-  constructor(game: Game, entity: FollowableEntity) {
+  constructor(game: Game, entity: FollowableEntity, actualCreatorFunction?: CreatorFunction) {
     this.game = game;
     this.entity = entity;
+    this.actualCreatorFunction = actualCreatorFunction;
   }
-
   public start(): () => void {
     this.bindEvents();
-    this.game.world.addChild(this.entity.getTrait('container').container);
+    
+    // Add preview entity to entity layer 
+    const layerManager = this.game.worldManager.getLayerManager();
+    layerManager.addToLayer(this.entity.getTrait('container').container, 'entity');
     
     // Immediately position the entity at the current cursor position
     this.updateEntityPosition();
@@ -135,26 +142,42 @@ export class MouseFollower {
       }
     }
   }
-
-  private handleMouseDown = (): void => {
+  private handleMouseDown = async (): Promise<void> => {
     if (!this.isPlaceable) return;
 
     // Get current global position from the entity's transform
     const globalX = this.entity.getTrait('position').position.x;
     const globalY = this.entity.getTrait('position').position.y;
 
-    // Use EntityManager to handle placement
-    const placementSuccess = this.game.entityManager.placeEntity(
-      this.entity,
-      globalX,
-      globalY
-    );
+    Logger.log(`MouseFollower: Placing entity at ${globalX}, ${globalY}`);
 
-    if (placementSuccess) {
-      // Remove all event listeners
-      this.cleanup();
+    if (this.actualCreatorFunction) {
+      Logger.log('MouseFollower: Using actual creator function for networked entity');
+        try {
+        // Create networked entity at the placement position FIRST
+        const networkedEntity = await this.actualCreatorFunction(this.game, { x: globalX, y: globalY, type: "global" });
+        Logger.log(`MouseFollower: Successfully created networked entity: ${networkedEntity.uid}`);
+        
+        // Only cleanup preview entity AFTER successful creation
+        this.cleanup();
+      } catch (error) {
+        console.error('MouseFollower: Failed to create networked entity:', error);
+        // Don't cleanup on error so user can try again
+      }
     } else {
-      console.warn('Failed to place entity');
+      Logger.log('MouseFollower: Using direct entity placement (legacy)');
+      // This is a direct entity placement (legacy behavior)
+      const placementSuccess = this.game.entityManager.placeEntity(
+        this.entity,
+        globalX,
+        globalY
+      );
+
+      if (placementSuccess) {
+        this.cleanup();
+      } else {
+        console.warn('Failed to place entity');
+      }
     }
   }
 
@@ -163,11 +186,13 @@ export class MouseFollower {
       this.cleanup();
     }
   }
-
   private cleanup(): void {
     window.removeEventListener("mousemove", this.handleMouseMove);
     window.removeEventListener("keydown", this.handleKeydown);
     window.removeEventListener("mousedown", this.handleMouseDown);
-    this.game.world.removeChild(this.entity.getTrait('container').container);
+    
+    // Remove from layer system
+    const layerManager = this.game.worldManager.getLayerManager();
+    layerManager.removeFromLayer(this.entity.getTrait('container').container);
   }
 }

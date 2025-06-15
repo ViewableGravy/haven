@@ -1,7 +1,7 @@
 /***** TYPE DEFINITIONS *****/
 import type { EntityData, ServerEvents } from "../../server/types";
 import type { LoadChunkEvent } from "../../server/types/events/load_chunk";
-import { logger } from "../logger";
+import { Logger } from "../Logger";
 
 export interface RemotePlayer {
   id: string;
@@ -213,7 +213,7 @@ export class MultiplayerClient {
     }
 
     this.reconnectAttempts++;
-    logger.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+    Logger.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
 
     setTimeout(() => {
       this.connect().catch(() => {

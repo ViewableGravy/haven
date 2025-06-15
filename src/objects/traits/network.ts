@@ -50,91 +50,19 @@ export class NetworkTrait {
     // Setup network synchronization for specified traits
     await this.setupNetworkSync();
   }
-
   /***** NETWORK SYNCHRONIZATION *****/
   private async setupNetworkSync(): Promise<void> {
     // Setup trait synchronization based on config
     this.setupTraitSync();
-
-    // Only notify server for entity creation if this is a locally created entity
-    // Server entities (those with multiplayerId) should not notify server on creation
-    if (this.shouldSyncEntityCreation()) {
-      if (this.game.controllers.multiplayer?.isConnected()) {
-        await this.notifyServerEntityCreated();
-      }
-    }
-  }
-
-  /***** SYNC DECISION LOGIC *****/
-  private shouldSyncEntityCreation(): boolean {
-    // Don't sync entity creation if entity has multiplayerId (it came from server)
-    if (this.entity.multiplayerId) {
-      return false;
-    }
     
-    // Don't sync if not connected to multiplayer
-    if (!this.game.controllers.multiplayer?.isConnected()) {
-      return false;
-    }
-    
-    return true;
+    // NetworkTrait ONLY handles trait synchronization, never entity creation
+    // Entity creation sync is handled by the factory methods that create networked entities
   }
 
   private shouldSyncTraitChanges(): boolean {
     // For trait changes, we always want to sync back to server if connected
     // (even for server entities, since local changes should be synced)
     return this.game.controllers.multiplayer?.isConnected() ?? false;
-  }
-
-  private async notifyServerEntityCreated(): Promise<void> {
-    // Double-check that we should sync entity creation to server at the moment of notification
-    if (!this.shouldSyncEntityCreation()) {
-      return;
-    }
-
-    // Get entity position for server notification
-    try {
-      const positionTrait = this.entity.getTrait('position');
-      const position = positionTrait.position.position;
-      
-      // Ensure position is valid
-      if (position.x === undefined || position.y === undefined) {
-        console.warn('NetworkTrait: Entity position not set, skipping server notification');
-        return;
-      }
-      
-      const entityType = this.entity.getEntityType();
-      
-      // Calculate chunk coordinates
-      const chunkX = Math.floor(position.x / this.game.consts.chunkAbsolute);
-      const chunkY = Math.floor(position.y / this.game.consts.chunkAbsolute);
-
-      // Use async notification if available, fallback to synchronous
-      if (this.game.controllers.multiplayer?.client.sendEntityPlaceAsync) {
-        try {
-          await this.game.controllers.multiplayer.client.sendEntityPlaceAsync(
-            entityType,
-            position.x,
-            position.y,
-            chunkX,
-            chunkY
-          );
-        } catch (error) {
-          console.error('NetworkTrait: Failed to create entity on server:', error);
-        }
-      } else {
-        // Fallback to synchronous method
-        this.game.controllers.multiplayer?.client.sendEntityPlace?.(
-          entityType,
-          position.x,
-          position.y,
-          chunkX,
-          chunkY
-        );
-      }
-    } catch (error) {
-      console.warn('NetworkTrait: Failed to notify server of entity creation:', error);
-    }
   }
 
   private setupTraitSync(): void {
@@ -149,19 +77,23 @@ export class NetworkTrait {
         console.warn(`NetworkTrait: Entity ${this.entity.uid} does not have trait '${traitName}' for sync`);
       }
     }
-  }
-
-  private setupTraitWatcher(_traitName: string, _trait: any): void {
+  }  private setupTraitWatcher(_traitName: string, _trait: any): void {
     // For now, we'll implement basic trait watching
     // In a full implementation, this would watch for changes and sync them
     
+    if (!this.shouldSyncTraitChanges()) {
+      return;
+    }
+
     switch (this.syncConfig.syncFrequency) {
       case 'immediate':
         // Setup immediate sync on trait changes
+        // TODO: Implement immediate trait change detection and sync
         break;
       case 'batched':
       default:
         // Setup batched sync (default)
+        // TODO: Implement batched trait change detection and sync
         break;
     }
   }

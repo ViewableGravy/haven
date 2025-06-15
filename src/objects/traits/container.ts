@@ -10,6 +10,8 @@ export class ContainerTrait {
 
   constructor(_entity: GameObject, transform?: TransformTrait) {
     this.container = new Container();
+    this.container.sortableChildren = true; // Enable z-index sorting for child sprites
+    this.container.zIndex = 10; // Place entity containers above chunk containers (0) and background (-1)
 
     if (transform) {
       this.container.width = transform.size.width;

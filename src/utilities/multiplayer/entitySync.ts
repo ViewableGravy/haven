@@ -8,6 +8,7 @@ import { TransformTrait } from "../../objects/traits/transform";
 import type { EntityData } from "../../server/types";
 import type { Game } from "../game/game";
 import { WorldObjects } from "../../worldObjects";
+import { Logger } from "../Logger";
 
 /***** ENTITY TYPE MAPPING *****/
 const ENTITY_TYPE_MAP = {
@@ -41,37 +42,14 @@ export class EntitySyncManager {
       });
     }
   }
-
   /***** ENTITY PLACEMENT INTEGRATION *****/
   private setupEntityPlacementListener(): void {
-    // Listen to local entity placements and notify server
-    this.game.entityManager.onEntityPlacement((event) => {
-      // Only notify server for locally placed entities (not server-generated ones)
-      if (!event.entity.multiplayerId) {
-        this.notifyServerEntityPlaced(
-          event.entity, 
-          event.globalPosition.x, 
-          event.globalPosition.y
-        );
-      }
-    });
+    // Entity placement notifications are handled by World.createNetworkedEntity
+    // No need to listen for placement events here to avoid duplicate entity_placed events
   }
-
   /***** SERVER NOTIFICATION *****/
-  private notifyServerEntityPlaced(entity: GameObject, worldX: number, worldY: number): void {
-    // Calculate chunk coordinates for server
-    const chunkX = Math.floor(worldX / this.game.consts.chunkAbsolute);
-    const chunkY = Math.floor(worldY / this.game.consts.chunkAbsolute);
-    
-    // Send to server via multiplayer client
-    this.game.controllers.multiplayer?.client.sendEntityPlace?.(
-      entity.getEntityType(),
-      worldX,
-      worldY,
-      chunkX,
-      chunkY
-    );
-  }
+  // Entity creation notifications are handled by World.createNetworkedEntity
+  // to avoid duplicate entity_placed events
 
   /**
    * Set up listener for chunk loading to process queued entities
@@ -105,11 +83,14 @@ export class EntitySyncManager {
 
   /***** REMOTE ENTITY HANDLING *****/
   public async handleRemoteEntityPlaced(entityData: EntityData): Promise<void> {
+    Logger.log(`EntitySync: Received remote entity placement: ${JSON.stringify(entityData)}`);
+    
     // Server tells us about entity at world position
     // EntityManager figures out which chunk it belongs to
     
     // If not ready yet, queue the entity
     if (!this.isReady) {
+      Logger.log('EntitySync: Not ready, queueing entity for later');
       this.queueEntityForLaterPlacement(entityData);
       return;
     }
@@ -117,17 +98,25 @@ export class EntitySyncManager {
     // Check if entity already exists in the unified entity system
     const existingEntity = this.findEntityById(entityData.id);
     if (existingEntity) {
+      Logger.log('EntitySync: Entity already exists, skipping');
       return;
     }
 
+    Logger.log('EntitySync: Creating entity from server data');
     // Use WorldObjects to create entity
     const entity = await this.createEntityFromServerData(entityData);
-    if (!entity) return;
+    if (!entity) {
+      console.error('EntitySync: Failed to create entity from server data');
+      return;
+    }
 
+    Logger.log('EntitySync: Successfully created entity, placing in main stage');
     // Place entity directly on main stage (no chunk dependency)
     try {
       this.placeEntityInMainStage(entity, entityData);
+      Logger.log('EntitySync: Entity placed successfully');
     } catch (error) {
+      console.error('EntitySync: Failed to place entity, queuing for later:', error);
       // If placement fails, queue for later
       this.queueEntityForLaterPlacement(entityData);
       return;
@@ -156,10 +145,9 @@ export class EntitySyncManager {
 
     // Place entity directly on main stage with global coordinates
     container.x = entityData.x;
-    container.y = entityData.y;
-
-    // Add to world container so entity inherits zoom transforms
-    this.game.world.addChild(container);
+    container.y = entityData.y;    // Add to entity layer for proper depth sorting
+    const layerManager = this.game.worldManager.getLayerManager();
+    layerManager.addToLayer(container, 'entity');
 
     // Mark entity as placed if it has the placeable trait
     PlaceableTrait.place(entity);
@@ -338,12 +326,10 @@ export class EntitySyncManager {
     if (!factory) {
       console.warn(`No factory found for WorldObjects key: ${worldObjectKey}`);
       return null;
-    }
-
-    try {
+    }    try {
       // Create entity using the unified factory system
-      // This will automatically add NetworkTrait and handle synchronization
-      const entity = await factory.createNetworked({
+      // Use createFromServer since this entity originated from the server
+      const entity = factory.createFromServer({
         x: entityData.x,
         y: entityData.y,
         game: this.game

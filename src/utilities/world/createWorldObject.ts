@@ -12,6 +12,7 @@ export interface FactoryOptions {
 export interface ObjectFactory<T extends GameObject> {
   createLocal: (options: FactoryOptions) => T;
   createNetworked: (options: FactoryOptions) => Promise<T>;
+  createFromServer: (options: FactoryOptions) => T;
   castToNetworked: (entity: T, options: Omit<FactoryOptions, 'x' | 'y'>) => Promise<T>;
 }
 
@@ -20,7 +21,7 @@ export type BaseFactoryFunction<T extends GameObject> = (game: Game, position: P
 /***** OBJECT FACTORY CREATOR *****/
 export function createObjectFactory<T extends GameObject>(
   baseFactory: BaseFactoryFunction<T>,
-  entityType: string
+  _entityType: string
 ): ObjectFactory<T> {
   return {
     createLocal: (options: FactoryOptions) => {
@@ -51,6 +52,25 @@ export function createObjectFactory<T extends GameObject>(
       };
 
       const entity = await options.game.worldManager.createNetworkedEntity({
+        factoryFn: () => baseFactory(options.game, position),
+        syncTraits: ['position', 'placeable'],
+        autoPlace: {
+          x: options.x,
+          y: options.y
+        }
+      });
+      
+      return entity;
+    },    createFromServer: (options: FactoryOptions) => {
+      const position: Position = {
+        x: options.x,
+        y: options.y,
+        type: "global"
+      };
+      
+      // Create entity with NetworkTrait but without entity creation sync
+      // This is for entities that originated from the server
+      const entity = options.game.worldManager.createFromServerEntity({
         factoryFn: () => baseFactory(options.game, position),
         syncTraits: ['position', 'placeable'],
         autoPlace: {

@@ -1,6 +1,7 @@
 /***** WORLD OBJECTS USAGE EXAMPLES *****/
 import { WorldObjects } from "../worldObjects";
 import type { Game } from "../utilities/game/game";
+import { Logger } from "../utilities/Logger";
 
 /***** USAGE EXAMPLES *****/
 
@@ -12,7 +13,7 @@ export function createLocalSpruceTreeExample(game: Game, x: number, y: number) {
     game
   });
   
-  console.log("Created local spruce tree:", spruceTree.uid);
+  Logger.log("Created local spruce tree: " + spruceTree.uid);
   return spruceTree;
 }
 
@@ -25,7 +26,7 @@ export async function createNetworkedSpruceTreeExample(game: Game, x: number, y:
       game
     });
     
-    console.log("Created networked spruce tree:", spruceTree.uid);
+    Logger.log("Created networked spruce tree: " + spruceTree.uid);
     return spruceTree;
   } catch (error) {
     console.error("Failed to create networked spruce tree:", error);
@@ -42,12 +43,12 @@ export async function castSpruceTreeToNetworkedExample(game: Game, x: number, y:
     game
   });
   
-  console.log("Created local tree:", localTree.uid);
+  Logger.log("Created local tree: " + localTree.uid);
   
   // Convert it to networked
   try {
     const networkedTree = await WorldObjects.spruceTree.castToNetworked(localTree, { game });
-    console.log("Converted to networked tree:", networkedTree.uid);
+    Logger.log("Converted to networked tree: " + networkedTree.uid);
     return networkedTree;
   } catch (error) {
     console.error("Failed to cast to networked:", error);
@@ -63,7 +64,7 @@ export async function createAssemblerExample(game: Game, x: number, y: number) {
     game
   });
   
-  console.log("Created networked assembler:", assembler.uid);
+  Logger.log("Created networked assembler: " + assembler.uid);
   return assembler;
 }
 
@@ -79,7 +80,7 @@ export function setupEntityPlacementExample(game: Game) {
         game
       });
       
-      console.log(`Placed spruce tree at (${event.x}, ${event.y}), ID: ${tree.uid}`);
+      Logger.log(`Placed spruce tree at (${event.x}, ${event.y}), ID: ${tree.uid}`);
       return tree;
     } catch (error) {
       console.error("Failed to place spruce tree:", error);
@@ -102,7 +103,7 @@ export async function createMultipleEntitiesExample(game: Game) {
     y: 100,
     game
   });
-  console.log("Created preview tree:", previewTree.uid);
+  Logger.log("Created preview tree: " + previewTree.uid);
   entities.push(previewTree);
   
   // Create networked entities
@@ -120,7 +121,7 @@ export async function createMultipleEntitiesExample(game: Game) {
     });
     
     entities.push(tree1, assembler1);
-    console.log("Created batch of entities:", entities.map(e => e.uid));
+    Logger.log("Created batch of entities: " + entities.map(e => e.uid).join(", "));
     
     return entities;
   } catch (error) {

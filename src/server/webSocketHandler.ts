@@ -1,6 +1,6 @@
 /***** TYPE DEFINITIONS *****/
 import { v4 as uuidv4 } from 'uuid';
-import { logger } from "../utilities/logger";
+import { Logger } from "../utilities/Logger";
 import type { BunMultiplayerServer } from './bunServer';
 import type { BunWebSocket, EntityData, Player } from './types';
 
@@ -25,7 +25,7 @@ export class WebSocketHandler {
       visibleChunks: new Set<string>()
     };
 
-    logger.log(`Player ${playerId} connected at (${player.x}, ${player.y})`);
+    Logger.log(`Player ${playerId} connected at (${player.x}, ${player.y})`);
 
     this.server.addPlayer(player);
 
@@ -61,7 +61,7 @@ export class WebSocketHandler {
     const player = this.server.getPlayer(playerId);
     
     if (!player) {
-      logger.error(`Received message from unknown player: ${playerId}`);
+      Logger.error(`Received message from unknown player: ${playerId}`);
       return;
     }
 
@@ -69,7 +69,7 @@ export class WebSocketHandler {
       const data = JSON.parse(message.toString()) as any; // Use any for now, could be any server event
       this.handlePlayerMessage(player, data);
     } catch (error) {
-      logger.error(`Failed to parse message from player ${playerId}:`, error);
+      Logger.error(`Failed to parse message from player ${playerId}:`, error);
     }
   };
 
@@ -78,7 +78,7 @@ export class WebSocketHandler {
     const player = this.server.getPlayer(playerId);
 
     if (player) {
-      logger.log(`Player ${playerId} disconnected`);
+      Logger.log(`Player ${playerId} disconnected`);
       this.server.removePlayer(playerId);
 
       // Broadcast player leave to all other players
@@ -110,7 +110,7 @@ export class WebSocketHandler {
         this.handleEntityRemove(player.id, message.data, requestId);
         break;
       default:
-        logger.log(`Unknown message type: ${message.type}`);
+        Logger.log(`Unknown message type: ${message.type}`);
     }
   };
 

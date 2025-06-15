@@ -11,6 +11,7 @@ export type HotbarItem = {
   name: string;
   node: React.ReactNode;
   creatorFunction: (game: Game, position: Position) => GameObject;
+  previewCreatorFunction?: (game: Game, position: Position) => GameObject;
 };
 
 type HotbarStore = {
@@ -29,7 +30,8 @@ const getHotbarItems = (): HotbarItem[] => {
   return allInfographics.map(infographic => ({
     name: infographic.name,
     node: infographic.name,
-    creatorFunction: infographic.creatorFunction!
+    creatorFunction: infographic.creatorFunction!,
+    previewCreatorFunction: infographic.previewCreatorFunction
   }));
 };
 

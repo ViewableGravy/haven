@@ -13,6 +13,7 @@ import { ContextMenuTrait } from "../traits/contextMenu";
 import { GhostableTrait } from "../traits/ghostable";
 import { PlaceableTrait } from "../traits/placeable";
 import { TransformTrait } from "../traits/transform";
+import { Logger } from "../../utilities/Logger";
 
 
 /***** BASE SPRUCE TREE *****/
@@ -37,11 +38,11 @@ export class BaseSpruceTree extends GameObject {
     this.addTrait('contextMenu', new ContextMenuTrait(this, [
       {
         label: "Twig",
-        action: () => console.log("Collected twig from spruce tree")
+        action: () => Logger.log("Collected twig from spruce tree")
       },
       {
         label: "Branch", 
-        action: () => console.log("Collected branch from spruce tree")
+        action: () => Logger.log("Collected branch from spruce tree")
       }
     ]));
   }

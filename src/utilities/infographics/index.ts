@@ -8,6 +8,7 @@ export type InfographicDefinition = {
   name: string;
   component: React.FC;
   creatorFunction?: (game: Game, position: Position) => any;
+  previewCreatorFunction?: (game: Game, position: Position) => any;
 };
 
 type InfographicFactory<TEntity = any> = (entity: TEntity) => InfographicDefinition;

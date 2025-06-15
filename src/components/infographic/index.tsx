@@ -32,18 +32,19 @@ const createStyle = (opts: CSSProperties): CSSProperties => ({
 export const Infographic: InfographicProps = ({ bottom, right }) => {
   const infographicState = useStore(infographicStore);
   const game = usePixiContext();
-
   const createGhostEntity = useCleanupCallback((ref) => {
     if (!infographicState.active || !infographicState.item) return;
 
-    // Create entity using the item's creator function
-    const followEntity = infographicState.item.creatorFunction(game, new Position(0, 0));
+    // Create entity using the item's preview creator function (for ghost mode)
+    const previewCreator = infographicState.item.previewCreatorFunction || infographicState.item.creatorFunction;
+    const followEntity = previewCreator(game, new Position(0, 0));
 
     // Set ghost mode using the trait
     GhostableTrait.setGhostMode(followEntity, true);
 
     // Create mouse follower and assign cleanup function to ref
-    const mouseFollower = new MouseFollower(game, followEntity);
+    // Pass the actual creator function so it can create networked entities on placement
+    const mouseFollower = new MouseFollower(game, followEntity, infographicState.item.creatorFunction);
     ref.current = mouseFollower.start();
   });
 

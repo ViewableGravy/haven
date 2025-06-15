@@ -1,5 +1,5 @@
 /***** TYPE DEFINITIONS *****/
-import { logger } from "../utilities/logger";
+import { Logger } from "../utilities/Logger";
 import type { ChunkKey } from "../utilities/tagged";
 import type { EntityData } from "./types";
 import type { LoadChunkEvent } from "./types/events/load_chunk";
@@ -18,14 +18,26 @@ export interface ServerChunkObject {
 export class ChunkDatabase {
   private chunks: Map<ChunkKey, ServerChunkObject> = new Map();
 
-  /**
+  constructor() {
+    Logger.log('ChunkDB: Initialized in-memory chunk database');
+  }
+  /***** MEMORY MANAGEMENT *****/
+  public clear(): void {
+    this.chunks.clear();
+    Logger.log('ChunkDB: Cleared all chunks from memory');
+  }
+
+  public shutdown(): void {
+    this.clear();
+    Logger.log('ChunkDB: Shutdown complete');
+  }  /**
    * Store a chunk in the database
    * @param chunkKey - The unique identifier for the chunk
    * @param chunkData - The chunk data to store
    */
   public storeChunk(chunkKey: ChunkKey, chunkData: ServerChunkObject): void {
     this.chunks.set(chunkKey, chunkData);
-    logger.log(`ChunkDB: Stored chunk ${chunkKey} with ${chunkData.tiles.length} tiles and ${chunkData.entities.length} entities`);
+    Logger.log(`ChunkDB: Stored chunk ${chunkKey} with ${chunkData.tiles.length} tiles and ${chunkData.entities.length} entities`);
   }
 
   /**
@@ -44,9 +56,7 @@ export class ChunkDatabase {
    */
   public hasChunk(chunkKey: ChunkKey): boolean {
     return this.chunks.has(chunkKey);
-  }
-
-  /**
+  }  /**
    * Add an entity to an existing chunk
    * @param chunkKey - The unique identifier for the chunk
    * @param entity - The entity to add
@@ -56,13 +66,11 @@ export class ChunkDatabase {
     const chunk = this.chunks.get(chunkKey);
     if (chunk) {
       chunk.entities.push(entity);
-      logger.log(`ChunkDB: Added entity ${entity.id} to chunk ${chunkKey}`);
+      Logger.log(`ChunkDB: Added entity ${entity.id} to chunk ${chunkKey}`);
       return true;
     }
     return false;
-  }
-
-  /**
+  }  /**
    * Remove an entity from a chunk
    * @param chunkKey - The unique identifier for the chunk
    * @param entityId - The ID of the entity to remove
@@ -75,7 +83,7 @@ export class ChunkDatabase {
       chunk.entities = chunk.entities.filter((entity) => entity.id !== entityId);
       const removed = chunk.entities.length < initialLength;
       if (removed) {
-        logger.log(`ChunkDB: Removed entity ${entityId} from chunk ${chunkKey}`);
+        Logger.log(`ChunkDB: Removed entity ${entityId} from chunk ${chunkKey}`);
       }
       return removed;
     }
@@ -100,6 +108,19 @@ export class ChunkDatabase {
       .reduce((sum, chunk) => sum + chunk.entities.length, 0);
     
     return { chunkCount, totalEntities };
+  }
+
+  /**
+   * Debug method to list all chunks currently in memory
+   */
+  public debugListChunks(): void {
+    Logger.log(`ChunkDB: Currently storing ${this.chunks.size} chunks in memory:`);
+    for (const [chunkKey, chunkData] of this.chunks) {
+      Logger.log(`  - Chunk ${chunkKey}: ${chunkData.entities.length} entities (generated at ${new Date(chunkData.generatedAt).toISOString()})`);
+      chunkData.entities.forEach((entity, index) => {
+        Logger.log(`    Entity ${index + 1}: ${entity.type} (${entity.id}) placed by ${entity.placedBy}`);
+      });
+    }
   }
 }
 

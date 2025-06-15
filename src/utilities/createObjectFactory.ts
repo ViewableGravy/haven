@@ -12,6 +12,7 @@ export interface FactoryOptions {
 export interface ObjectFactory<T extends GameObject> {
   createLocal: (options: FactoryOptions) => T;
   createNetworked: (options: FactoryOptions) => Promise<T>;
+  createFromServer: (options: FactoryOptions) => T;
   castToNetworked: (entity: T, options: Omit<FactoryOptions, 'x' | 'y'>) => Promise<T>;
 }
 
@@ -44,9 +45,7 @@ export function createObjectFactory<T extends GameObject>(
           }
         }
       );
-    },
-
-    /**
+    },    /**
      * Create a networked entity that is synced with the server
      * This sends a request to the server and waits for confirmation
      */
@@ -57,42 +56,39 @@ export function createObjectFactory<T extends GameObject>(
         type: "global"
       };
 
-      // Calculate chunk coordinates for server
-      const chunkX = Math.floor(options.x / options.game.consts.chunkAbsolute);
-      const chunkY = Math.floor(options.y / options.game.consts.chunkAbsolute);
+      // Create networked entity using World manager
+      // The World manager will handle entity creation sync
+      return await options.game.worldManager.createNetworkedEntity({
+        factoryFn: () => factoryFn(options.game, position),
+        syncTraits: syncTraits as any,
+        autoPlace: {
+          x: options.x,
+          y: options.y
+        }
+      });
+    },
 
-      // Send async request to server to create the entity
-      const entityType = factoryFn(options.game, { x: 0, y: 0, type: "global" }).getEntityType();
-      
-      try {
-        // Request entity creation from server
-        await options.game.controllers.multiplayer?.client.sendEntityPlaceAsync?.(
-          entityType,
-          options.x,
-          options.y,
-          chunkX,
-          chunkY
-        );
+    /**
+     * Create an entity from server data (no entity creation sync)
+     * Used when the server tells the client to create an entity
+     */
+    createFromServer: (options: FactoryOptions): T => {
+      const position: Position = {
+        x: options.x,
+        y: options.y,
+        type: "global"
+      };
 
-        // The server will respond and the entity will be created through the normal
-        // multiplayer entity sync flow. We don't create the entity locally here,
-        // instead we wait for the server to tell us it was created successfully.
-        
-        // For now, we'll create a temporary local entity and return it
-        // In a full implementation, we'd wait for the server response
-        return options.game.worldManager.createNetworkedEntity({
-          factoryFn: () => factoryFn(options.game, position),
-          syncTraits: syncTraits as any,
-          autoPlace: {
-            x: options.x,
-            y: options.y
-          }
-        });
-        
-      } catch (error) {
-        console.error('Failed to create networked entity:', error);
-        throw error;
-      }
+      // Use the World manager to create a networked entity without entity creation sync
+      // This entity originated from the server, so no need to sync creation back
+      return options.game.worldManager.createFromServerEntity({
+        factoryFn: () => factoryFn(options.game, position),
+        syncTraits: syncTraits as any,
+        autoPlace: {
+          x: options.x,
+          y: options.y
+        }
+      });
     },
 
     /**

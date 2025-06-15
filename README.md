@@ -107,7 +107,7 @@ No more manual server restarts during development! 🎉
 
 ### Utilities & Helpers
 - `src/utilities/eventEmitter/` - Custom event system
-- `src/utilities/logger/` - Centralized logging system
+- `src/utilities/Logger/` - Centralized logging system
 - `src/workers/` - Web worker pool for background processing
 
 ## System Architecture Diagram

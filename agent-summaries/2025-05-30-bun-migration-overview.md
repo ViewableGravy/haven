@@ -24,7 +24,7 @@ The implementation introduces Bun's native `--watch` flag functionality, which m
 - `package.json` - New scripts for Bun server with watch mode and legacy fallback options
 - `src/shared/constants.ts` - Updated default server port from 8080 to 8081 to avoid conflicts
 - `src/server/types.ts` - Added BunWebSocket type definitions for native Bun WebSocket support
-- `src/utilities/logger/index.ts` - Enhanced logger with error method for improved debugging
+- `src/utilities/Logger/index.ts` - Enhanced Logger with error method for improved debugging
 - `src/utilities/multiplayer/client.ts` - Updated client connection URL to match new server port
 
 ### Documentation and Scripts

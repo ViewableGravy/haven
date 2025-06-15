@@ -54,7 +54,7 @@ latticus/
 ├── shared/
 │   ├── utilities/
 │   │   ├── createStore.ts - Ported from V1
-│   │   ├── logger.ts - Ported logging system
+│   │   ├── Logger.ts - Ported logging system
 │   │   └── eventEmitter.ts - Ported event system
 │   ├── traits/
 │   │   ├── base.ts - Ported Traitable system
@@ -77,7 +77,7 @@ latticus/
 - `src/utilities/store/` → `latticus/shared/utilities/createStore.ts`
 - `src/objects/traits/` → `latticus/shared/traits/`
 - `src/spriteSheets/` → `latticus/shared/assets/spriteSheets/`
-- `src/utilities/game/logger.ts` → `latticus/shared/utilities/logger.ts`
+- `src/utilities/game/Logger.ts` → `latticus/shared/utilities/Logger.ts`
 - `src/server/chunkGenerator.ts` → `latticus/server/chunks/generator.ts`
 
 ## Architecture Diagram

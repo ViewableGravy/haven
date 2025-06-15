@@ -15,7 +15,7 @@ import { DesertSprite } from "../../spriteSheets/desert/desert";
 import { ChunkManager } from "../../systems/chunkManager";
 import { globalRenderTexturePool } from "../../systems/chunkManager/renderTexturePool";
 import { KeyboardController } from "../keyboardController";
-import { logger } from "../logger";
+import { Logger } from "../Logger";
 import { MultiplayerManager } from "../multiplayer/manager";
 import { Player } from "../player";
 import { Position } from "../position";
@@ -111,7 +111,6 @@ export class Game {
     this.initialized = true;
     this.initializing = false;
   }
-
   private async initializePixi(el: HTMLElement) {
     await this.state.app.init({
       resizeTo: window
@@ -121,6 +120,9 @@ export class Game {
     this.world = new Container();
     this.world.sortableChildren = true; // Enable sorting for proper layering
     this.state.app.stage.addChild(this.world);
+    
+    // Initialize the layer system now that world container exists
+    this.worldManager.initializeLayerSystem();
     
     // Create entity stage for reference (legacy compatibility)
     // Note: Entities now go on world container to inherit zoom transforms
@@ -182,7 +184,7 @@ export class Game {
     // Warm up the render texture pool with some initial textures
     // This helps reduce allocation spikes during gameplay
     globalRenderTexturePool.warmPool(5);
-    logger.log('Render texture pool initialized and warmed');
+    Logger.log('Render texture pool initialized and warmed');
   }
 
   private initializeSystems = async () => {
@@ -229,29 +231,22 @@ export class Game {
     // Set height to 2 tiles, maintain original aspect ratio
     const targetHeight = this.consts.tileSize * 2;
     const originalAspectRatio = playerSprite.texture.width / playerSprite.texture.height;
-    
-    playerSprite.height = targetHeight;
+      playerSprite.height = targetHeight;
     playerSprite.width = targetHeight * originalAspectRatio;
-    
-    // Set high z-index to render on top of everything
-    playerSprite.zIndex = 1000;
     
     // Subscribe to player position to update sprite position
     player.position.subscribeImmediately(({ x, y }) => {
       playerSprite.x = x;
       playerSprite.y = y;
     });
-    
-    // Add to world container
-    this.world.addChild(playerSprite);
-    
-    // Ensure world container sorts children by z-index
-    this.world.sortableChildren = true;
+      // Add to entity layer for proper depth sorting
+    const layerManager = this.worldManager.getLayerManager();
+    layerManager.addToLayer(playerSprite, 'entity');
     
     // Add interactive behavior
     playerSprite.eventMode = 'static';
     playerSprite.on('pointerdown', () => {
-      logger.log('Character clicked!');
+      Logger.log('Character clicked!');
     });
 
     return player;
@@ -279,11 +274,11 @@ export class Game {
     try {
       this.controllers.multiplayer = new MultiplayerManager(this, player);
       await this.controllers.multiplayer.initialize();
-      logger.log('Multiplayer enabled');
+      Logger.log('Multiplayer enabled');
       
       // Initialize chunk unloading after multiplayer is set up
       this.controllers.chunkManager.initializeUnloading();
-      logger.log('Chunk unloading system initialized');
+      Logger.log('Chunk unloading system initialized');
     } catch (error) {
       console.warn('Failed to initialize multiplayer, continuing in single-player mode:', error);
       // Don't throw error - game should work without multiplayer
@@ -303,10 +298,12 @@ export class Game {
     await SpruceTreeSprite.load();
     await Assets.load(Selection);
   }
-
   private startGameLoop(player: Player) {
     this.state.app.ticker.add((ticker) => {
       player.handleMovement(this, ticker);
+      
+      // Update entity layer sorting based on y-position
+      this.worldManager.getLayerManager().updateEntitySorting();
     });
   }
 
@@ -322,7 +319,7 @@ export class Game {
 
     // Clean up render texture pool
     globalRenderTexturePool.destroy();
-    logger.log('Render texture pool cleared');
+    Logger.log('Render texture pool cleared');
 
     // Clean up entity manager
     this.entityManager.clear();

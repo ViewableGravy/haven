@@ -1,7 +1,7 @@
 /***** TYPE DEFINITIONS *****/
 import { GameConstants } from "../../shared/constants";
 
-/***** LOGGER CLASS *****/
+/***** Logger CLASS *****/
 /**
  * Centralized logging utility that provides controlled debug output
  * Only logs messages when DEBUG is enabled in global configuration
@@ -37,21 +37,15 @@ export class Logger {
   }
 
   public static log = (message: string, chance: number = 1): void => {
-    
     // We are on the server, so we don't have a window object
-    if (typeof window !== undefined) {
+    if (typeof window === "undefined") {
       if ((GameConstants.DEBUG_SERVER || GameConstants.DEBUG) && Math.random() < chance) {
         console.log(message);
       }
-    }
-
-    if (GameConstants.DEBUG && Math.random() < chance) {
+    } else {
       if ((GameConstants.DEBUG_CLIENT || GameConstants.DEBUG) && Math.random() < chance) {
         console.log(message);
       }
     }
   }
 }
-
-/***** GLOBAL LOGGER INSTANCE *****/
-export const logger = new Logger();

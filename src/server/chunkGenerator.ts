@@ -1,7 +1,7 @@
 /***** TYPE DEFINITIONS *****/
 import { noise as perlinNoise } from "@chriscourses/perlin-noise";
 import { GameConstants } from "../shared/constants";
-import { logger } from "../utilities/logger";
+import { Logger } from "../utilities/Logger";
 import { createChunkKey } from "../utilities/tagged";
 import type { ServerChunkObject } from "./chunkdb";
 import { BiomeManager } from "./systems/biomes/biomeManager";
@@ -38,7 +38,7 @@ export class ServerChunkGenerator {
       generatedAt: Date.now()
     };
 
-    logger.log(`ServerChunkGenerator: Generated chunk (${chunkX}, ${chunkY}) with ${tiles.length} tiles and ${entities.length} entities`);
+    Logger.log(`ServerChunkGenerator: Generated chunk (${chunkX}, ${chunkY}) with ${tiles.length} tiles and ${entities.length} entities`);
     return chunkData;
   }
 
@@ -256,7 +256,7 @@ export class ServerChunkGenerator {
     const chunks: Array<ServerChunkObject> = [];
     const halfRadius = Math.floor(radius / 2);
 
-    logger.log(`ServerChunkGenerator: Generating ${radius}x${radius} chunks around (${centerX}, ${centerY})`);
+    Logger.log(`ServerChunkGenerator: Generating ${radius}x${radius} chunks around (${centerX}, ${centerY})`);
 
     for (let x = centerX - halfRadius; x <= centerX + halfRadius; x++) {
       for (let y = centerY - halfRadius; y <= centerY + halfRadius; y++) {
@@ -265,7 +265,7 @@ export class ServerChunkGenerator {
       }
     }
 
-    logger.log(`ServerChunkGenerator: Generated ${chunks.length} chunks`);
+    Logger.log(`ServerChunkGenerator: Generated ${chunks.length} chunks`);
     return chunks;
   }
 
@@ -287,7 +287,7 @@ export class ServerChunkGenerator {
     const halfWidth = Math.floor(width / 2);
     const halfHeight = Math.floor(height / 2);
 
-    logger.log(`ServerChunkGenerator: Generating ${width}x${height} chunks around (${centerX}, ${centerY})`);
+    Logger.log(`ServerChunkGenerator: Generating ${width}x${height} chunks around (${centerX}, ${centerY})`);
 
     for (let x = centerX - halfWidth; x <= centerX + halfWidth; x++) {
       for (let y = centerY - halfHeight; y <= centerY + halfHeight; y++) {
@@ -296,7 +296,7 @@ export class ServerChunkGenerator {
       }
     }
 
-    logger.log(`ServerChunkGenerator: Generated ${chunks.length} chunks`);
+    Logger.log(`ServerChunkGenerator: Generated ${chunks.length} chunks`);
     return chunks;
   }
 
