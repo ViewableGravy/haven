@@ -5,7 +5,6 @@ import { infographicStore } from "../../components/infographic/store";
 import { AssemblerSprite } from "../../spriteSheets/assembler";
 import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
-import { entitySyncRegistry } from "../../utilities/multiplayer/entitySyncRegistry";
 import type { Position } from "../../utilities/position";
 import { GameObject } from "../base";
 import { ContainerTrait } from "../traits/container";
@@ -144,9 +143,3 @@ infographicsRegistry.register("assembler", (entity: Assembler) => ({
   creatorFunction: createNetworkedAssembler
 }));
 
-/***** ENTITY SYNC REGISTRATION *****/
-// Register the assembler entity sync creator
-entitySyncRegistry.register("assembler", {
-  name: "Assembler",
-  creatorFunction: createNetworkedAssembler
-});

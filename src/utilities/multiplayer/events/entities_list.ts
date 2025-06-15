@@ -6,7 +6,7 @@ import type { ServerEventHandler } from "./types";
 export class EntitiesListHandler implements ServerEventHandler {
     constructor(private multiplayerManager: MultiplayerManager) {}
 
-    public handleEvent(data: MultiplayerClient.Data.EntitiesList): void {
-        this.multiplayerManager.entitySync.syncExistingEntities(data.entities);
+    public async handleEvent(data: MultiplayerClient.Data.EntitiesList): Promise<void> {
+        await this.multiplayerManager.entitySync.syncExistingEntities(data.entities);
     }
 }

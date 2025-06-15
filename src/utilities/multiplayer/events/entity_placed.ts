@@ -6,7 +6,7 @@ import type { ServerEventHandler } from "./types";
 export class EntityPlacedHandler implements ServerEventHandler {
     constructor(private multiplayerManager: MultiplayerManager) {}
 
-    public handleEvent(data: MultiplayerClient.Data.EntityPlaced): void {
-        this.multiplayerManager.entitySync.handleRemoteEntityPlaced(data);
+    public async handleEvent(data: MultiplayerClient.Data.EntityPlaced): Promise<void> {
+        await this.multiplayerManager.entitySync.handleRemoteEntityPlaced(data);
     }
 }

@@ -7,7 +7,13 @@ import { PlaceableTrait } from "../../objects/traits/placeable";
 import { TransformTrait } from "../../objects/traits/transform";
 import type { EntityData } from "../../server/types";
 import type { Game } from "../game/game";
-import { entitySyncRegistry } from "./entitySyncRegistry";
+import { WorldObjects } from "../../worldObjects";
+
+/***** ENTITY TYPE MAPPING *****/
+const ENTITY_TYPE_MAP = {
+  "assembler": "assembler",
+  "spruce-tree": "spruceTree"
+} as const;
 
 /***** ENTITY SYNC MANAGER *****/
 export class EntitySyncManager {
@@ -30,7 +36,9 @@ export class EntitySyncManager {
     
     // Process any entities that were queued before initialization
     if (this.queuedEntities.length > 0) {
-      this.processQueuedEntities();
+      this.processQueuedEntities().catch(error => {
+        console.error('Failed to process queued entities:', error);
+      });
     }
   }
 
@@ -76,7 +84,9 @@ export class EntitySyncManager {
 
     // Subscribe to chunk loaded events from the chunk manager
     this.chunkLoadSubscription = this.game.controllers.chunkManager.subscribe(() => {
-      this.processQueuedEntities();
+      this.processQueuedEntities().catch(error => {
+        console.error('Failed to process queued entities on chunk load:', error);
+      });
     });
   }
 
@@ -94,7 +104,7 @@ export class EntitySyncManager {
   }
 
   /***** REMOTE ENTITY HANDLING *****/
-  public handleRemoteEntityPlaced(entityData: EntityData): void {
+  public async handleRemoteEntityPlaced(entityData: EntityData): Promise<void> {
     // Server tells us about entity at world position
     // EntityManager figures out which chunk it belongs to
     
@@ -110,8 +120,8 @@ export class EntitySyncManager {
       return;
     }
 
-    // Use registry to create entity
-    const entity = entitySyncRegistry.createEntity(entityData, this.game);
+    // Use WorldObjects to create entity
+    const entity = await this.createEntityFromServerData(entityData);
     if (!entity) return;
 
     // Place entity directly on main stage (no chunk dependency)
@@ -175,20 +185,30 @@ export class EntitySyncManager {
   /**
    * Try to place any queued entities (called when new chunks load)
    */
-  public processQueuedEntities(): void {
+  public async processQueuedEntities(): Promise<void> {
     if (this.queuedEntities.length === 0) {
       return;
     }
 
     const remainingQueue: EntityData[] = [];
     
-    this.queuedEntities.forEach(entityData => {
+    const entityPromises = this.queuedEntities.map(async (entityData) => {
       try {
         // Try to place the entity again
-        this.handleRemoteEntityPlaced(entityData);
+        await this.handleRemoteEntityPlaced(entityData);
+        return { success: true, entityData };
       } catch {
         // Still can't place it, keep it in queue
-        remainingQueue.push(entityData);
+        return { success: false, entityData };
+      }
+    });
+
+    const results = await Promise.allSettled(entityPromises);
+    
+    // Rebuild queue with failed entities
+    results.forEach((result) => {
+      if (result.status === 'fulfilled' && !result.value.success) {
+        remainingQueue.push(result.value.entityData);
       }
     });
     
@@ -212,7 +232,7 @@ export class EntitySyncManager {
   }
 
   /***** ENTITY SYNC *****/
-  public syncExistingEntities(entities: EntityData[]): void {
+  public async syncExistingEntities(entities: EntityData[]): Promise<void> {
     // Clear existing server entities (if any)
     this.clearServerEntities();
 
@@ -223,9 +243,11 @@ export class EntitySyncManager {
     }
 
     // Add all entities from server
-    entities.forEach(entityData => {
-      this.handleRemoteEntityPlaced(entityData);
+    const entityPromises = entities.map(async (entityData) => {
+      await this.handleRemoteEntityPlaced(entityData);
     });
+    
+    await Promise.allSettled(entityPromises);
   }
 
   /***** CLEANUP *****/
@@ -299,5 +321,41 @@ export class EntitySyncManager {
       }
     }
     return count;
+  }
+
+  /**
+   * Creates an entity from server data using the WorldObjects system
+   */
+  private async createEntityFromServerData(entityData: EntityData): Promise<GameObject | null> {
+    // Map server entity type to WorldObjects key
+    const worldObjectKey = ENTITY_TYPE_MAP[entityData.type as keyof typeof ENTITY_TYPE_MAP];
+    if (!worldObjectKey) {
+      console.warn(`No WorldObjects mapping found for entity type: ${entityData.type}`);
+      return null;
+    }
+
+    const factory = WorldObjects[worldObjectKey];
+    if (!factory) {
+      console.warn(`No factory found for WorldObjects key: ${worldObjectKey}`);
+      return null;
+    }
+
+    try {
+      // Create entity using the unified factory system
+      // This will automatically add NetworkTrait and handle synchronization
+      const entity = await factory.createNetworked({
+        x: entityData.x,
+        y: entityData.y,
+        game: this.game
+      });
+
+      // Set multiplayer properties for remote entity
+      entity.setAsRemoteEntity(entityData.id, entityData.placedBy);
+      
+      return entity;
+    } catch (error) {
+      console.error(`Failed to create entity of type ${entityData.type}:`, error);
+      return null;
+    }
   }
 }

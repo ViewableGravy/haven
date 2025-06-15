@@ -11,7 +11,7 @@ export class RemoteChunkLoadHandler implements ServerEventHandler {
         private multiplayerManager: MultiplayerManager
     ) {}
 
-    public handleEvent(data: LoadChunkEvent.LoadChunkData): void {
+    public async handleEvent(data: LoadChunkEvent.LoadChunkData): Promise<void> {
         // Parse chunk coordinates from the chunkKey
         const { chunkX, chunkY } = parseChunkKey(data.chunkKey);
         
@@ -39,7 +39,7 @@ export class RemoteChunkLoadHandler implements ServerEventHandler {
             // Process entities that came with the chunk data
             for (const entityData of data.entities) {
                 logger.log(`RemoteChunkLoadHandler: Processing entity ${entityData.id} for chunk ${data.chunkKey}`);
-                this.multiplayerManager.entitySync.handleRemoteEntityPlaced(entityData);
+                await this.multiplayerManager.entitySync.handleRemoteEntityPlaced(entityData);
             }
             
             logger.log(`RemoteChunkLoadHandler: Finished loading chunk ${data.chunkKey}`);

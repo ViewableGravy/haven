@@ -1,7 +1,6 @@
 /***** TYPE DEFINITIONS *****/
 import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
-import { entitySyncRegistry } from "../../utilities/multiplayer/entitySyncRegistry";
 import type { Position } from "../../utilities/position";
 import { BaseSpruceTree } from "./base";
 import { createSpruceTreeInfographicNode } from "./info";
@@ -59,10 +58,4 @@ infographicsRegistry.register("spruce-tree", (entity: SpruceTree) => ({
   creatorFunction: createNetworkedSpruceTree
 }));
 
-/***** ENTITY SYNC REGISTRATION *****/
-// Register the spruce tree entity sync creator
-// Use the basic factory for server entities (no NetworkTrait)
-entitySyncRegistry.register("spruce-tree", {
-  name: "Spruce Tree",
-  creatorFunction: createStandardSpruceTree
-});
+
