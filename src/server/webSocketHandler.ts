@@ -96,15 +96,18 @@ export class WebSocketHandler {
 
   /***** MESSAGE HANDLING *****/
   private handlePlayerMessage = (player: Player, message: any): void => {
+    // Extract requestId if present for async responses
+    const requestId = message.requestId;
+    
     switch (message.type) {
       case 'position_update':
         this.handlePositionUpdate(player.id, message.data);
         break;
       case 'entity_placed':
-        this.handleEntityPlace(player.id, message.data);
+        this.handleEntityPlace(player.id, message.data, requestId);
         break;
       case 'entity_remove':
-        this.handleEntityRemove(player.id, message.data);
+        this.handleEntityRemove(player.id, message.data, requestId);
         break;
       default:
         logger.log(`Unknown message type: ${message.type}`);
@@ -121,7 +124,7 @@ export class WebSocketHandler {
     y: number;
     chunkX: number;
     chunkY: number;
-  }): void => {
+  }, requestId?: string): void => {
     const entityId = uuidv4();
     const entityData: EntityData = {
       id: entityId,
@@ -134,9 +137,27 @@ export class WebSocketHandler {
     };
 
     this.server.placeEntity(entityData);
+    
+    // Send async response if requestId is provided
+    if (requestId) {
+      this.server.sendToPlayer(playerId, {
+        type: 'entity_placed_response',
+        data: entityData,
+        requestId
+      } as any);
+    }
   };
 
-  private handleEntityRemove = (playerId: string, data: { id: string }): void => {
-    this.server.removeEntity(playerId, data.id);
+  private handleEntityRemove = (playerId: string, data: { id: string }, requestId?: string): void => {
+    const success = this.server.removeEntity(playerId, data.id);
+    
+    // Send async response if requestId is provided
+    if (requestId) {
+      this.server.sendToPlayer(playerId, {
+        type: 'entity_removed_response',
+        data: { success },
+        requestId
+      } as any);
+    }
   };
 }

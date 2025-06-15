@@ -22,6 +22,14 @@ export type MultiplayerEvents = CreateMultiplayerEvents<{
   chunk_data: (data: any) => void; // Added for server chunk data
 }>
 
+/***** ASYNC MESSAGE HANDLING *****/
+export interface PendingMessage {
+  id: string;
+  resolve: (response: any) => void;
+  reject: (error: Error) => void;
+  timeout: NodeJS.Timeout;
+}
+
 /***** MULTIPLAYER CLIENT *****/
 export class MultiplayerClient {
   private ws: WebSocket | null = null;
@@ -31,6 +39,8 @@ export class MultiplayerClient {
   private reconnectInterval: number = 5000;
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 10;
+  private pendingMessages: Map<string, PendingMessage> = new Map();
+  private messageIdCounter: number = 0;
 
   constructor(serverUrl: string = 'ws://localhost:8081') {
     this.serverUrl = serverUrl;
@@ -79,18 +89,69 @@ export class MultiplayerClient {
       this.isConnected = false;
     }
     
+    // Reject all pending messages
+    for (const pending of this.pendingMessages.values()) {
+      clearTimeout(pending.timeout);
+      pending.reject(new Error('Connection closed'));
+    }
+    this.pendingMessages.clear();
+    
     // Clear all event handlers to prevent memory leaks
     this.events = {};
   }
 
   /***** MESSAGE HANDLING *****/
   private handleServerMessage(message: ServerEvents.ServerMessage): void {
+    // Check if this is a response to a pending async message
+    if ('requestId' in message && typeof message.requestId === 'string') {
+      const pending = this.pendingMessages.get(message.requestId);
+      if (pending) {
+        clearTimeout(pending.timeout);
+        this.pendingMessages.delete(message.requestId);
+        pending.resolve(message.data);
+        return;
+      }
+    }
+
+    // Handle regular event-based messages
     const handler = this.events[message.type as keyof MultiplayerEvents];
     if (handler) {
       handler(message.data as any);
     } else {
       console.warn('Unknown server message type:', message.type);
     }
+  }
+
+  /***** ASYNC MESSAGE SENDING *****/
+  public sendAsync<T = any>(type: string, data: any, timeoutMs: number = 5000): Promise<T> {
+    return new Promise((resolve, reject) => {
+      if (!this.isConnected || !this.ws) {
+        reject(new Error('Client not connected'));
+        return;
+      }
+
+      const messageId = `msg_${++this.messageIdCounter}_${Date.now()}`;
+      
+      const timeout = setTimeout(() => {
+        this.pendingMessages.delete(messageId);
+        reject(new Error(`Message timeout after ${timeoutMs}ms`));
+      }, timeoutMs);
+
+      this.pendingMessages.set(messageId, {
+        id: messageId,
+        resolve,
+        reject,
+        timeout
+      });
+
+      const message = {
+        type,
+        data,
+        requestId: messageId
+      };
+
+      this.ws.send(JSON.stringify(message));
+    });
   }
 
   /***** EVENT SUBSCRIPTION *****/
@@ -122,6 +183,10 @@ export class MultiplayerClient {
     }
   }
 
+  public async sendEntityPlaceAsync(type: string, x: number, y: number, chunkX: number, chunkY: number): Promise<EntityData> {
+    return this.sendAsync('entity_placed', { type, x, y, chunkX, chunkY });
+  }
+
   public sendEntityRemove(id: string): void {
     if (this.isConnected && this.ws) {
       this.ws.send(JSON.stringify({
@@ -129,6 +194,10 @@ export class MultiplayerClient {
         data: { id }
       }));
     }
+  }
+
+  public async sendEntityRemoveAsync(id: string): Promise<void> {
+    return this.sendAsync('entity_remove', { id });
   }
 
   /***** CONNECTION STATUS *****/

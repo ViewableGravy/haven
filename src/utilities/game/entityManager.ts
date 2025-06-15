@@ -114,9 +114,6 @@ export class EntityManager {
       // Store global position before conversion
       const globalPosition = { x: globalX, y: globalY };
 
-      // Get appropriate chunk
-      const chunk = this.game.controllers.chunkManager.getChunk(globalX, globalY);
-
       // Update entity state with global coordinates
       GhostableTrait.setGhostMode(entity, false);
       entity.getTrait('position').position.position = {
@@ -125,22 +122,31 @@ export class EntityManager {
         type: "global"
       };
 
-      // Convert global position to local chunk coordinates for PIXI container positioning
-      const { x, y } = chunk.toLocalPosition(entity.getTrait('position').position);
-      entity.getTrait('container').container.x = x;
-      entity.getTrait('container').container.y = y;
+      // Place entity directly on main entity stage with global coordinates
+      const container = entity.getTrait('container').container;
+      container.x = globalX;
+      container.y = globalY;
 
-      // Place entity in chunk and add to tracking
-      chunk.addChild(entity.getTrait('container').container);
+      // Add to main entity stage instead of chunk
+      this.game.entityStage.addChild(container);
       this.addEntity(entity);
 
       // Mark as placed
       PlaceableTrait.place(entity);
 
-      // Calculate chunk coordinates for multiplayer
+      // Calculate chunk coordinates for multiplayer tracking
       const chunkSize = this.game.consts.chunkAbsolute;
       const chunkX = Math.floor(globalX / chunkSize);
       const chunkY = Math.floor(globalY / chunkSize);
+
+      // Add entity to chunk tracking (for cleanup purposes)
+      const chunkKey = `${chunkX},${chunkY}` as any;
+      let chunkEntities = this.entitiesByChunk.get(chunkKey);
+      if (!chunkEntities) {
+        chunkEntities = new Set();
+        this.entitiesByChunk.set(chunkKey, chunkEntities);
+      }
+      chunkEntities.add(entity);
 
       // Notify placement listeners (including multiplayer)
       const placementEvent: EntityPlacementEvent = {

@@ -51,6 +51,7 @@ export class Game {
   public initialized: boolean = false;
   public initializing: boolean = false;
   public world!: ContainerChild;
+  public entityStage!: Container; // New main stage for entities
 
   // Game constants
   public readonly consts: GameConstants = {
@@ -116,8 +117,14 @@ export class Game {
       resizeTo: window
     });
 
+    // Create main world container for chunks (terrain only)
     this.world = new Container();
     this.state.app.stage.addChild(this.world);
+    
+    // Create entity stage for all entities (sits above chunks)
+    this.entityStage = new Container();
+    this.entityStage.sortableChildren = true;
+    this.state.app.stage.addChild(this.entityStage);
     
     el.appendChild(this.state.app.canvas);
   }

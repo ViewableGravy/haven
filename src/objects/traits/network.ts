@@ -27,12 +27,14 @@ export class NetworkTrait {
     this.game = game;
     this.syncConfig = syncConfig;
     
-    // Auto-register with EntityManager and setup network sync
-    this.initialize();
+    // Auto-register with EntityManager and setup network sync (async)
+    this.initialize().catch(error => {
+      console.error('NetworkTrait initialization failed:', error);
+    });
   }
 
   /***** INITIALIZATION *****/
-  private initialize(): void {
+  private async initialize(): Promise<void> {
     // Register entity with EntityManager automatically
     this.game.entityManager.addEntity(this.entity);
     this.isRegistered = true;
@@ -46,21 +48,21 @@ export class NetworkTrait {
     this.game.entityManager.onEntityDestroy(this.entity, this.destroyCleanup);
 
     // Setup network synchronization for specified traits
-    this.setupNetworkSync();
+    await this.setupNetworkSync();
   }
 
   /***** NETWORK SYNCHRONIZATION *****/
-  private setupNetworkSync(): void {
+  private async setupNetworkSync(): Promise<void> {
     // If we have a multiplayer connection, notify server about this entity
     if (this.game.controllers.multiplayer?.isConnected()) {
-      this.notifyServerEntityCreated();
+      await this.notifyServerEntityCreated();
     }
 
     // Setup trait synchronization based on config
     this.setupTraitSync();
   }
 
-  private notifyServerEntityCreated(): void {
+  private async notifyServerEntityCreated(): Promise<void> {
     // Only notify server for locally created entities (not server-generated ones)
     if (this.entity.multiplayerId) {
       return; // This is a remote entity, don't notify server
@@ -83,14 +85,29 @@ export class NetworkTrait {
       const chunkX = Math.floor(position.x / this.game.consts.chunkAbsolute);
       const chunkY = Math.floor(position.y / this.game.consts.chunkAbsolute);
 
-      // Notify server via multiplayer client
-      this.game.controllers.multiplayer?.client.sendEntityPlace?.(
-        entityType,
-        position.x,
-        position.y,
-        chunkX,
-        chunkY
-      );
+      // Use async notification if available, fallback to synchronous
+      if (this.game.controllers.multiplayer?.client.sendEntityPlaceAsync) {
+        try {
+          await this.game.controllers.multiplayer.client.sendEntityPlaceAsync(
+            entityType,
+            position.x,
+            position.y,
+            chunkX,
+            chunkY
+          );
+        } catch (error) {
+          console.error('NetworkTrait: Failed to create entity on server:', error);
+        }
+      } else {
+        // Fallback to synchronous method
+        this.game.controllers.multiplayer?.client.sendEntityPlace?.(
+          entityType,
+          position.x,
+          position.y,
+          chunkX,
+          chunkY
+        );
+      }
     } catch (error) {
       console.warn('NetworkTrait: Failed to notify server of entity creation:', error);
     }

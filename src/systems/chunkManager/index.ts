@@ -1,7 +1,6 @@
 import { Container, Graphics, Sprite, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
 import type { GameObject } from "../../objects/base";
-import { ContainerTrait } from "../../objects/traits/container";
 import type { LoadChunkEvent } from "../../server/types/events/load_chunk";
 import { EventEmitter } from "../../utilities/eventEmitter";
 import type { Game } from "../../utilities/game/game";
@@ -133,22 +132,20 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     logger.log(`  - World position: (${worldPosition.x}, ${worldPosition.y})`);
     logger.log(`  - Container size: ${chunkContainer.width}x${chunkContainer.height}`);
     
-    // Atomically register chunk and its entities
+    // Register chunk (terrain only)
     this.chunkRegistry.addChunk(chunkKey, chunk);
     this.container.addChild(chunkContainer);
     
     logger.log(`  - Added to world container (total children: ${this.container.children.length})`);
     logger.log(`  - World container bounds: x=${this.container.x}, y=${this.container.y}, w=${this.container.width}, h=${this.container.height}`);
     
-    // Add entities to the game
+    // Entities are now handled by EntityManager and placed on main stage
+    // Just add them to entity tracking without adding to chunk containers
     for (const entity of entities) {
-      if (ContainerTrait.is(entity)) {
-        chunk.addChild(entity.getTrait('container').container);
-      }
       this.game.entityManager.addEntity(entity);
     }
     
-    // Register entities for this chunk
+    // Register entities for this chunk (for cleanup tracking)
     this.game.entityManager.setEntitiesForChunk(chunkKey, new Set(entities));
     
     logger.log(`ChunkManager: Successfully registered chunk ${chunkKey} with ${entities.length} entities`);

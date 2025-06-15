@@ -211,9 +211,9 @@ export class BunMultiplayerServer {
     logger.log(`Entity ${entityData.type} placed by ${entityData.placedBy} at (${entityData.x}, ${entityData.y}) in chunk (${entityData.chunkX}, ${entityData.chunkY})`);
   };
 
-  public removeEntity = (playerId: string, entityId: string): void => {
+  public removeEntity = (playerId: string, entityId: string): boolean => {
     const entity = this.entities.get(entityId);
-    if (!entity) return;
+    if (!entity) return false;
 
     this.entities.delete(entityId);
 
@@ -226,6 +226,7 @@ export class BunMultiplayerServer {
     });
 
     logger.log(`Entity ${entityId} removed by ${playerId} from chunk (${entity.chunkX}, ${entity.chunkY})`);
+    return true;
   };
 
   /***** UTILITY METHODS *****/

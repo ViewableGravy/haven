@@ -123,6 +123,19 @@ export function createNetworkedAssembler(game: Game, position: Position): Assemb
   });
 }
 
+/***** LOCAL ASSEMBLER FACTORY *****/
+export function createLocalAssembler(game: Game, position: Position): Assembler {
+  return game.worldManager.createLocalEntity(
+    () => createStandardAssembler(game, position),
+    {
+      autoPlace: {
+        x: position.x,
+        y: position.y
+      }
+    }
+  );
+}
+
 /***** INFOGRAPHIC REGISTRATION *****/
 // Register the assembler infographic when this module loads
 infographicsRegistry.register("assembler", (entity: Assembler) => ({

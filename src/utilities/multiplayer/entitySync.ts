@@ -6,7 +6,6 @@ import { GhostableTrait } from "../../objects/traits/ghostable";
 import { PlaceableTrait } from "../../objects/traits/placeable";
 import { TransformTrait } from "../../objects/traits/transform";
 import type { EntityData } from "../../server/types";
-import type { Chunk } from "../../systems/chunkManager/chunk";
 import type { Game } from "../game/game";
 import { entitySyncRegistry } from "./entitySyncRegistry";
 
@@ -115,27 +114,26 @@ export class EntitySyncManager {
     const entity = entitySyncRegistry.createEntity(entityData, this.game);
     if (!entity) return;
 
-    // Try to get the appropriate chunk using global coordinates
-    // If chunk doesn't exist yet, queue this entity for later placement
+    // Place entity directly on main stage (no chunk dependency)
     try {
-      const chunk = this.game.controllers.chunkManager.getChunk(entityData.x, entityData.y);
-      this.placeEntityInChunk(entity, entityData, chunk);
-    } catch {
+      this.placeEntityInMainStage(entity, entityData);
+    } catch (error) {
+      // If placement fails, queue for later
       this.queueEntityForLaterPlacement(entityData);
       return;
     }
   }
 
   /**
-   * Actually places an entity in a chunk
+   * Actually places an entity on the main stage with global coordinates
    */
-  private placeEntityInChunk(entity: GameObject, entityData: EntityData, chunk: Chunk): void {
+  private placeEntityInMainStage(entity: GameObject, entityData: EntityData): void {
     // Ensure entity is not in ghost mode (if it supports ghosting)
     GhostableTrait.setGhostMode(entity, false);
 
     // Set the entity's transform position to global coordinates
     invariant(TransformTrait.is(entity), "Entities must have a transform trait to set position");
-    invariant(ContainerTrait.is(entity), "Entities must have a container trait to be placed in a chunk");
+    invariant(ContainerTrait.is(entity), "Entities must have a container trait to be placed");
 
     const { position } = entity.getTrait('position');
     const { container } = entity.getTrait('container');
@@ -146,12 +144,12 @@ export class EntitySyncManager {
       type: "global"
     };
 
-    // Add to chunk and mark as placed
-    const { x, y } = chunk.toLocalPosition(position);
-    container.x = x;
-    container.y = y;
+    // Place entity directly on main stage with global coordinates
+    container.x = entityData.x;
+    container.y = entityData.y;
 
-    chunk.addChild(container);
+    // Add to main entity stage instead of chunk
+    this.game.entityStage.addChild(container);
 
     // Mark entity as placed if it has the placeable trait
     PlaceableTrait.place(entity);
@@ -201,9 +199,12 @@ export class EntitySyncManager {
   public handleRemoteEntityRemoved(data: { id: string }): void {
     const entity = this.findEntityById(data.id);
     if (entity) {
-      // Remove from chunk and game
+      // Remove from main entity stage
       if (ContainerTrait.is(entity)) {
-        entity.getTrait('container').container.parent?.removeChild(entity.getTrait('container').container);
+        const container = entity.getTrait('container').container;
+        if (container.parent) {
+          container.parent.removeChild(container);
+        }
       }
 
       this.game.entityManager.removeEntity(entity);
