@@ -141,7 +141,7 @@ export class WebSocketHandler {
     // Send async response if requestId is provided
     if (requestId) {
       this.server.sendToPlayer(playerId, {
-        type: 'entity_placed_response',
+        type: 'entity_placed',
         data: entityData,
         requestId
       } as any);
@@ -154,7 +154,7 @@ export class WebSocketHandler {
     // Send async response if requestId is provided
     if (requestId) {
       this.server.sendToPlayer(playerId, {
-        type: 'entity_removed_response',
+        type: 'entity_removed',
         data: { success },
         requestId
       } as any);

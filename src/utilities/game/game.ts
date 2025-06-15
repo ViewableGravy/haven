@@ -117,14 +117,15 @@ export class Game {
       resizeTo: window
     });
 
-    // Create main world container for chunks (terrain only)
+    // Create main world container for chunks and entities
     this.world = new Container();
+    this.world.sortableChildren = true; // Enable sorting for proper layering
     this.state.app.stage.addChild(this.world);
     
-    // Create entity stage for all entities (sits above chunks)
+    // Create entity stage for reference (legacy compatibility)
+    // Note: Entities now go on world container to inherit zoom transforms
     this.entityStage = new Container();
     this.entityStage.sortableChildren = true;
-    this.state.app.stage.addChild(this.entityStage);
     
     el.appendChild(this.state.app.canvas);
   }

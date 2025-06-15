@@ -127,8 +127,8 @@ export class EntityManager {
       container.x = globalX;
       container.y = globalY;
 
-      // Add to main entity stage instead of chunk
-      this.game.entityStage.addChild(container);
+      // Add to world container so entity inherits zoom transforms
+      this.game.world.addChild(container);
       this.addEntity(entity);
 
       // Mark as placed

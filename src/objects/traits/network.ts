@@ -53,19 +53,43 @@ export class NetworkTrait {
 
   /***** NETWORK SYNCHRONIZATION *****/
   private async setupNetworkSync(): Promise<void> {
-    // If we have a multiplayer connection, notify server about this entity
-    if (this.game.controllers.multiplayer?.isConnected()) {
-      await this.notifyServerEntityCreated();
-    }
-
     // Setup trait synchronization based on config
     this.setupTraitSync();
+
+    // Only notify server for entity creation if this is a locally created entity
+    // Server entities (those with multiplayerId) should not notify server on creation
+    if (this.shouldSyncEntityCreation()) {
+      if (this.game.controllers.multiplayer?.isConnected()) {
+        await this.notifyServerEntityCreated();
+      }
+    }
+  }
+
+  /***** SYNC DECISION LOGIC *****/
+  private shouldSyncEntityCreation(): boolean {
+    // Don't sync entity creation if entity has multiplayerId (it came from server)
+    if (this.entity.multiplayerId) {
+      return false;
+    }
+    
+    // Don't sync if not connected to multiplayer
+    if (!this.game.controllers.multiplayer?.isConnected()) {
+      return false;
+    }
+    
+    return true;
+  }
+
+  private shouldSyncTraitChanges(): boolean {
+    // For trait changes, we always want to sync back to server if connected
+    // (even for server entities, since local changes should be synced)
+    return this.game.controllers.multiplayer?.isConnected() ?? false;
   }
 
   private async notifyServerEntityCreated(): Promise<void> {
-    // Only notify server for locally created entities (not server-generated ones)
-    if (this.entity.multiplayerId) {
-      return; // This is a remote entity, don't notify server
+    // Double-check that we should sync entity creation to server at the moment of notification
+    if (!this.shouldSyncEntityCreation()) {
+      return;
     }
 
     // Get entity position for server notification

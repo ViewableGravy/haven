@@ -61,7 +61,8 @@ infographicsRegistry.register("spruce-tree", (entity: SpruceTree) => ({
 
 /***** ENTITY SYNC REGISTRATION *****/
 // Register the spruce tree entity sync creator
+// Use the basic factory for server entities (no NetworkTrait)
 entitySyncRegistry.register("spruce-tree", {
   name: "Spruce Tree",
-  creatorFunction: createNetworkedSpruceTree
+  creatorFunction: createStandardSpruceTree
 });

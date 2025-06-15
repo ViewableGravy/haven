@@ -184,7 +184,7 @@ export class MultiplayerClient {
   }
 
   public async sendEntityPlaceAsync(type: string, x: number, y: number, chunkX: number, chunkY: number): Promise<EntityData> {
-    return this.sendAsync('entity_placed', { type, x, y, chunkX, chunkY });
+    return this.sendAsync('entity_placed', { type, x, y, chunkX, chunkY }, 10000); // 10 second timeout
   }
 
   public sendEntityRemove(id: string): void {

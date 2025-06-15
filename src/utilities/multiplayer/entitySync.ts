@@ -148,8 +148,8 @@ export class EntitySyncManager {
     container.x = entityData.x;
     container.y = entityData.y;
 
-    // Add to main entity stage instead of chunk
-    this.game.entityStage.addChild(container);
+    // Add to world container so entity inherits zoom transforms
+    this.game.world.addChild(container);
 
     // Mark entity as placed if it has the placeable trait
     PlaceableTrait.place(entity);
