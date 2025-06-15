@@ -95,11 +95,12 @@ export class BaseSpruceTree extends GameObject {
         infographicStore.setState(() => ({
           active: true,
           component: spruceTreeInfographic.component,
-          item: spruceTreeInfographic.createNetworked ? {
+          item: {
             name: spruceTreeInfographic.name,
             node: spruceTreeInfographic.name,
-            creatorFunction: spruceTreeInfographic.createNetworked
-          } : undefined
+            creatorFunction: spruceTreeInfographic.createNetworked,
+            previewCreatorFunction: spruceTreeInfographic.previewCreatorFunction
+          }
         }));
       }
     });

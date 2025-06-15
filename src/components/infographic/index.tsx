@@ -35,8 +35,11 @@ export const Infographic: InfographicProps = ({ bottom, right }) => {
   const createGhostEntity = useCleanupCallback((ref) => {
     if (!infographicState.active || !infographicState.item) return;
 
+    console.log('infographic state:', infographicState.item.creatorFunction);
+
     // Create entity using the item's preview creator function (for ghost mode)
     const previewCreator = infographicState.item.previewCreatorFunction || infographicState.item.creatorFunction;
+    console.log("Creating ghost entity with creator function:", infographicState.item.previewCreatorFunction);
     const followEntity = previewCreator(game, new Position(0, 0));
 
     // Set ghost mode using the trait
@@ -52,7 +55,7 @@ export const Infographic: InfographicProps = ({ bottom, right }) => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const normalizedKey = event.key.toUpperCase();
 
-      if (normalizedKey === 'Q' && infographicState.active && infographicState.item) {
+      if (normalizedKey === 'Q' && infographicStore.state.active && infographicStore.state.item) {
         createGhostEntity();
       }
     };

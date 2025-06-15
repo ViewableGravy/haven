@@ -27,7 +27,7 @@ type SelectionStore = {
 // Create a function to get items from the infographics registry
 const getHotbarItems = (): HotbarItem[] => {
   const allInfographics = infographicsRegistry.getAll();
-  return allInfographics.map(infographic => ({
+  return allInfographics.map((infographic) => ({
     name: infographic.name,
     node: infographic.name,
     creatorFunction: infographic.createNetworked!,
