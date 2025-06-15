@@ -1,9 +1,9 @@
 import type { GameObject } from "../../objects/base";
 import { TransformTrait } from "../../objects/traits/transform";
 import type { Game } from "../game/game";
+import { Logger } from "../logger";
 import type { Position } from "../position";
 import { Rectangle } from "../rectangle";
-import { Logger } from "../Logger";
 
 /***** TYPE DEFINITIONS *****/
 type FollowableEntity = GameObject;

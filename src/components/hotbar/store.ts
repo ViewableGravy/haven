@@ -30,7 +30,7 @@ const getHotbarItems = (): HotbarItem[] => {
   return allInfographics.map(infographic => ({
     name: infographic.name,
     node: infographic.name,
-    creatorFunction: infographic.creatorFunction!,
+    creatorFunction: infographic.createNetworked!,
     previewCreatorFunction: infographic.previewCreatorFunction
   }));
 };

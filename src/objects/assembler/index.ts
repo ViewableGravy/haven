@@ -1,9 +1,9 @@
 /***** TYPE DEFINITIONS *****/
+import type { NetworkSyncConfig } from "../../objects/traits/network";
+import { createFactory } from "../../utilities/createFactory";
 import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
 import type { Position } from "../../utilities/position";
-import type { NetworkSyncConfig } from "../../objects/traits/network";
-import { createFactory } from "../../utilities/createFactory";
 import { BaseAssembler } from "./base";
 import { createTestEntityInfographicNode } from "./info";
 
@@ -54,9 +54,10 @@ export const assemblerFactory = createFactory({
 infographicsRegistry.register("assembler", (entity: Assembler) => ({
   name: "Assembler",
   component: createTestEntityInfographicNode(entity),
-  creatorFunction: (game: Game, position: Position) => createStandardAssembler(game, { position }),
+  createNetworked: assemblerFactory.createNetworked,
   previewCreatorFunction: (game: Game, position: Position) => createStandardAssembler(game, { position })
 }));
 
 /***** EXPORTS *****/
 export { BaseAssembler } from "./base";
+

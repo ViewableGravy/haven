@@ -7,7 +7,18 @@ import type { Position } from "../position";
 export type InfographicDefinition = {
   name: string;
   component: React.FC;
-  creatorFunction?: (game: Game, position: Position) => any;
+
+  /**
+   * Function to create the entity in the game world.
+   * This is used to create networked entities that are synced with the world.
+   */
+  createNetworked?: (game: Game, position: Position) => any;
+
+  /**
+   * Function to create a preview of the entity in ghost mode.
+   * This is used to allow you to create a local entity, that is not synced
+   * with the world and provides a preview of where it will be placed.
+   */
   previewCreatorFunction?: (game: Game, position: Position) => any;
 };
 
@@ -48,7 +59,7 @@ class InfographicsRegistry {
   public getAll(): InfographicDefinition[] {
     return Object.values(this.registry)
       .map(factory => factory({} as any)) // Temporary entity for getting creator functions
-      .filter(def => def.creatorFunction); // Only include items that can be created
+      .filter(def => def.createNetworked); // Only include items that can be created
   }
 }
 

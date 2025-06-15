@@ -67,10 +67,10 @@ export class BaseAssembler extends GameObject {
         infographicStore.setState(() => ({
           active: true,
           component: assemblerInfographic.component,
-          item: assemblerInfographic.creatorFunction ? {
+          item: assemblerInfographic.createNetworked ? {
             name: assemblerInfographic.name,
             node: assemblerInfographic.name,
-            creatorFunction: assemblerInfographic.creatorFunction
+            creatorFunction: assemblerInfographic.createNetworked
           } : undefined
         }));
       }

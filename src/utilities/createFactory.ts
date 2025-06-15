@@ -134,6 +134,6 @@ export function createFactory<T extends GameObject>(
 
       // Create networked entity at the same position
       return await createFactory(config).createNetworked(game, opts);
-    }
+    },
   };
 }
