@@ -309,9 +309,7 @@ export class EntitySyncManager {
       }
     }
     return count;
-  }
-
-  /**
+  }  /**
    * Creates an entity from server data using the WorldObjects system
    */
   private async createEntityFromServerData(entityData: EntityData): Promise<GameObject | null> {
@@ -326,13 +324,11 @@ export class EntitySyncManager {
     if (!factory) {
       console.warn(`No factory found for WorldObjects key: ${worldObjectKey}`);
       return null;
-    }    try {
-      // Create entity using the unified factory system
-      // Use createFromServer since this entity originated from the server
-      const entity = factory.createFromServer({
+    }try {
+      // Create entity using the unified factory system      // Use createFromServer since this entity originated from the server
+      const entity = factory.createFromServer(this.game, {
         x: entityData.x,
-        y: entityData.y,
-        game: this.game
+        y: entityData.y
       });
 
       // Set multiplayer properties for remote entity

@@ -2,13 +2,16 @@
 import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
 import type { Position } from "../../utilities/position";
+import type { NetworkSyncConfig } from "../../objects/traits/network";
+import { createFactory } from "../../utilities/createFactory";
 import { BaseSpruceTree } from "./base";
 import { createSpruceTreeInfographicNode } from "./info";
 
 /***** FACTORY FUNCTION *****/
 export type SpruceTree = BaseSpruceTree;
 
-export function createStandardSpruceTree(game: Game, position: Position): SpruceTree {
+export function createStandardSpruceTree(game: Game, opts: { position: Position }): SpruceTree {
+  const { position } = opts;
   const spruceTree = new BaseSpruceTree(game, position);
 
   const { container } = spruceTree.getTrait('container');
@@ -26,10 +29,12 @@ export function createStandardSpruceTree(game: Game, position: Position): Spruce
   return spruceTree;
 }
 
-/***** NEW FACTORY METHODS *****/
+/***** LEGACY FACTORY METHODS - DEPRECATED *****/
+// These are maintained for backward compatibility but should be migrated to GameObjects.spruce.*
+
 export async function createNetworkedSpruceTree(game: Game, position: Position): Promise<SpruceTree> {
   return await game.worldManager.createNetworkedEntity({
-    factoryFn: () => createStandardSpruceTree(game, position),
+    factoryFn: () => createStandardSpruceTree(game, { position }),
     syncTraits: ['position', 'placeable'],
     autoPlace: {
       x: position.x,
@@ -40,7 +45,7 @@ export async function createNetworkedSpruceTree(game: Game, position: Position):
 
 export function createLocalSpruceTree(game: Game, position: Position): SpruceTree {
   return game.worldManager.createLocalEntity(
-    () => createStandardSpruceTree(game, position),
+    () => createStandardSpruceTree(game, { position }),
     {
       autoPlace: {
         x: position.x,
@@ -56,7 +61,20 @@ infographicsRegistry.register("spruce-tree", (entity: SpruceTree) => ({
   name: "Spruce Tree",
   component: createSpruceTreeInfographicNode(entity),
   creatorFunction: createNetworkedSpruceTree,
-  previewCreatorFunction: createStandardSpruceTree
+  previewCreatorFunction: (game: Game, position: Position) => createStandardSpruceTree(game, { position })
 }));
+
+/***** UNIFIED FACTORY *****/
+const SpruceTreeNetworkConfig: NetworkSyncConfig = {
+  syncTraits: ['position', 'placeable'],
+  syncFrequency: 'batched',
+  priority: 'normal',
+  persistent: true
+};
+
+export const spruceTreeFactory = createFactory({
+  factoryFn: createStandardSpruceTree,
+  network: SpruceTreeNetworkConfig
+});
 
 

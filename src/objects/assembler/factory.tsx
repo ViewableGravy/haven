@@ -6,6 +6,8 @@ import { AssemblerSprite } from "../../spriteSheets/assembler";
 import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
 import type { Position } from "../../utilities/position";
+import type { NetworkSyncConfig } from "../../objects/traits/network";
+import { createFactory } from "../../utilities/createFactory";
 import { GameObject } from "../base";
 import { ContainerTrait } from "../traits/container";
 import { GhostableTrait } from "../traits/ghostable";
@@ -93,7 +95,8 @@ export class BaseAssembler extends GameObject {
 /***** FACTORY FUNCTION *****/
 export type Assembler = BaseAssembler;
 
-export function createStandardAssembler(game: Game, position: Position): Assembler {
+export function createStandardAssembler(game: Game, opts: { position: Position }): Assembler {
+  const { position } = opts;
   const assembler = new BaseAssembler(game, position);
 
   // Add sprites to container
@@ -106,10 +109,12 @@ export function createStandardAssembler(game: Game, position: Position): Assembl
   return assembler;
 }
 
-/***** NEW NETWORKED ASSEMBLER FACTORY *****/
+/***** LEGACY FACTORY METHODS - DEPRECATED *****/
+// These are maintained for backward compatibility but should be migrated to GameObjects.assembler.*
+
 export async function createNetworkedAssembler(game: Game, position: Position): Promise<Assembler> {
   return await game.worldManager.createNetworkedEntity({
-    factoryFn: () => createStandardAssembler(game, position),
+    factoryFn: () => createStandardAssembler(game, { position }),
     syncTraits: ['position', 'placeable'],
     autoPlace: {
       x: position.x,
@@ -118,10 +123,9 @@ export async function createNetworkedAssembler(game: Game, position: Position): 
   });
 }
 
-/***** LOCAL ASSEMBLER FACTORY *****/
 export function createLocalAssembler(game: Game, position: Position): Assembler {
   return game.worldManager.createLocalEntity(
-    () => createStandardAssembler(game, position),
+    () => createStandardAssembler(game, { position }),
     {
       autoPlace: {
         x: position.x,
@@ -137,6 +141,19 @@ infographicsRegistry.register("assembler", (entity: Assembler) => ({
   name: "Assembler",
   component: createTestEntityInfographicNode(entity),
   creatorFunction: createNetworkedAssembler,
-  previewCreatorFunction: createStandardAssembler
+  previewCreatorFunction: (game: Game, position: Position) => createStandardAssembler(game, { position })
 }));
+
+/***** UNIFIED FACTORY *****/
+const AssemblerNetworkConfig: NetworkSyncConfig = {
+  syncTraits: ['position', 'placeable'],
+  syncFrequency: 'batched',
+  priority: 'normal',
+  persistent: true
+};
+
+export const assemblerFactory = createFactory({
+  factoryFn: createStandardAssembler,
+  network: AssemblerNetworkConfig
+});
 
