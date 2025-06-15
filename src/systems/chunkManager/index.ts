@@ -93,7 +93,9 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
    * Unloads and removes a chunk from the game world
    * This destroys the chunk, removes it from the container, and cleans up associated entities
    * @param chunkKey - The unique identifier for the chunk to unload
-   */  public unloadChunk(chunkKey: ChunkKey): void {
+   */  
+  
+  public unloadChunk(chunkKey: ChunkKey): void {
     const chunk = this.chunkRegistry.getChunk(chunkKey);
     if (chunk) {
       // Notify EntitySyncManager before cleanup so it can remove entity references
