@@ -16,7 +16,7 @@ interface EntityPlacementEvent {
 }
 
 type EntityPlacementListener = (event: EntityPlacementEvent) => void;
-type EntityDestroyCallback = () => void;
+type EntityDestroyCallback = (notifyServer: boolean) => void;
 
 /***** ENTITY MANAGER *****/
 export class EntityManager {
@@ -33,10 +33,11 @@ export class EntityManager {
   /***** ENTITY TRACKING *****/
   public addEntity(entity: GameObject): void {
     this.entities.add(entity);
-  }
-  public removeEntity(entity: GameObject): void {
+  }  
+  
+  public removeEntity(entity: GameObject, notifyServer: boolean = false): void {
     // Call any registered destroy callbacks first
-    this.executeDestroyCallbacks(entity);
+    this.executeDestroyCallbacks(entity, notifyServer);
     
     // Remove from layer system before destroying
     try {
@@ -48,8 +49,11 @@ export class EntityManager {
     }
     
     // Clean up entity traits after removing from display
+    // Pass notifyServer flag to entity destroy method
     try {
-      entity.destroy();
+      if (entity.destroy) {
+        entity.destroy(notifyServer);
+      }
     } catch (error) {
       console.error('Error destroying entity:', error);
     }
@@ -81,13 +85,12 @@ export class EntityManager {
       }
     }
   }
-
-  private executeDestroyCallbacks(entity: GameObject): void {
+  private executeDestroyCallbacks(entity: GameObject, notifyServer: boolean): void {
     const callbacks = this.destroyCallbacks.get(entity);
     if (callbacks) {
       callbacks.forEach((callback) => {
         try {
-          callback();
+          callback(notifyServer);
         } catch (error) {
           console.error('Error executing destroy callback:', error);
         }
@@ -103,12 +106,12 @@ export class EntityManager {
   public getEntitiesForChunk(chunkKey: ChunkKey): Set<GameObject> | undefined {
     return this.entitiesByChunk.get(chunkKey);
   }
-
   public removeEntitiesForChunk(chunkKey: ChunkKey): void {
     const entities = this.entitiesByChunk.get(chunkKey);
     if (entities) {
       for (const entity of entities) {
-        this.removeEntity(entity);
+        // Don't notify server when removing entities due to chunk unloading
+        this.removeEntity(entity, false);
       }
     }
     

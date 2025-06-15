@@ -217,7 +217,7 @@ export class World {
   public destroyEntity(entity: GameObject): void {
     // The EntityManager.removeEntity will handle calling destroy callbacks
     // and cleaning up the entity properly
-    this.game.entityManager.removeEntity(entity);
+    this.game.entityManager.removeEntity(entity, false);
   }
 
   /***** BATCH OPERATIONS *****/

@@ -67,10 +67,9 @@ export class BaseAssembler extends GameObject {
       infographicStore.setInactive();
     });
   }
-
-  public destroy(): void {
+  public destroy(notifyServer: boolean = true): void {
     // Call the generic GameObject destroy first to clean up all traits
-    super.destroy();
+    super.destroy(notifyServer);
     
     // Clean up assembler specific resources
     this.assemblerSprite.removeAllListeners();

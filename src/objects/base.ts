@@ -63,13 +63,20 @@ export class GameObject extends Traitable {
   public hasPosition = (): this is HasPosition => hasPosition(this);
   public hasSize = (): this is hasSize => hasSize(this);
   public hasRectangle = (): this is HasRectangle => hasRectangle(this);
-
+  
   /***** CLEANUP *****/
   /**
    * Generic destroy method that cleans up all traits
    * This should be called when an entity is being removed from the game
+   * @param notifyServer - Whether to notify the server about entity removal (default: true)
+   * 
+   * Note: notifyServer should be passed when we are ready to clean up the entity on the client (e.g.
+   * during chunk unloading, or changing scenes), and we don't want it actually removed from the server.)
+   * 
+   * TODO: The server should also prevent the entity from being removed if the player does not have permission
+   * to remove it, of if the entity is not in a valid state to be removed.
    */
-  public destroy(): void {
-    this.cleanupTraits();
+  public destroy(notifyServer: boolean = true): void {
+    this.cleanupTraits(notifyServer);
   }
 }

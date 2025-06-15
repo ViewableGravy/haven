@@ -1,7 +1,7 @@
 import { Container, Rectangle, RenderTexture, Sprite, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
 import type { Game } from "../../utilities/game/game";
-import { Logger } from "../../utilities/Logger";
+import { Logger } from "../../utilities/logger";
 import { Position } from "../../utilities/position";
 import { globalRenderTexturePool } from "./renderTexturePool";
 

@@ -25,7 +25,7 @@ export class ContainerTrait {
   }
 
   /***** CLEANUP *****/
-  public destroy(): void {
+  public destroy = (): void => {
     // Unsubscribe from position changes
     if (this.positionUnsubscribe) {
       this.positionUnsubscribe();

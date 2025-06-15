@@ -206,7 +206,8 @@ export class EntitySyncManager {
         }
       }
 
-      this.game.entityManager.removeEntity(entity);
+      // Don't notify server since this is a server-initiated removal
+      this.game.entityManager.removeEntity(entity, false);
     }
   }
 

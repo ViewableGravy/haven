@@ -95,8 +95,7 @@ export class BaseSpruceTree extends GameObject {
       infographicStore.setInactive();
     });
   }
-
-  public destroy(): void {
+  public destroy(notifyServer: boolean = true): void {
     // Clean up spruce tree specific resources before calling super.destroy()
     if (ContainerTrait.is(this)) {
       const container = this.getTrait('container').container;
@@ -108,6 +107,6 @@ export class BaseSpruceTree extends GameObject {
     this.spruceTreeSprite.removeAllListeners();
     
     // Call the generic GameObject destroy to clean up all traits
-    super.destroy();
+    super.destroy(notifyServer);
   }
 }
