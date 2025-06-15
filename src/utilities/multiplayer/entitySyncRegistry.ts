@@ -41,6 +41,36 @@ export class EntitySyncRegistry {
     }
   }
 
+  /***** NEW NETWORKED ENTITY CREATION *****/
+  public createNetworkedEntity(entityData: EntityData, game: Game): GameObject | null {
+    const creator = this.creators.get(entityData.type);
+    if (!creator) {
+      console.warn(`No entity sync creator registered for type: ${entityData.type}`);
+      return null;
+    }
+
+    try {
+      // Use World manager to create entity with NetworkTrait
+      const entity = game.worldManager.createNetworkedEntity({
+        factoryFn: () => creator.creatorFunction(game, {
+          x: entityData.x,
+          y: entityData.y,
+          type: "global"
+        }),
+        syncTraits: ['position', 'placeable'],
+        onCreated: (entity) => {
+          // Set multiplayer properties for remote entity
+          entity.setAsRemoteEntity(entityData.id, entityData.placedBy);
+        }
+      });
+      
+      return entity;
+    } catch (error) {
+      console.error(`Failed to create networked entity of type ${entityData.type}:`, error);
+      return null;
+    }
+  }
+
   /***** UTILITIES *****/
   public hasCreator(entityType: string): boolean {
     return this.creators.has(entityType);

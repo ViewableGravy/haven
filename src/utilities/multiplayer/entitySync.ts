@@ -156,8 +156,15 @@ export class EntitySyncManager {
     // Mark entity as placed if it has the placeable trait
     PlaceableTrait.place(entity);
 
-    // Add to unified entity manager
-    this.game.entityManager.addEntity(entity);
+    // Check if entity already has NetworkTrait (from new pattern)
+    // If not, add to EntityManager manually (legacy pattern)
+    try {
+      entity.getTrait('network');
+      // Entity has NetworkTrait, it will manage itself
+    } catch {
+      // Entity doesn't have NetworkTrait, add to EntityManager manually
+      this.game.entityManager.addEntity(entity);
+    }
   }
 
   /**

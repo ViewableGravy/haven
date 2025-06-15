@@ -16,12 +16,14 @@ interface EntityPlacementEvent {
 }
 
 type EntityPlacementListener = (event: EntityPlacementEvent) => void;
+type EntityDestroyCallback = () => void;
 
 /***** ENTITY MANAGER *****/
 export class EntityManager {
   private entities: Set<GameObject> = new Set();
   private entitiesByChunk: Map<ChunkKey, Set<GameObject>> = new Map();
   private placementListeners: Set<EntityPlacementListener> = new Set();
+  private destroyCallbacks: Map<GameObject, Set<EntityDestroyCallback>> = new Map();
   private game: Game;
 
   constructor(game: Game) {
@@ -34,6 +36,9 @@ export class EntityManager {
   }
 
   public removeEntity(entity: GameObject): void {
+    // Call any registered destroy callbacks first
+    this.executeDestroyCallbacks(entity);
+    
     // Clean up entity traits before removing from tracking
     try {
       entity.destroy();
@@ -42,10 +47,44 @@ export class EntityManager {
     }
     
     this.entities.delete(entity);
+    
+    // Clean up destroy callback references
+    this.destroyCallbacks.delete(entity);
   }
 
   public getEntities(): Set<GameObject> {
-    return this.entities;
+    return new Set(this.entities);
+  }
+
+  /***** DESTROY CALLBACK MANAGEMENT *****/
+  public onEntityDestroy(entity: GameObject, callback: EntityDestroyCallback): void {
+    if (!this.destroyCallbacks.has(entity)) {
+      this.destroyCallbacks.set(entity, new Set());
+    }
+    this.destroyCallbacks.get(entity)!.add(callback);
+  }
+
+  public offEntityDestroy(entity: GameObject, callback: EntityDestroyCallback): void {
+    const callbacks = this.destroyCallbacks.get(entity);
+    if (callbacks) {
+      callbacks.delete(callback);
+      if (callbacks.size === 0) {
+        this.destroyCallbacks.delete(entity);
+      }
+    }
+  }
+
+  private executeDestroyCallbacks(entity: GameObject): void {
+    const callbacks = this.destroyCallbacks.get(entity);
+    if (callbacks) {
+      callbacks.forEach((callback) => {
+        try {
+          callback();
+        } catch (error) {
+          console.error('Error executing destroy callback:', error);
+        }
+      });
+    }
   }
 
   /***** CHUNK-BASED ENTITY MANAGEMENT *****/
@@ -151,5 +190,6 @@ export class EntityManager {
     this.entities.clear();
     this.entitiesByChunk.clear();
     this.placementListeners.clear();
+    this.destroyCallbacks.clear();
   }
 }

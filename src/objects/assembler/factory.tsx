@@ -111,17 +111,29 @@ export function createStandardAssembler(game: Game, position: Position): Assembl
   return assembler;
 }
 
+/***** NEW NETWORKED ASSEMBLER FACTORY *****/
+export function createNetworkedAssembler(game: Game, position: Position): Assembler {
+  return game.worldManager.createNetworkedEntity({
+    factoryFn: () => createStandardAssembler(game, position),
+    syncTraits: ['position', 'placeable'],
+    autoPlace: {
+      x: position.x,
+      y: position.y
+    }
+  });
+}
+
 /***** INFOGRAPHIC REGISTRATION *****/
 // Register the assembler infographic when this module loads
 infographicsRegistry.register("assembler", (entity: Assembler) => ({
   name: "Assembler",
   component: createTestEntityInfographicNode(entity),
-  creatorFunction: createStandardAssembler
+  creatorFunction: createNetworkedAssembler
 }));
 
 /***** ENTITY SYNC REGISTRATION *****/
 // Register the assembler entity sync creator
 entitySyncRegistry.register("assembler", {
   name: "Assembler",
-  creatorFunction: createStandardAssembler
+  creatorFunction: createNetworkedAssembler
 });
