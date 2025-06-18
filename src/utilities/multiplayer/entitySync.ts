@@ -8,7 +8,6 @@ import { PlaceableTrait } from "../../objects/traits/placeable";
 import { TransformTrait } from "../../objects/traits/transform";
 import type { EntityData } from "../../server/types";
 import type { Game } from "../game/game";
-import { Logger } from "../logger";
 
 /***** ENTITY TYPE MAPPING *****/
 const ENTITY_TYPE_MAP = {

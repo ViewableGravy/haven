@@ -39,12 +39,11 @@ export class EntityManager {
     // Call any registered destroy callbacks first
     this.executeDestroyCallbacks(entity, notifyServer);
       // Remove from layer system before destroying
-    try {
+   
+    if (entity.hasTrait("container")) {
       const container = entity.getTrait('container').container;
       const layerManager = this.game.layerManager;
       layerManager.removeFromLayer(container);
-    } catch (error) {
-      // Entity might not have container trait, that's ok
     }
     
     // Clean up entity traits after removing from display
@@ -84,16 +83,18 @@ export class EntityManager {
       }
     }
   }
+
   private executeDestroyCallbacks(entity: GameObject, notifyServer: boolean): void {
     const callbacks = this.destroyCallbacks.get(entity);
     if (callbacks) {
-      callbacks.forEach((callback) => {
+      for (const callback of callbacks) {
+        // Execute each callback, passing the notifyServer flag
         try {
           callback(notifyServer);
         } catch (error) {
           console.error('Error executing destroy callback:', error);
         }
-      });
+      }
     }
   }
 
