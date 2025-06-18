@@ -84,8 +84,8 @@ export class BaseSpruceTree extends GameObject {
 
       this.selectionSprite.renderable = true;
       this.selectionSprite.interactive = false;
-      this.selectionSprite.eventMode = "none";      
-      
+      this.selectionSprite.eventMode = "none";
+
       // Get spruce tree infographic from the registry, passing this entity instance
       infographicStore.setFromRegistry("spruce-tree", this);
     });

@@ -76,7 +76,7 @@ export class GameObject extends Traitable {
    * TODO: The server should also prevent the entity from being removed if the player does not have permission
    * to remove it, of if the entity is not in a valid state to be removed.
    */
-  public destroy(notifyServer: boolean = true): void {
+  public destroy(notifyServer: boolean): void {
     this.cleanupTraits(notifyServer);
   }
 }

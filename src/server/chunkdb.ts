@@ -18,8 +18,8 @@ export interface ServerChunkObject {
 export class ChunkDatabase {
   private chunks: Map<ChunkKey, ServerChunkObject> = new Map();
 
-  constructor() {
-  }
+  constructor() {}
+
   /***** MEMORY MANAGEMENT *****/
   public clear(): void {
     this.chunks.clear();
@@ -27,7 +27,9 @@ export class ChunkDatabase {
 
   public shutdown(): void {
     this.clear();
-  }  /**
+  }  
+  
+  /**
    * Store a chunk in the database
    * @param chunkKey - The unique identifier for the chunk
    * @param chunkData - The chunk data to store
@@ -52,7 +54,9 @@ export class ChunkDatabase {
    */
   public hasChunk(chunkKey: ChunkKey): boolean {
     return this.chunks.has(chunkKey);
-  }  /**
+  }  
+  
+  /**
    * Add an entity to an existing chunk
    * @param chunkKey - The unique identifier for the chunk
    * @param entity - The entity to add
@@ -65,7 +69,9 @@ export class ChunkDatabase {
       return true;
     }
     return false;
-  }  /**
+  }  
+  
+  /**
    * Remove an entity from a chunk
    * @param chunkKey - The unique identifier for the chunk
    * @param entityId - The ID of the entity to remove
@@ -73,6 +79,7 @@ export class ChunkDatabase {
    */
   public removeEntityFromChunk(chunkKey: ChunkKey, entityId: string): boolean {
     const chunk = this.chunks.get(chunkKey);
+    
     if (chunk) {
       const initialLength = chunk.entities.length;
       chunk.entities = chunk.entities.filter((entity) => entity.id !== entityId);
@@ -81,6 +88,7 @@ export class ChunkDatabase {
       }
       return removed;
     }
+
     return false;
   }
 

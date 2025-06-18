@@ -2,7 +2,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from "../utilities/logger";
 import type { BunMultiplayerServer } from './bunServer';
-import type { BunWebSocket, EntityData, EntityPlacedMessage, Player, ServerEvents } from './types';
+import type { BunWebSocket, EntityData, Player } from './types';
 
 /***** WEBSOCKET EVENT HANDLER *****/
 export class WebSocketHandler {
@@ -141,7 +141,7 @@ export class WebSocketHandler {
         type: 'entity_placed',
         data: entityData,
         requestId
-      } as ServerEvents.AsyncResponse<EntityPlacedMessage>);
+      });
     }
   };
 
