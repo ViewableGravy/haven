@@ -10,7 +10,6 @@ import type { MultiplayerClient } from "../multiplayer/client";
 import type { Position } from "../position";
 import { SubscribablePosition } from "../position/subscribable";
 
-
 /***** TYPE DEFINITIONS *****/
 type MovementDirection = 'north' | 'northeast' | 'east' | 'southeast' | 'south' | 'southwest' | 'west' | 'northwest' | 'idle';
 
@@ -120,10 +119,15 @@ export class Player {
     }
 
     this.currentSprite.play();
-  }  /***** COLLISION DETECTION *****/
+  }  
+  
+  /***** COLLISION DETECTION *****/
   /**
    * Check if moving to a new position would collide with any solid entities
    * Treats the player as a point (10px from bottom of sprite) for collision
+   * 
+   * I am aware this is extremely primitive right now, but until we implement a spacial object tree (quad tree),
+   * this will suffice for testing purposes.
    */
   private checkCollision = (game: Game, newX: number, newY: number): boolean => {
     // Player sprite is 80px tall and anchored at center (0.5, 0.5)
@@ -247,7 +251,9 @@ export class Player {
 
     // Check collision for the new position
     const newX = currentX + finalDeltaX;
-    const newY = currentY + finalDeltaY;    // Only apply movement if no collision detected
+    const newY = currentY + finalDeltaY;    
+    
+    // Only apply movement if no collision detected
     const hasCollision = this.checkCollision(game, newX, newY);
     
     if (!hasCollision) {

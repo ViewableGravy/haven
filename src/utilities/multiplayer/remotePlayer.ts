@@ -75,7 +75,10 @@ export class RemotePlayer {
       if (this.sprite) {
         this.sprite.x = x;
         this.sprite.y = y;
-      }    });    // Add to entity layer for proper depth sorting
+      }    
+    }); 
+    
+    // Add to entity layer for proper depth sorting
     const layerManager = this.game.layerManager;
     layerManager.addToLayer(this.sprite, 'entity');
   }
