@@ -1,5 +1,4 @@
 /***** TYPE DEFINITIONS *****/
-import type { NetworkSyncConfig } from "../../objects/traits/network";
 import { createFactory } from "../../utilities/createFactory";
 import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
@@ -9,10 +8,10 @@ import { createTestEntityInfographicNode } from "./info";
 
 /***** FACTORY FUNCTION *****/
 export type Assembler = BaseAssembler;
+export type Opts = { position: Position };
 
-export function createStandardAssembler(game: Game, opts: { position: Position }): Assembler {
-  const { position } = opts;
-  const assembler = new BaseAssembler(game, position);
+export function createStandardAssembler(game: Game, opts: Opts): Assembler {
+  const assembler = new BaseAssembler(game, opts.position);
 
   // Add sprites to container
   assembler.getTrait('container').container.addChild(assembler.assemblerSprite);
@@ -24,29 +23,15 @@ export function createStandardAssembler(game: Game, opts: { position: Position }
   return assembler;
 }
 
-export function createLocalAssembler(game: Game, position: Position): Assembler {
-  return game.worldManager.createLocalEntity(
-    () => createStandardAssembler(game, { position }),
-    {
-      autoPlace: {
-        x: position.x,
-        y: position.y
-      }
-    }
-  );
-}
-
 /***** UNIFIED FACTORY *****/
-const AssemblerNetworkConfig: NetworkSyncConfig = {
-  syncTraits: ['position', 'placeable'],
-  syncFrequency: 'batched',
-  priority: 'normal',
-  persistent: true
-};
-
 export const assemblerFactory = createFactory({
   factoryFn: createStandardAssembler,
-  network: AssemblerNetworkConfig
+  network: {
+    syncTraits: ['position', 'placeable'],
+    syncFrequency: 'batched',
+    priority: 'normal',
+    persistent: true
+  }
 });
 
 /***** INFOGRAPHIC REGISTRATION *****/
