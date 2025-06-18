@@ -2,7 +2,6 @@ import { Container, Sprite, type Renderer, type RenderTexture } from "pixi.js";
 import type { LoadChunkEvent } from "../../../server/types/events/load_chunk";
 import { GameConstants } from "../../../shared/constants";
 import { SpritePool } from "../../../spriteSheets/meadow/pool";
-import { Logger } from "../../../utilities/Logger";
 import { globalRenderTexturePool, type RenderTexturePool } from "../renderTexturePool";
 import { ChunkTextureSpriteService, type SpriteNames } from "./sheetService";
 
@@ -73,8 +72,6 @@ export class ChunkTextureBuilder extends SpritePool<SpriteNames> {
     for (const release of borrowedSprites) {
       release();
     }
-    
-    Logger.log(`ChunkManager: Created sprite-based background texture using pooled RenderTexture`);
     return renderTexture;
   }
 }

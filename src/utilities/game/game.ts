@@ -184,7 +184,6 @@ export class Game {
     // Warm up the render texture pool with some initial textures
     // This helps reduce allocation spikes during gameplay
     globalRenderTexturePool.warmPool(5);
-    Logger.log('Render texture pool initialized and warmed');
   }
 
   private initializeSystems = async () => {
@@ -246,7 +245,6 @@ export class Game {
     // Add interactive behavior
     playerSprite.eventMode = 'static';
     playerSprite.on('pointerdown', () => {
-      Logger.log('Character clicked!');
     });
 
     return player;
@@ -274,11 +272,8 @@ export class Game {
     try {
       this.controllers.multiplayer = new MultiplayerManager(this, player);
       await this.controllers.multiplayer.initialize();
-      Logger.log('Multiplayer enabled');
-      
       // Initialize chunk unloading after multiplayer is set up
       this.controllers.chunkManager.initializeUnloading();
-      Logger.log('Chunk unloading system initialized');
     } catch (error) {
       console.warn('Failed to initialize multiplayer, continuing in single-player mode:', error);
       // Don't throw error - game should work without multiplayer
@@ -319,8 +314,6 @@ export class Game {
 
     // Clean up render texture pool
     globalRenderTexturePool.destroy();
-    Logger.log('Render texture pool cleared');
-
     // Clean up entity manager
     this.entityManager.clear();
 

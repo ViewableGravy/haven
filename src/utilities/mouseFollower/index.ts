@@ -148,16 +148,10 @@ export class MouseFollower {
     // Get current global position from the entity's transform
     const globalX = this.entity.getTrait('position').position.x;
     const globalY = this.entity.getTrait('position').position.y;
-
-    Logger.log(`MouseFollower: Placing entity at ${globalX}, ${globalY}`);
-
     if (this.actualCreatorFunction) {
-      Logger.log('MouseFollower: Using actual creator function for networked entity');
         try {
         // Create networked entity at the placement position FIRST
         const networkedEntity = await this.actualCreatorFunction(this.game, { x: globalX, y: globalY, type: "global" });
-        Logger.log(`MouseFollower: Successfully created networked entity: ${networkedEntity.uid}`);
-        
         // Only cleanup preview entity AFTER successful creation
         this.cleanup();
       } catch (error) {
@@ -165,7 +159,6 @@ export class MouseFollower {
         // Don't cleanup on error so user can try again
       }
     } else {
-      Logger.log('MouseFollower: Using direct entity placement (legacy)');
       // This is a direct entity placement (legacy behavior)
       const placementSuccess = this.game.entityManager.placeEntity(
         this.entity,

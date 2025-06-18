@@ -1,7 +1,7 @@
 /***** TYPE DEFINITIONS *****/
 import { RenderTexture } from "pixi.js";
 import { GameConstants } from "../../shared/constants";
-import { Logger } from "../../utilities/Logger";
+import { Logger } from "../../utilities/logger";
 
 /***** RENDER TEXTURE POOL *****/
 /**
@@ -23,8 +23,6 @@ export class RenderTexturePool {
     this.maxPoolSize = maxPoolSize;
     this.textureWidth = textureWidth;
     this.textureHeight = textureHeight;
-    
-    Logger.log(`RenderTexturePool: Initialized with max size ${maxPoolSize}, texture dimensions ${textureWidth}x${textureHeight}`);
   }
 
   /***** TEXTURE BORROWING *****/
@@ -37,13 +35,11 @@ export class RenderTexturePool {
 
     if (this.pool.length > 0) {
       texture = this.pool.pop()!;
-      Logger.log(`RenderTexturePool: Borrowed texture from pool (${this.pool.length} remaining)`);
     } else {
       texture = RenderTexture.create({
         width,
         height,
       });
-      Logger.log(`RenderTexturePool: Created new texture (pool was empty)`);
     }
 
     return texture;
@@ -70,13 +66,11 @@ export class RenderTexturePool {
       const oldestTexture = this.pool.shift();
       if (oldestTexture) {
         oldestTexture.destroy(true);
-        Logger.log(`RenderTexturePool: Evicted oldest texture (pool at capacity: ${this.maxPoolSize})`);
       }
     }
 
     // Add texture to pool
     this.pool.push(texture);
-    Logger.log(`RenderTexturePool: Returned texture to pool (${this.pool.length}/${this.maxPoolSize})`);
   }
 
   /***** TEXTURE CLEARING *****/
@@ -97,7 +91,6 @@ export class RenderTexturePool {
       
       // Note: RenderTexture will be cleared automatically when new content
       // is rendered to it, so explicit clearing isn't always necessary
-      Logger.log("RenderTexturePool: Prepared texture for reuse");
     } catch (error) {
       Logger.error("RenderTexturePool: Failed to clear texture content", error);
     }
@@ -121,14 +114,11 @@ export class RenderTexturePool {
    * Should be called during game cleanup to prevent memory leaks.
    */
   public destroy(): void {
-    Logger.log(`RenderTexturePool: Destroying pool with ${this.pool.length} textures`);
-    
     for (const texture of this.pool) {
       texture.destroy(true);
     }
     
     this.pool.length = 0;
-    Logger.log("RenderTexturePool: Pool destroyed");
   }
 
   /***** POOL WARMING *****/
@@ -141,12 +131,8 @@ export class RenderTexturePool {
     const texturesToCreate = Math.min(count, this.maxPoolSize - this.pool.length);
     
     if (texturesToCreate <= 0) {
-      Logger.log("RenderTexturePool: Pool already at capacity, no warming needed");
       return;
     }
-
-    Logger.log(`RenderTexturePool: Warming pool with ${texturesToCreate} textures`);
-    
     for (let i = 0; i < texturesToCreate; i++) {
       const texture = RenderTexture.create({
         width: this.textureWidth,
@@ -154,8 +140,6 @@ export class RenderTexturePool {
       });
       this.pool.push(texture);
     }
-    
-    Logger.log(`RenderTexturePool: Pool warmed to ${this.pool.length} textures`);
   }
 }
 

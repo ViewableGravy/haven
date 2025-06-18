@@ -40,7 +40,6 @@ export class Chunk {
     this.container.zIndex = 0;
     this.container.sortableChildren = true;
     
-    Logger.log(`Chunk (${chunkX}, ${chunkY}): Container positioned at world coordinates (${worldX}, ${worldY}), size: ${size}x${size}`);
   }
 
   /**
@@ -142,8 +141,6 @@ export class Chunk {
         
         // Return the render texture to the pool
         globalRenderTexturePool.returnTexture(renderTexture);
-        
-        Logger.log("Chunk: Returned RenderTexture to pool during destruction");
       }
     });
   }

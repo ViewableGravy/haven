@@ -37,11 +37,9 @@ export class BaseSpruceTree extends GameObject {
     this.addTrait('contextMenu', new ContextMenuTrait(this, [
       {
         label: "Twig",
-        action: () => Logger.log("Collected twig from spruce tree")
       },
       {
         label: "Branch", 
-        action: () => Logger.log("Collected branch from spruce tree")
       }
     ]));
   }

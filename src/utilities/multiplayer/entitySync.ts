@@ -74,14 +74,12 @@ export class EntitySyncManager {
 
   /***** REMOTE ENTITY HANDLING *****/
   public async handleRemoteEntityPlaced(entityData: EntityData): Promise<void> {
-    Logger.log(`EntitySync: Received remote entity placement: ${JSON.stringify(entityData)}`);
     
     // Server tells us about entity at world position
     // EntityManager figures out which chunk it belongs to
     
     // If not ready yet, queue the entity
     if (!this.isReady) {
-      Logger.log('EntitySync: Not ready, queueing entity for later');
       this.queueEntityForLaterPlacement(entityData);
       return;
     }
@@ -89,23 +87,17 @@ export class EntitySyncManager {
     // Check if entity already exists in the unified entity system
     const existingEntity = this.findEntityById(entityData.id);
     if (existingEntity) {
-      Logger.log('EntitySync: Entity already exists, skipping');
       return;
     }
-
-    Logger.log('EntitySync: Creating entity from server data');
     // Use WorldObjects to create entity
     const entity = await this.createEntityFromServerData(entityData);
     if (!entity) {
       console.error('EntitySync: Failed to create entity from server data');
       return;
     }
-
-    Logger.log('EntitySync: Successfully created entity, placing in main stage');
     // Place entity directly on main stage (no chunk dependency)
     try {
       this.placeEntityInMainStage(entity, entityData);
-      Logger.log('EntitySync: Entity placed successfully');
     } catch (error) {
       console.error('EntitySync: Failed to place entity, queuing for later:', error);
       // If placement fails, queue for later

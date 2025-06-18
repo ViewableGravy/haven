@@ -1,6 +1,6 @@
 /***** TYPE DEFINITIONS *****/
 import { v4 as uuidv4 } from 'uuid';
-import { Logger } from "../utilities/Logger";
+import { Logger } from "../utilities/logger";
 import type { BunMultiplayerServer } from './bunServer';
 import type { BunWebSocket, EntityData, Player } from './types';
 
@@ -25,7 +25,6 @@ export class WebSocketHandler {
       visibleChunks: new Set<string>()
     };
 
-    Logger.log(`Player ${playerId} connected at (${player.x}, ${player.y})`);
 
     this.server.addPlayer(player);
 
@@ -78,7 +77,6 @@ export class WebSocketHandler {
     const player = this.server.getPlayer(playerId);
 
     if (player) {
-      Logger.log(`Player ${playerId} disconnected`);
       this.server.removePlayer(playerId);
 
       // Broadcast player leave to all other players
@@ -110,7 +108,6 @@ export class WebSocketHandler {
         this.handleEntityRemove(player.id, message.data, requestId);
         break;
       default:
-        Logger.log(`Unknown message type: ${message.type}`);
     }
   };
 

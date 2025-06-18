@@ -10,6 +10,7 @@ import { createTestEntityInfographicNode } from "./info";
 export type Assembler = BaseAssembler;
 export type Opts = { position: Position };
 
+/***** COMPONENT START *****/
 export function createStandardAssembler(game: Game, opts: Opts): Assembler {
   const assembler = new BaseAssembler(game, opts.position);
 
@@ -42,7 +43,3 @@ infographicsRegistry.register("assembler", (entity: Assembler) => ({
   createNetworked: assemblerFactory.createNetworked,
   previewCreatorFunction: (game: Game, position: Position) => createStandardAssembler(game, { position })
 }));
-
-/***** EXPORTS *****/
-export { BaseAssembler } from "./base";
-

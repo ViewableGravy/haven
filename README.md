@@ -218,7 +218,7 @@ When adding new systems or modifying existing ones, please:
 
 ### Utilities & Helpers
 - `src/utilities/eventEmitter/` - Custom event system
-- `src/utilities/Logger/` - Centralized logging system
+- `src/utilities/logger/` - Centralized logging system
 - `src/workers/` - Web worker pool for background processing
 
 ## System Architecture Diagram

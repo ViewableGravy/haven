@@ -88,7 +88,6 @@ export class MultiplayerManager {
 
     // Entity synchronization events
     this.client.on('entity_placed', (data: EntityData) => {
-      Logger.log(`MultiplayerManager: Received entity_placed event: ${JSON.stringify(data)}`);
       const result = this.entityPlacedHandler.handleEvent(data);
       if (result instanceof Promise) {
         result.catch((error: Error) => {

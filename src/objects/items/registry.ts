@@ -5,7 +5,6 @@ import { fishingRodConfig } from "./configs/fishingrod";
 import { largeBoxConfig } from "./configs/largebox";
 import { stickConfig } from "./configs/stick";
 import { twigConfig } from "./configs/twig";
-import { Logger } from "../../utilities/Logger";
 
 /***** ITEM CONFIGURATION REGISTRY *****/
 class ItemConfigRegistry {
@@ -19,8 +18,6 @@ class ItemConfigRegistry {
       this.registerConfig(duckConfig);
       this.registerConfig(fishingRodConfig);
       this.registerConfig(largeBoxConfig);
-
-      Logger.log(`Loaded ${this.configs.size} item configurations`);
     } catch (error) {
       console.error('Failed to load item configurations:', error);
       throw error;

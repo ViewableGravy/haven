@@ -19,7 +19,7 @@ The implementation includes creating a Logger utility class with conditional log
 ## Files to be Modified
 
 ### New Files:
-- `src/utilities/Logger/index.ts` - Logger utility implementation
+- `src/utilities/logger/index.ts` - Logger utility implementation
 
 ### Modified Files:
 - `src/shared/constants.ts` - Add debug configuration constant
@@ -74,6 +74,6 @@ The implementation includes creating a Logger utility class with conditional log
 **Total Files to Update:** 9 files  
 **Total console.log Replacements:** ~30 instances  
 **Configuration Location:** `src/shared/constants.ts`  
-**Logger Location:** `src/utilities/Logger/index.ts`  
+**Logger Location:** `src/utilities/logger/index.ts`  
 
 The Logger implementation follows the single responsibility principle and uses a class-based approach consistent with the existing codebase architecture. The debug flag will be centrally configurable and can be easily toggled for development vs production environments.

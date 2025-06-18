@@ -157,7 +157,6 @@ export class World {
    * Create a networked entity that syncs specified traits
    */
   public async createNetworkedEntity<T extends GameObject>(opts: CreateNetworkedEntityOpts<T>): Promise<T> {
-    Logger.log(`World: Creating networked entity with options: ${JSON.stringify(opts)}`);
     
     const entity = this.createEntity(opts.factoryFn, {
       ...opts,
@@ -168,12 +167,8 @@ export class World {
         persistent: opts.network?.persistent ?? true
       }
     });
-
-    Logger.log('World: Entity created, syncing to server');
     // Handle entity creation sync (separate from NetworkTrait)
     await this.syncEntityCreationToServer(entity);
-
-    Logger.log('World: Networked entity creation complete');
     return entity;
   }
 
@@ -278,21 +273,15 @@ export class World {
    * Handle syncing entity creation to server (separate from NetworkTrait)
    */
   private async syncEntityCreationToServer(entity: GameObject): Promise<void> {
-    Logger.log('World: Attempting to sync entity creation to server');
-    
     // Don't sync if not connected to multiplayer
     if (!this.game.controllers.multiplayer?.isConnected()) {
       console.warn('World: Not connected to multiplayer, skipping entity sync');
       return;
     }
-
-    Logger.log('World: Multiplayer connected, proceeding with entity sync');
-
     try {
       const positionTrait = entity.getTrait('position');
       const position = positionTrait.position.position;
       
-      Logger.log(`World: Entity position: ${JSON.stringify(position)}`);
       
       // Ensure position is valid
       if (position.x === undefined || position.y === undefined) {
@@ -301,17 +290,11 @@ export class World {
       }
       
       const entityType = entity.getEntityType();
-      Logger.log(`World: Entity type: ${entityType}`);
-      
       // Calculate chunk coordinates
       const chunkX = Math.floor(position.x / this.game.consts.chunkAbsolute);
       const chunkY = Math.floor(position.y / this.game.consts.chunkAbsolute);
-      
-      Logger.log(`World: Chunk coordinates: ${chunkX}, ${chunkY}`);
-
       // Use async notification if available, fallback to synchronous
       if (this.game.controllers.multiplayer?.client.sendEntityPlaceAsync) {
-        Logger.log('World: Using async entity place');
         try {
           const result = await this.game.controllers.multiplayer.client.sendEntityPlaceAsync(
             entityType,
@@ -320,12 +303,10 @@ export class World {
             chunkX,
             chunkY
           );
-          Logger.log(`World: Entity creation sent successfully: ${JSON.stringify(result)}`);
         } catch (error) {
           console.error('World: Failed to create entity on server:', error);
         }
       } else {
-        Logger.log('World: Using sync entity place');
         // Fallback to synchronous method
         this.game.controllers.multiplayer?.client.sendEntityPlace?.(
           entityType,
@@ -334,7 +315,6 @@ export class World {
           chunkX,
           chunkY
         );
-        Logger.log('World: Sync entity place sent');
       }
     } catch (error) {
       console.warn('World: Failed to sync entity creation to server:', error);

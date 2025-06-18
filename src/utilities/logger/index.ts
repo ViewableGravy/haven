@@ -48,4 +48,12 @@ export class Logger {
       }
     }
   }
+
+  public static error = (message: string, error?: any): void => {
+    if (typeof window === "undefined") {
+      console.error(message, error);
+    } else {
+      console.error(message, error);
+    }
+  }
 }

@@ -213,7 +213,6 @@ export class MultiplayerClient {
     }
 
     this.reconnectAttempts++;
-    Logger.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
 
     setTimeout(() => {
       this.connect().catch(() => {

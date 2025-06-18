@@ -77,7 +77,7 @@ latticus/
 - `src/utilities/store/` → `latticus/shared/utilities/createStore.ts`
 - `src/objects/traits/` → `latticus/shared/traits/`
 - `src/spriteSheets/` → `latticus/shared/assets/spriteSheets/`
-- `src/utilities/game/Logger.ts` → `latticus/shared/utilities/Logger.ts`
+- `src/utilities/game/Logger.ts` → `latticus/shared/utilities/logger.ts`
 - `src/server/chunkGenerator.ts` → `latticus/server/chunks/generator.ts`
 
 ## Architecture Diagram

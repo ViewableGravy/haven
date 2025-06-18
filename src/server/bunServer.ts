@@ -1,7 +1,7 @@
 /***** TYPE DEFINITIONS *****/
 import { v4 as uuidv4 } from 'uuid';
 import { GameConstants } from '../shared/constants';
-import { Logger } from "../utilities/Logger";
+import { Logger } from "../utilities/logger";
 import { createChunkKey } from '../utilities/tagged';
 import { chunkDatabase } from './chunkdb';
 import { ServerChunkGenerator } from './chunkGenerator';
@@ -38,21 +38,13 @@ export class BunMultiplayerServer {
         open: this.webSocketHandler.handleOpen,
         close: this.webSocketHandler.handleClose,
         drain: this.webSocketHandler.handleDrain
-      }
-    });
-
-    Logger.log(`Bun server started on port ${this.port} with auto-restart enabled`);
-    Logger.log('Auto-restart test: Server file modified!');
-
-    // Setup graceful shutdown handlers
+      }    });    // Setup graceful shutdown handlers
     process.on('SIGINT', () => {
-      Logger.log('Received SIGINT, shutting down gracefully...');
       this.shutdown();
       process.exit(0);
     });
 
     process.on('SIGTERM', () => {
-      Logger.log('Received SIGTERM, shutting down gracefully...');
       this.shutdown();
       process.exit(0);
     });
@@ -95,18 +87,14 @@ export class BunMultiplayerServer {
       chunkCount: chunkStats.chunkCount
     };
   };
-
-  /***** CHUNK MANAGEMENT *****/  public loadChunksAroundPlayer = (player: Player): void => {
+  /***** CHUNK MANAGEMENT *****/
+  public loadChunksAroundPlayer = (player: Player): void => {
     const playerChunkX = Math.floor(player.x / this.chunkAbsolute);
     const playerChunkY = Math.floor(player.y / this.chunkAbsolute);
-
-    Logger.log(`Loading chunks for player ${player.id} at chunk (${playerChunkX}, ${playerChunkY})`);
     
     // Debug: Show what chunks are currently in memory
     chunkDatabase.debugListChunks();
 
-    const chunkWidth = GameConstants.CHUNK_RENDER_WIDTH;
-    const chunkHeight = GameConstants.CHUNK_RENDER_HEIGHT;
     const halfWidth = GameConstants.HALF_CHUNK_RENDER_WIDTH;
     const halfHeight = GameConstants.HALF_CHUNK_RENDER_HEIGHT;
 
@@ -117,8 +105,6 @@ export class BunMultiplayerServer {
         player.visibleChunks.add(chunkKey);
       }
     }
-
-    Logger.log(`Sent ${chunkWidth * chunkHeight} chunks to player ${player.id}`);
   };
 
   private sendNewChunksForPlayer = (playerId: string, newChunkX: number, newChunkY: number): void => {
@@ -145,14 +131,9 @@ export class BunMultiplayerServer {
     });
 
     chunksToLoad.forEach(({x, y}) => {
-      this.ensureChunkExistsAndSend(playerId, x, y);
-    });
+      this.ensureChunkExistsAndSend(playerId, x, y);    });
 
     player.visibleChunks = newVisibleChunks;
-
-    if (chunksToLoad.length > 0) {
-      Logger.log(`Sent ${chunksToLoad.length} new chunks to player ${playerId} at chunk (${newChunkX}, ${newChunkY})`);
-    }
   };
   private ensureChunkExistsAndSend = (playerId: string, chunkX: number, chunkY: number): void => {
     const chunkKey = createChunkKey(chunkX, chunkY);
@@ -160,12 +141,9 @@ export class BunMultiplayerServer {
     let chunkData = chunkDatabase.getChunk(chunkKey);
     
     if (!chunkData) {
-      Logger.log(`Server: Chunk ${chunkKey} not found in database, generating new chunk`);
       chunkData = this.chunkGenerator.generateChunk(chunkX, chunkY);
       chunkDatabase.storeChunk(chunkKey, chunkData);
-      Logger.log(`Generated and stored new chunk ${chunkKey} with ${chunkData.entities.length} entities`);
     } else {
-      Logger.log(`Server: Found existing chunk ${chunkKey} with ${chunkData.entities.length} entities`);
     }
 
     const loadChunkMessage: ServerEvents.LoadChunkMessage = {
@@ -211,19 +189,15 @@ export class BunMultiplayerServer {
     this.entities.set(entityData.id, entityData);
 
     const chunkKey = createChunkKey(entityData.chunkX, entityData.chunkY);
-    Logger.log(`Server: Attempting to add entity ${entityData.id} to chunk ${chunkKey}`);
     
     const success = chunkDatabase.addEntityToChunk(chunkKey, entityData);
     
     if (!success) {
-      Logger.log(`Server: Chunk ${chunkKey} not found, creating new chunk for entity placement`);
       const chunkData = this.chunkGenerator.generateChunk(entityData.chunkX, entityData.chunkY);
       chunkData.entities.push(entityData);
       chunkDatabase.storeChunk(chunkKey, chunkData);
-      Logger.log(`Created new chunk ${chunkKey} for entity placement with ${chunkData.entities.length} entities`);
     } else {
       const chunkData = chunkDatabase.getChunk(chunkKey);
-      Logger.log(`Server: Successfully added entity to existing chunk ${chunkKey}, chunk now has ${chunkData?.entities.length} entities`);
     }
 
     this.broadcast({
@@ -231,7 +205,6 @@ export class BunMultiplayerServer {
       data: entityData
     });
 
-    Logger.log(`Entity ${entityData.type} placed by ${entityData.placedBy} at (${entityData.x}, ${entityData.y}) in chunk (${entityData.chunkX}, ${entityData.chunkY})`);
   };
 
   public removeEntity = (playerId: string, entityId: string): boolean => {
@@ -248,7 +221,6 @@ export class BunMultiplayerServer {
       data: { id: entityId }
     });
 
-    Logger.log(`Entity ${entityId} removed by ${playerId} from chunk (${entity.chunkX}, ${entity.chunkY})`);
     return true;
   };
 
@@ -292,13 +264,11 @@ export class BunMultiplayerServer {
   public stop = (): void => {
     if (this.server) {
       this.server.stop();
-      Logger.log('Server stopped');
     }
   };
 
   /***** SHUTDOWN HANDLING *****/
   public shutdown(): void {
-    Logger.log('Server shutting down...');
     chunkDatabase.shutdown();
     if (this.server) {
       this.server.stop();
@@ -333,18 +303,14 @@ export class BunMultiplayerServer {
 // Check if this file is being run directly
 if (process.argv[1] === __filename || process.argv[1] === import.meta.url) {
   const server = new BunMultiplayerServer(); // Use default port from constants
-  Logger.log('Bun server created and listening on port 8081');
-  Logger.log('Chunk generation system initialized');
 
   // Log server statistics periodically
   setInterval(() => {
     const chunkStats = server.getChunkStats();
-    Logger.log(`Server Stats - Players: ${server.getPlayerCount()}, Entities: ${server.getEntityCount()}, Chunks: ${chunkStats.chunkCount}, Chunk Entities: ${chunkStats.totalEntities}`);
   }, 30000); // Every 30 seconds
 
   // Graceful shutdown
   process.on('SIGINT', () => {
-    Logger.log('Shutting down server...');
     server.stop();
     process.exit(0);
   });

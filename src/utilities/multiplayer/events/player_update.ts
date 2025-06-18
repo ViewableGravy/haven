@@ -9,8 +9,6 @@ export class PlayerUpdateHandler implements ServerEventHandler {
 
     public handleEvent(data: MultiplayerClient.Data.PlayerUpdate): void {
         const remotePlayer = this.multiplayerManager.remotePlayers.get(data.id);
-
-        Logger.log(`PlayerUpdateHandler: Remote player ${data.id}: ${remotePlayer ? 'found' : 'not found'}`);
         if (remotePlayer) {
             remotePlayer.updatePosition(data.x, data.y);
         }
