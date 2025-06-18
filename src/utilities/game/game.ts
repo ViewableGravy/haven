@@ -15,12 +15,12 @@ import { DesertSprite } from "../../spriteSheets/desert/desert";
 import { ChunkManager } from "../../systems/chunkManager";
 import { globalRenderTexturePool } from "../../systems/chunkManager/renderTexturePool";
 import { KeyboardController } from "../keyboardController";
-import { Logger } from "../logger";
 import { MultiplayerManager } from "../multiplayer/manager";
 import { Player } from "../player";
 import { Position } from "../position";
 import { SubscribablePosition } from "../position/subscribable";
 import { EntityManager } from "./entityManager";
+import { LayerManager } from "./layerManager";
 import { World } from "./world";
 
 /***** TYPE DEFINITIONS *****/
@@ -62,10 +62,10 @@ export class Game {
 
   // Game state - simplified
   public readonly state: GameState;
-
   // Managers
   public readonly entityManager: EntityManager;
   public readonly worldManager: World;
+  public readonly layerManager: LayerManager;
 
   // Controllers
   public controllers: GlobalControllers = {
@@ -83,9 +83,9 @@ export class Game {
       minZoom: 0.1,
       maxZoom: 3.0,
     };
-    
-    this.entityManager = new EntityManager(this);
+      this.entityManager = new EntityManager(this);
     this.worldManager = new World(this);
+    this.layerManager = new LayerManager(this);
   }
 
   public initialize = async (el: HTMLElement) => {
@@ -118,11 +118,10 @@ export class Game {
 
     // Create main world container for chunks and entities
     this.world = new Container();
-    this.world.sortableChildren = true; // Enable sorting for proper layering
+    this.world.sortableChildren = true;
     this.state.app.stage.addChild(this.world);
-    
     // Initialize the layer system now that world container exists
-    this.worldManager.initializeLayerSystem();
+    this.layerManager.initialize();
     
     // Create entity stage for reference (legacy compatibility)
     // Note: Entities now go on world container to inherit zoom transforms
@@ -237,10 +236,8 @@ export class Game {
     player.position.subscribeImmediately(({ x, y }) => {
       playerSprite.x = x;
       playerSprite.y = y;
-    });
-      // Add to entity layer for proper depth sorting
-    const layerManager = this.worldManager.getLayerManager();
-    layerManager.addToLayer(playerSprite, 'entity');
+    });      // Add to entity layer for proper depth sorting
+    this.layerManager.addToLayer(playerSprite, 'entity');
     
     // Add interactive behavior
     playerSprite.eventMode = 'static';
@@ -296,9 +293,8 @@ export class Game {
   private startGameLoop(player: Player) {
     this.state.app.ticker.add((ticker) => {
       player.handleMovement(this, ticker);
-      
-      // Update entity layer sorting based on y-position
-      this.worldManager.getLayerManager().updateEntitySorting();
+    // Update entity layer sorting based on y-position
+    this.layerManager.updateEntitySorting();
     });
   }
 

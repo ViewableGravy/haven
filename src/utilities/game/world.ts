@@ -1,9 +1,7 @@
 /***** TYPE DEFINITIONS *****/
-import { Container } from 'pixi.js';
 import type { GameObject } from "../../objects/base";
 import { NetworkTrait, type NetworkSyncConfig } from "../../objects/traits/network";
 import type { TraitNames } from "../../objects/traits/types";
-import type { LayerManager, LayerType, LayeredEntity } from "../../types/rendering";
 import type { Game } from "./game";
 
 /***** ENTITY CREATION OPTIONS *****/
@@ -27,98 +25,9 @@ export type CreateNetworkedEntityOpts<T extends GameObject> = EntityCreationOpti
 /***** WORLD OBJECT *****/
 export class World {
   private game: Game;
-  private layerManager: LayerManager | null = null;
 
   constructor(game: Game) {
     this.game = game;
-  }
-
-  /***** LAYER SYSTEM *****/
-  /**
-   * Initialize the layer system with background and entity layers
-   * This is called after the world container is created
-   */
-  public initializeLayerSystem(): void {
-    if (this.layerManager) {
-      return; // Already initialized
-    }
-    
-    const backgroundLayer = new Container();
-    const entityLayer = new Container();
-    
-    backgroundLayer.zIndex = -10;
-    entityLayer.zIndex = 0;
-    
-    // Add layers to the world container so they inherit zoom transforms
-    this.game.world.addChild(backgroundLayer);
-    this.game.world.addChild(entityLayer);
-    
-    // Enable sorting for the world container and entity layer
-    this.game.world.sortableChildren = true;
-    entityLayer.sortableChildren = true;
-    
-    const updateEntitySorting = () => {
-      // Sort entities by y-position for proper depth perception
-      const entities = entityLayer.children as Array<LayeredEntity>;
-      for (let i = 0; i < entities.length; i++) {
-        const entity = entities[i];
-        if (entity._isLayeredEntity) {
-          // Use y-position for z-index, with small offset to maintain stable sorting
-          entity.zIndex = entity.y + (i * 0.001);
-        }
-      }
-    };
-
-    const addToLayer = (object: Container, layer: LayerType) => {
-      const layeredObject = object as LayeredEntity;
-      
-      // Remove from current layer if any
-      if (layeredObject._currentLayer && this.layerManager) {
-        this.layerManager.removeFromLayer(object);
-      }
-      
-      // Add to appropriate layer
-      if (layer === 'background') {
-        backgroundLayer.addChild(object);
-      } else {
-        layeredObject._isLayeredEntity = true;
-        entityLayer.addChild(object);
-        updateEntitySorting();
-      }
-      
-      layeredObject._currentLayer = layer;
-    };
-    
-    const removeFromLayer = (object: Container) => {
-      const layeredObject = object as LayeredEntity;
-      
-      if (layeredObject._currentLayer === 'background') {
-        backgroundLayer.removeChild(object);
-      } else if (layeredObject._currentLayer === 'entity') {
-        entityLayer.removeChild(object);
-        layeredObject._isLayeredEntity = false;
-      }
-      
-      layeredObject._currentLayer = undefined;
-    };
-    
-    this.layerManager = {
-      backgroundLayer,
-      entityLayer,
-      addToLayer,
-      removeFromLayer,
-      updateEntitySorting
-    };
-  }
-
-  /**
-   * Get the layer manager for external access
-   */
-  public getLayerManager(): LayerManager {
-    if (!this.layerManager) {
-      throw new Error('Layer system not initialized. Call initializeLayerSystem() first.');
-    }
-    return this.layerManager;
   }
 
   /***** ENTITY CREATION *****/

@@ -129,7 +129,7 @@ export class EntitySyncManager {
     // Place entity directly on main stage with global coordinates
     container.x = entityData.x;
     container.y = entityData.y;    // Add to entity layer for proper depth sorting
-    const layerManager = this.game.worldManager.getLayerManager();
+    const layerManager = this.game.layerManager;
     layerManager.addToLayer(container, 'entity');
 
     // Mark entity as placed if it has the placeable trait

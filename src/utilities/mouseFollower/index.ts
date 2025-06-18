@@ -1,7 +1,6 @@
 import type { GameObject } from "../../objects/base";
 import { TransformTrait } from "../../objects/traits/transform";
 import type { Game } from "../game/game";
-import { Logger } from "../logger";
 import type { Position } from "../position";
 import { Rectangle } from "../rectangle";
 
@@ -25,7 +24,7 @@ export class MouseFollower {
     this.bindEvents();
     
     // Add preview entity to entity layer 
-    const layerManager = this.game.worldManager.getLayerManager();
+    const layerManager = this.game.layerManager;
     layerManager.addToLayer(this.entity.getTrait('container').container, 'entity');
     
     // Immediately position the entity at the current cursor position
@@ -151,7 +150,8 @@ export class MouseFollower {
     if (this.actualCreatorFunction) {
         try {
         // Create networked entity at the placement position FIRST
-        const networkedEntity = await this.actualCreatorFunction(this.game, { x: globalX, y: globalY, type: "global" });
+        await this.actualCreatorFunction(this.game, { x: globalX, y: globalY, type: "global" });
+        
         // Only cleanup preview entity AFTER successful creation
         this.cleanup();
       } catch (error) {
@@ -185,7 +185,7 @@ export class MouseFollower {
     window.removeEventListener("mousedown", this.handleMouseDown);
     
     // Remove from layer system
-    const layerManager = this.game.worldManager.getLayerManager();
+    const layerManager = this.game.layerManager;
     layerManager.removeFromLayer(this.entity.getTrait('container').container);
   }
 }

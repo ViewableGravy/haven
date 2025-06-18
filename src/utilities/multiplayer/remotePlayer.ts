@@ -75,9 +75,8 @@ export class RemotePlayer {
       if (this.sprite) {
         this.sprite.x = x;
         this.sprite.y = y;
-      }
-    });    // Add to entity layer for proper depth sorting
-    const layerManager = this.game.worldManager.getLayerManager();
+      }    });    // Add to entity layer for proper depth sorting
+    const layerManager = this.game.layerManager;
     layerManager.addToLayer(this.sprite, 'entity');
   }
 
@@ -194,9 +193,8 @@ export class RemotePlayer {
       this.positionUnsubscribe = null;
     }
       // Clean up sprite
-    if (this.sprite) {
-      // Remove from layer system
-      const layerManager = this.game.worldManager.getLayerManager();
+    if (this.sprite) {      // Remove from layer system
+      const layerManager = this.game.layerManager;
       layerManager.removeFromLayer(this.sprite);
       
       this.sprite.destroy();

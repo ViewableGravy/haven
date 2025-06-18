@@ -38,11 +38,10 @@ export class EntityManager {
   public removeEntity(entity: GameObject, notifyServer: boolean = true): void {
     // Call any registered destroy callbacks first
     this.executeDestroyCallbacks(entity, notifyServer);
-    
-    // Remove from layer system before destroying
+      // Remove from layer system before destroying
     try {
       const container = entity.getTrait('container').container;
-      const layerManager = this.game.worldManager.getLayerManager();
+      const layerManager = this.game.layerManager;
       layerManager.removeFromLayer(container);
     } catch (error) {
       // Entity might not have container trait, that's ok
@@ -137,7 +136,7 @@ export class EntityManager {
       const container = entity.getTrait('container').container;
       container.x = globalX;
       container.y = globalY;      // Add to entity layer for proper depth sorting
-      const layerManager = this.game.worldManager.getLayerManager();
+      const layerManager = this.game.layerManager;
       layerManager.addToLayer(container, 'entity');
       this.addEntity(entity);
 

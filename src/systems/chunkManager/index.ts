@@ -101,7 +101,7 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
       this.game.controllers.multiplayer?.entitySync?.handleChunkUnload?.(chunkKey);
       
       // Remove from layer system
-      const layerManager = this.game.worldManager.getLayerManager();
+      const layerManager = this.game.layerManager;
       layerManager.removeFromLayer(chunk.getContainer());
       
       chunk.destroy();
@@ -130,7 +130,7 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     const chunkContainer = chunk.getContainer();
       // Register chunk (terrain only) - add to background layer
     this.chunkRegistry.addChunk(chunkKey, chunk);
-    const layerManager = this.game.worldManager.getLayerManager();
+    const layerManager = this.game.layerManager;
     layerManager.addToLayer(chunkContainer, 'background');
     
     // Entities are now handled by EntityManager and placed on main stage
