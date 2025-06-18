@@ -127,8 +127,6 @@ export class Chunk {
     // Add to world container
     game.worldContainer.addChild(this.container);
     this.isLoaded = true;
-    
-    console.log(`Loaded chunk (${this.chunkX}, ${this.chunkY})`);
   }
 
   public unload(): void {
@@ -140,7 +138,6 @@ export class Chunk {
     }
     
     this.isLoaded = false;
-    console.log(`Unloaded chunk (${this.chunkX}, ${this.chunkY})`);
   }
 
   public destroy(): void {

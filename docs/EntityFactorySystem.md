@@ -150,7 +150,6 @@ const NetworkConfig: NetworkSyncConfig = {
 ```typescript
 try {
   const entity = await WorldObjects.spruceTree.createNetworked(game, { x, y });
-  console.log("Entity created successfully:", entity.uid);
 } catch (error) {
   console.error("Failed to create networked entity:", error);
   // Fallback to local entity if needed

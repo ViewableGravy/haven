@@ -282,7 +282,6 @@ export class WebSocketHandler {
 ```typescript
 try {
   const entity = await WorldObjects.spruceTree.createNetworked(game, { x, y });
-  console.log("Entity created successfully");
 } catch (error) {
   if (error.message === 'Request timeout') {
     // Server didn't respond in time
@@ -301,7 +300,6 @@ try {
 ```typescript
 // Automatic reconnection
 client.on('disconnect', () => {
-  console.log("Disconnected from server, attempting reconnection...");
   setTimeout(() => {
     client.reconnect();
   }, 5000);
