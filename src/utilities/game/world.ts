@@ -4,7 +4,6 @@ import type { GameObject } from "../../objects/base";
 import { NetworkTrait, type NetworkSyncConfig } from "../../objects/traits/network";
 import type { TraitNames } from "../../objects/traits/types";
 import type { LayerManager, LayerType, LayeredEntity } from "../../types/rendering";
-import { Logger } from "../logger";
 import type { Game } from "./game";
 
 /***** ENTITY CREATION OPTIONS *****/
@@ -61,14 +60,16 @@ export class World {
     const updateEntitySorting = () => {
       // Sort entities by y-position for proper depth perception
       const entities = entityLayer.children as Array<LayeredEntity>;
-      entities.forEach((entity, index) => {
+      for (let i = 0; i < entities.length; i++) {
+        const entity = entities[i];
         if (entity._isLayeredEntity) {
           // Use y-position for z-index, with small offset to maintain stable sorting
-          entity.zIndex = entity.y + (index * 0.001);
+          entity.zIndex = entity.y + (i * 0.001);
         }
-      });
+      }
     };
-      const addToLayer = (object: Container, layer: LayerType) => {
+
+    const addToLayer = (object: Container, layer: LayerType) => {
       const layeredObject = object as LayeredEntity;
       
       // Remove from current layer if any
@@ -247,15 +248,12 @@ export class World {
   /**
    * Find entities with specific traits
    */
-  public findEntitiesWithTrait(traitName: string): Array<GameObject> {
+  public findEntitiesWithTrait(traitName: TraitNames): Array<GameObject> {
     const entities: Array<GameObject> = [];
     
     for (const entity of this.getAllEntities()) {
-      try {
-        entity.getTrait(traitName as keyof import('../../objects/traits/types').Traits);
+      if (entity.hasTrait(traitName)) {
         entities.push(entity);
-      } catch {
-        // Entity doesn't have this trait, skip it
       }
     }
     
@@ -279,6 +277,7 @@ export class World {
       console.warn('World: Not connected to multiplayer, skipping entity sync');
       return;
     }
+
     try {
       const positionTrait = entity.getTrait('position');
       const position = positionTrait.position.position;
@@ -294,46 +293,20 @@ export class World {
       // Calculate chunk coordinates
       const chunkX = Math.floor(position.x / this.game.consts.chunkAbsolute);
       const chunkY = Math.floor(position.y / this.game.consts.chunkAbsolute);
-      // Use async notification if available, fallback to synchronous
-      if (this.game.controllers.multiplayer?.client.sendEntityPlaceAsync) {
-        try {
-          const result = await this.game.controllers.multiplayer.client.sendEntityPlaceAsync(
-            entityType,
-            position.x,
-            position.y,
-            chunkX,
-            chunkY
-          );
-        } catch (error) {
-          console.error('World: Failed to create entity on server:', error);
-        }
-      } else {
-        // Fallback to synchronous method
-        this.game.controllers.multiplayer?.client.sendEntityPlace?.(
+      // Use async notification method
+      try {
+        await this.game.controllers.multiplayer.client.sendEntityPlaceAsync(
           entityType,
           position.x,
           position.y,
           chunkX,
           chunkY
         );
+      } catch (error) {
+        console.error('World: Failed to create entity on server:', error);
       }
     } catch (error) {
       console.warn('World: Failed to sync entity creation to server:', error);
     }
-  }
-
-  /***** UTILITY METHODS *****/
-  /**
-   * Get the game instance for advanced operations
-   */
-  public getGame(): Game {
-    return this.game;
-  }
-
-  /**
-   * Check if multiplayer is available
-   */
-  public isMultiplayerEnabled(): boolean {
-    return this.game.controllers.multiplayer?.isConnected() ?? false;
   }
 }
