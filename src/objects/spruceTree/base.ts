@@ -5,7 +5,6 @@ import { infographicStore } from "../../components/infographic/store";
 import { GameConstants } from "../../shared/constants";
 import { SpruceTreeSprite } from "../../spriteSheets/spruceTree";
 import type { Game } from "../../utilities/game/game";
-import { Logger } from "../../utilities/logger";
 import type { Position } from "../../utilities/position";
 import { GameObject } from "../base";
 import { ContainerTrait } from "../traits/container";
@@ -36,9 +35,11 @@ export class BaseSpruceTree extends GameObject {
     }));
     this.addTrait('contextMenu', new ContextMenuTrait(this, [
       {
+        action: () => console.log("Harvesting spruce tree... for twig"),
         label: "Twig",
       },
       {
+        action: () => console.log("Harvesting spruce tree... for branch"),
         label: "Branch", 
       }
     ]));
@@ -76,14 +77,16 @@ export class BaseSpruceTree extends GameObject {
     return sprite;
   }
 
-  public setupInteractivity(): void {
+  public setupInteractivity = (): void => {
     this.spruceTreeSprite.addEventListener("mouseover", () => {
       // Only show selection if not in ghost mode
       if (this.getTrait('ghostable').ghostMode) return;
 
       this.selectionSprite.renderable = true;
       this.selectionSprite.interactive = false;
-      this.selectionSprite.eventMode = "none";      // Get spruce tree infographic from the registry, passing this entity instance
+      this.selectionSprite.eventMode = "none";      
+      
+      // Get spruce tree infographic from the registry, passing this entity instance
       infographicStore.setFromRegistry("spruce-tree", this);
     });
 
@@ -93,6 +96,7 @@ export class BaseSpruceTree extends GameObject {
       infographicStore.setInactive();
     });
   }
+
   public destroy(notifyServer: boolean = true): void {
     // Clean up spruce tree specific resources before calling super.destroy()
     if (ContainerTrait.is(this)) {

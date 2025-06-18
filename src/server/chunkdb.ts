@@ -1,4 +1,5 @@
 /***** TYPE DEFINITIONS *****/
+import { Logger } from "../utilities/logger";
 import type { ChunkKey } from "../utilities/tagged";
 import type { EntityData } from "./types";
 import type { LoadChunkEvent } from "./types/events/load_chunk";
@@ -108,7 +109,8 @@ export class ChunkDatabase {
    */
   public debugListChunks(): void {
     for (const [chunkKey, chunkData] of this.chunks) {
-      chunkData.entities.forEach((entity, index) => {
+      chunkData.entities.forEach((_, index) => {
+        Logger.log(`Chunk: ${chunkKey}, Entity ${index + 1}:`)
       });
     }
   }

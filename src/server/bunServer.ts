@@ -144,6 +144,7 @@ export class BunMultiplayerServer {
       chunkData = this.chunkGenerator.generateChunk(chunkX, chunkY);
       chunkDatabase.storeChunk(chunkKey, chunkData);
     } else {
+      Logger.log(`Server: Chunk ${chunkKey} already exists in database, loading from cache`, 0.01);
     }
 
     const loadChunkMessage: ServerEvents.LoadChunkMessage = {
@@ -225,12 +226,14 @@ export class BunMultiplayerServer {
   };
 
   /***** UTILITY METHODS *****/
-  public sendToPlayer = (playerId: string, message: ServerEvents.ServerMessage): void => {
+  public sendToPlayer(playerId: string, message: ServerEvents.ServerMessage): void;
+  public sendToPlayer(playerId: string, message: ServerEvents.ServerMessageWithAsyncResponse): void;
+  public sendToPlayer(playerId: string, message: ServerEvents.ServerMessage | ServerEvents.ServerMessageWithAsyncResponse): void {
     const player = this.players.get(playerId);
     if (player && player.ws.readyState === 1) { // 1 = OPEN
       player.ws.send(JSON.stringify(message));
     }
-  };
+  }
 
   public broadcastToOthers = (excludePlayerId: string, message: ServerEvents.ServerMessage): void => {
     this.players.forEach((player, id) => {
@@ -307,6 +310,7 @@ if (process.argv[1] === __filename || process.argv[1] === import.meta.url) {
   // Log server statistics periodically
   setInterval(() => {
     const chunkStats = server.getChunkStats();
+    Logger.log(`Server Stats - Players: ${server.getPlayerCount()}, Chunks: ${chunkStats.chunkCount}`);
   }, 30000); // Every 30 seconds
 
   // Graceful shutdown

@@ -76,6 +76,16 @@ export interface EntityRemovedMessage {
   };
 }
 
+// Special message type for async entity removal responses
+export interface EntityRemovalSuccessMessage {
+  type: 'entity_removed';
+  data: {
+    success: boolean;
+  };
+}
+
+
+
 export interface EntitiesListMessage {
   type: 'entities_list';
   data: {
@@ -88,7 +98,7 @@ export namespace ServerEvents {
     type: LoadChunkEvent.LoadChunkType;
     data: LoadChunkEvent.LoadChunkData;
   }
-
+  
   export type ServerMessage = 
     | PlayerUpdateMessage 
     | PlayerJoinMessage 
@@ -99,8 +109,20 @@ export namespace ServerEvents {
     | EntitiesListMessage
     | LoadChunkMessage
 
+  // Async response versions that include requestId
+  export type AsyncResponse<T> = T & { requestId: string };
+    export type ServerMessageWithAsyncResponse = 
+    | ServerMessage 
+    | AsyncResponse<EntityPlacedMessage>
+    | AsyncResponse<EntityRemovalSuccessMessage>;
+
   export type ServerMessageType = ServerMessage['type'];
   export type ServerMessageData = ServerMessage['data'];
+  
+  // Helper function to determine if a message is an async response
+  export function isAsyncResponse(message: ServerMessageWithAsyncResponse): message is AsyncResponse<ServerMessage> {
+    return 'requestId' in message;
+  }
 }
 
 /***** MULTIPLAYER CLIENT NAMESPACE *****/
