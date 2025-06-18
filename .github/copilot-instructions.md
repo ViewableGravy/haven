@@ -23,6 +23,8 @@ export namespace ClientChunkNamespace {
 button.tsx component to `index.tsx` inside the folder.
 - When working on a feature, consider if it can be done locally, and prefer this over using a global state solution.
 - Always use a standard `for(const key (of|in) (object|array))` loop for iterating over objects or arrays over standard foreach loops. methods like reduce, map, filter, etc. are fine to use.
+- Always convert legacy code to new systems, instead of trying to make things backwards compatible.
+- Refer to docs/*.md for more information on how systems work in this application.
 
 ## Software
 - use bun for all package management and running of commands
@@ -37,7 +39,7 @@ This file should be under a `agent-summaries` folder in the root directory. This
   1. Multi-line ASCII Title
   2. High level overview with 1-2 paragraphs.
   3. A list of files that will be modified
-  4. Diagram of the changes, if applicable (and where possible)
+  4. Diagram of the changes, if applicable (and where possible) | Always use mermaid-js syntax
   5. Any final information that will be useful (1-2 paragraphs)
 
 *Note*: Please keep this document between 50-100 lines, and ensure it is clear and concise.

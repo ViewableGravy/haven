@@ -1,5 +1,5 @@
 import type { MultiplayerClient } from "../../../server/types";
-import { logger } from "../../logger";
+import { Logger } from "../../logger";
 import type { MultiplayerManager } from "../manager";
 import type { ServerEventHandler } from "./types";
 
@@ -9,8 +9,6 @@ export class PlayerUpdateHandler implements ServerEventHandler {
 
     public handleEvent(data: MultiplayerClient.Data.PlayerUpdate): void {
         const remotePlayer = this.multiplayerManager.remotePlayers.get(data.id);
-
-        logger.log(`PlayerUpdateHandler: Remote player ${data.id}: ${remotePlayer ? 'found' : 'not found'}`);
         if (remotePlayer) {
             remotePlayer.updatePosition(data.x, data.y);
         }

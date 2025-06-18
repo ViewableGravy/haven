@@ -1,7 +1,7 @@
 import { Container, Rectangle, RenderTexture, Sprite, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
 import type { Game } from "../../utilities/game/game";
-import { logger } from "../../utilities/logger";
+import { Logger } from "../../utilities/logger";
 import { Position } from "../../utilities/position";
 import { globalRenderTexturePool } from "./renderTexturePool";
 
@@ -40,7 +40,6 @@ export class Chunk {
     this.container.zIndex = 0;
     this.container.sortableChildren = true;
     
-    logger.log(`Chunk (${chunkX}, ${chunkY}): Container positioned at world coordinates (${worldX}, ${worldY}), size: ${size}x${size}`);
   }
 
   /**
@@ -142,8 +141,6 @@ export class Chunk {
         
         // Return the render texture to the pool
         globalRenderTexturePool.returnTexture(renderTexture);
-        
-        logger.log("Chunk: Returned RenderTexture to pool during destruction");
       }
     });
   }

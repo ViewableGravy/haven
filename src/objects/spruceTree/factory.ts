@@ -1,7 +1,7 @@
 /***** TYPE DEFINITIONS *****/
+import { createFactory } from "../../utilities/createFactory";
 import type { Game } from "../../utilities/game/game";
 import { infographicsRegistry } from "../../utilities/infographics";
-import { entitySyncRegistry } from "../../utilities/multiplayer/entitySyncRegistry";
 import type { Position } from "../../utilities/position";
 import { BaseSpruceTree } from "./base";
 import { createSpruceTreeInfographicNode } from "./info";
@@ -9,6 +9,7 @@ import { createSpruceTreeInfographicNode } from "./info";
 /***** FACTORY FUNCTION *****/
 export type SpruceTree = BaseSpruceTree;
 
+/***** FACTORY START *****/
 export function createStandardSpruceTree(game: Game, position: Position): SpruceTree {
   const spruceTree = new BaseSpruceTree(game, position);
 
@@ -27,17 +28,22 @@ export function createStandardSpruceTree(game: Game, position: Position): Spruce
   return spruceTree;
 }
 
+/***** UNIFIED FACTORY *****/
+export const spruceTreeFactory = createFactory({
+  factoryFn: createStandardSpruceTree,
+  network: {
+    syncTraits: ['position', 'placeable'],
+    syncFrequency: 'batched',
+    priority: 'normal',
+    persistent: true
+  }
+});
+
 /***** INFOGRAPHIC REGISTRATION *****/
-// Register the spruce tree infographic when this module loads
 infographicsRegistry.register("spruce-tree", (entity: SpruceTree) => ({
   name: "Spruce Tree",
   component: createSpruceTreeInfographicNode(entity),
-  creatorFunction: createStandardSpruceTree
+  createNetworked: spruceTreeFactory.createNetworked,
+  previewCreatorFunction: createStandardSpruceTree
 }));
 
-/***** ENTITY SYNC REGISTRATION *****/
-// Register the spruce tree entity sync creator
-entitySyncRegistry.register("spruce-tree", {
-  name: "Spruce Tree",
-  creatorFunction: createStandardSpruceTree
-});

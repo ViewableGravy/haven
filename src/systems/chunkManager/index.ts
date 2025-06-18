@@ -1,11 +1,9 @@
 import { Container, Graphics, Sprite, type ContainerChild } from "pixi.js";
 import invariant from "tiny-invariant";
 import type { GameObject } from "../../objects/base";
-import { ContainerTrait } from "../../objects/traits/container";
 import type { LoadChunkEvent } from "../../server/types/events/load_chunk";
 import { EventEmitter } from "../../utilities/eventEmitter";
 import type { Game } from "../../utilities/game/game";
-import { logger } from "../../utilities/logger";
 import { createChunkKey, type ChunkKey } from "../../utilities/tagged";
 import { Chunk } from "./chunk";
 import { ChunkRegistry } from "./registry";
@@ -94,14 +92,18 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
    * Unloads and removes a chunk from the game world
    * This destroys the chunk, removes it from the container, and cleans up associated entities
    * @param chunkKey - The unique identifier for the chunk to unload
-   */
+   */  
+  
   public unloadChunk(chunkKey: ChunkKey): void {
     const chunk = this.chunkRegistry.getChunk(chunkKey);
     if (chunk) {
       // Notify EntitySyncManager before cleanup so it can remove entity references
       this.game.controllers.multiplayer?.entitySync?.handleChunkUnload?.(chunkKey);
       
-      this.container.removeChild(chunk.getContainer());
+      // Remove from layer system
+      const layerManager = this.game.layerManager;
+      layerManager.removeFromLayer(chunk.getContainer());
+      
       chunk.destroy();
       this.chunkRegistry.removeChunk(chunkKey);
       this.game.entityManager.removeEntitiesForChunk(chunkKey);
@@ -126,32 +128,19 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
   ): void {
     // Get chunk position for debugging
     const chunkContainer = chunk.getContainer();
-    const worldPosition = chunk.getGlobalPosition();
-    
-    logger.log(`ChunkManager: Registering chunk ${chunkKey}`);
-    logger.log(`  - Container position: (${chunkContainer.x}, ${chunkContainer.y})`);
-    logger.log(`  - World position: (${worldPosition.x}, ${worldPosition.y})`);
-    logger.log(`  - Container size: ${chunkContainer.width}x${chunkContainer.height}`);
-    
-    // Atomically register chunk and its entities
+      // Register chunk (terrain only) - add to background layer
     this.chunkRegistry.addChunk(chunkKey, chunk);
-    this.container.addChild(chunkContainer);
+    const layerManager = this.game.layerManager;
+    layerManager.addToLayer(chunkContainer, 'background');
     
-    logger.log(`  - Added to world container (total children: ${this.container.children.length})`);
-    logger.log(`  - World container bounds: x=${this.container.x}, y=${this.container.y}, w=${this.container.width}, h=${this.container.height}`);
-    
-    // Add entities to the game
+    // Entities are now handled by EntityManager and placed on main stage
+    // Just add them to entity tracking without adding to chunk containers
     for (const entity of entities) {
-      if (ContainerTrait.is(entity)) {
-        chunk.addChild(entity.getTrait('container').container);
-      }
       this.game.entityManager.addEntity(entity);
     }
     
-    // Register entities for this chunk
+    // Register entities for this chunk (for cleanup tracking)
     this.game.entityManager.setEntitiesForChunk(chunkKey, new Set(entities));
-    
-    logger.log(`ChunkManager: Successfully registered chunk ${chunkKey} with ${entities.length} entities`);
   }
 
   public createChunkFromTiles(
@@ -159,13 +148,9 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     chunkY: number,
     tiles: Array<LoadChunkEvent.Tile>
   ): Chunk {
-    logger.log(`ChunkManager: Creating chunk (${chunkX}, ${chunkY}) from ${tiles.length} tiles`);
     
     // Create chunk instance
     const chunk = new Chunk(this.game, chunkX, chunkY);
-    
-    logger.log(`ChunkManager: Chunk container created at position (${chunk.getContainer().x}, ${chunk.getContainer().y})`);
-    logger.log(`ChunkManager: Chunk size should be ${this.game.consts.chunkAbsolute}x${this.game.consts.chunkAbsolute} pixels`);
     
     // Generate background texture efficiently
     const backgroundTexture = this.chunkTextureBuilder.createChunkBackgroundTexture(tiles);
@@ -179,7 +164,6 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     // Add background sprite to chunk
     chunk.addChild(backgroundSprite);
     
-    logger.log(`ChunkManager: Created optimized background texture for chunk (${chunkX}, ${chunkY})`);
     
     // Create debug border (inset by 1px to avoid overlap with adjacent chunks)
     const debugBorder = new Graphics();
@@ -188,8 +172,6 @@ export class ChunkManager extends EventEmitter<ChunkLoadedEvent> {
     debugBorder.zIndex = 100; // Above background (-1) but below entities
     chunk.addChild(debugBorder);
     
-    logger.log(`ChunkManager: Added inset debug border to chunk (${chunkX}, ${chunkY})`);
-    logger.log(`ChunkManager: Chunk (${chunkX}, ${chunkY}) creation complete`);
     
     return chunk;
   }

@@ -37,9 +37,9 @@ export class AssemblerSprite {
   public static atlas = {
     frames: {
       "assembling-machine-1": {
-        frame: { x: 0, y: 0, w: 220, h: 220 },
-        sourceSize: { w: 220, h: 220 },
-        spriteSourceSize: { x: 0, y: 0, w: 220, h: 220 },
+        frame: { x: 0, y: 0, w: 200, h: 200 },
+        sourceSize: { w: 180, h: 180 },
+        spriteSourceSize: { x: -20, y: -25, w: 200, h: 200 },
       }
     },
     meta: {

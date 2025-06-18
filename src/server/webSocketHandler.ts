@@ -1,6 +1,6 @@
 /***** TYPE DEFINITIONS *****/
 import { v4 as uuidv4 } from 'uuid';
-import { logger } from "../utilities/logger";
+import { Logger } from "../utilities/logger";
 import type { BunMultiplayerServer } from './bunServer';
 import type { BunWebSocket, EntityData, Player } from './types';
 
@@ -25,7 +25,6 @@ export class WebSocketHandler {
       visibleChunks: new Set<string>()
     };
 
-    logger.log(`Player ${playerId} connected at (${player.x}, ${player.y})`);
 
     this.server.addPlayer(player);
 
@@ -61,7 +60,7 @@ export class WebSocketHandler {
     const player = this.server.getPlayer(playerId);
     
     if (!player) {
-      logger.error(`Received message from unknown player: ${playerId}`);
+      Logger.error(`Received message from unknown player: ${playerId}`);
       return;
     }
 
@@ -69,7 +68,7 @@ export class WebSocketHandler {
       const data = JSON.parse(message.toString()) as any; // Use any for now, could be any server event
       this.handlePlayerMessage(player, data);
     } catch (error) {
-      logger.error(`Failed to parse message from player ${playerId}:`, error);
+      Logger.error(`Failed to parse message from player ${playerId}:`, error);
     }
   };
 
@@ -78,7 +77,6 @@ export class WebSocketHandler {
     const player = this.server.getPlayer(playerId);
 
     if (player) {
-      logger.log(`Player ${playerId} disconnected`);
       this.server.removePlayer(playerId);
 
       // Broadcast player leave to all other players
@@ -96,18 +94,20 @@ export class WebSocketHandler {
 
   /***** MESSAGE HANDLING *****/
   private handlePlayerMessage = (player: Player, message: any): void => {
+    // Extract requestId if present for async responses
+    const requestId = message.requestId;
+    
     switch (message.type) {
       case 'position_update':
         this.handlePositionUpdate(player.id, message.data);
         break;
       case 'entity_placed':
-        this.handleEntityPlace(player.id, message.data);
+        this.handleEntityPlace(player.id, message.data, requestId);
         break;
       case 'entity_remove':
-        this.handleEntityRemove(player.id, message.data);
+        this.handleEntityRemove(player.id, message.data, requestId);
         break;
       default:
-        logger.log(`Unknown message type: ${message.type}`);
     }
   };
 
@@ -121,7 +121,7 @@ export class WebSocketHandler {
     y: number;
     chunkX: number;
     chunkY: number;
-  }): void => {
+  }, requestId?: string): void => {
     const entityId = uuidv4();
     const entityData: EntityData = {
       id: entityId,
@@ -134,9 +134,27 @@ export class WebSocketHandler {
     };
 
     this.server.placeEntity(entityData);
+    
+    // Send async response if requestId is provided
+    if (requestId) {
+      this.server.sendToPlayer(playerId, {
+        type: 'entity_placed',
+        data: entityData,
+        requestId
+      });
+    }
   };
 
-  private handleEntityRemove = (playerId: string, data: { id: string }): void => {
-    this.server.removeEntity(playerId, data.id);
+  private handleEntityRemove = (playerId: string, data: { id: string }, requestId?: string): void => {
+    const success = this.server.removeEntity(playerId, data.id);
+    
+    // Send async response if requestId is provided
+    if (requestId) {
+      this.server.sendToPlayer(playerId, {
+        type: 'entity_removed',
+        data: { success },
+        requestId
+      });
+    }
   };
 }

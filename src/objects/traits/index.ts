@@ -1,3 +1,4 @@
+import { NetworkTrait } from "objects/traits/network";
 import invariant from "tiny-invariant";
 import type { TraitNames, Traits } from "./types";
 
@@ -23,11 +24,22 @@ export class Traitable {
     this.traits[traitName] = traitInstance;
   }
 
-  protected cleanupTraits = (): void => {
+  public hasTrait = <T extends TraitNames>(traitName: T): boolean => {
+    return traitName in this.traits;  
+  }
+
+  protected cleanupTraits = (notifyServer: boolean = false): void => {
     for (const trait of Object.values(this.traits)) {
-      if (trait && "destroy" in trait && typeof trait.destroy === 'function') {
+      if ("destroy" in trait && typeof trait?.destroy === 'function') {
         try {
-          trait.destroy();
+          switch (true) {
+            case trait instanceof NetworkTrait:
+              trait.destroy(notifyServer);
+              break;
+            default:
+              trait.destroy()
+              break;
+          }
         } catch (error) {
           console.error(`Error destroying trait on ${this.constructor.name}:`, error);
         }

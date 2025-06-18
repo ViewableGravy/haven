@@ -1,6 +1,7 @@
 /***** TYPE DEFINITIONS *****/
 import type { EntityData } from "../../server/types";
 import type { Game } from "../game/game";
+import { Logger } from "../logger";
 import type { Player } from "../player";
 import { MultiplayerClient, type RemotePlayer as RemotePlayerData } from "./client";
 import { EntitySyncManager } from "./entitySync";
@@ -87,7 +88,12 @@ export class MultiplayerManager {
 
     // Entity synchronization events
     this.client.on('entity_placed', (data: EntityData) => {
-      this.entityPlacedHandler.handleEvent(data);
+      const result = this.entityPlacedHandler.handleEvent(data);
+      if (result instanceof Promise) {
+        result.catch((error: Error) => {
+          console.error('Failed to handle entity_placed event:', error);
+        });
+      }
     });
 
     this.client.on('entity_removed', (data: { id: string }) => {
@@ -95,11 +101,21 @@ export class MultiplayerManager {
     });
 
     this.client.on('entities_list', (data: { entities: EntityData[] }) => {
-      this.entitiesListHandler.handleEvent(data);
+      const result = this.entitiesListHandler.handleEvent(data);
+      if (result instanceof Promise) {
+        result.catch((error: Error) => {
+          console.error('Failed to handle entities_list event:', error);
+        });
+      }
     });
 
     this.client.on('load_chunk', (data) => {
-      this.remoteChunkLoadHandler.handleEvent(data);
+      const result = this.remoteChunkLoadHandler.handleEvent(data);
+      if (result instanceof Promise) {
+        result.catch((error: Error) => {
+          console.error('Failed to handle load_chunk event:', error);
+        });
+      }
     });
   }
 

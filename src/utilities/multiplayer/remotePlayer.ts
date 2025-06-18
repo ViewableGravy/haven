@@ -75,14 +75,12 @@ export class RemotePlayer {
       if (this.sprite) {
         this.sprite.x = x;
         this.sprite.y = y;
-      }
-    });
-
-    // Add to world container
-    this.game.world.addChild(this.sprite);
+      }    
+    }); 
     
-    // Ensure world container sorts children by z-index
-    this.game.world.sortableChildren = true;
+    // Add to entity layer for proper depth sorting
+    const layerManager = this.game.layerManager;
+    layerManager.addToLayer(this.sprite, 'entity');
   }
 
   /***** POSITION UPDATES *****/
@@ -197,10 +195,11 @@ export class RemotePlayer {
       this.positionUnsubscribe();
       this.positionUnsubscribe = null;
     }
-    
-    // Clean up sprite
-    if (this.sprite) {
-      this.game.world.removeChild(this.sprite);
+      // Clean up sprite
+    if (this.sprite) {      // Remove from layer system
+      const layerManager = this.game.layerManager;
+      layerManager.removeFromLayer(this.sprite);
+      
       this.sprite.destroy();
       this.sprite = null;
     }

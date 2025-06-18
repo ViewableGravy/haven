@@ -37,7 +37,7 @@ export class ItemTrait implements InventoryNamespace.Item {
 
   /***** ITEM FUNCTIONALITY *****/
   public use(): void {
-    console.log(`Used item: ${this.name}`);
+    console.log(`Using item: ${this.name}`);
   }
 
   public canStackWith(otherItem: InventoryNamespace.Item): boolean {

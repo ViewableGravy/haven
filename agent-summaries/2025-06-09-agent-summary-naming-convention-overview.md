@@ -16,7 +16,7 @@ The goal is to move all files to the root `agent-summaries/` directory and renam
 3. `server/arrow-functions-refactor-overview.md` → `2025-05-30-arrow-functions-refactor-overview.md`
 4. `server/BUN_SERVER_MIGRATION.md` → `2025-05-30-bun-server-migration-overview.md`
 5. `server-sent-chunks/chunk-performance-optimization-overview.md` → `2025-05-29-chunk-performance-optimization-overview.md`
-6. `server-sent-chunks/logger-implementation-overview.md` → `2025-05-29-logger-implementation-overview.md`
+6. `server-sent-chunks/Logger-implementation-overview.md` → `2025-05-29-Logger-implementation-overview.md`
 7. `server-sent-chunks/SERVER_CHUNK_SYSTEM.md` → `2025-05-30-server-chunk-system-overview.md`
 8. `server-sent-chunks/spruce-tree-entity-system-overview.md` → `2025-06-03-spruce-tree-entity-system-overview.md`
 9. `server-sent-chunks/entity-persistence-bug-overview.md` → `2025-06-03-entity-persistence-bug-overview.md`
@@ -52,7 +52,7 @@ agent-summaries/
 After:
 agent-summaries/
 ├── 2025-05-29-chunk-performance-optimization-overview.md
-├── 2025-05-29-logger-implementation-overview.md
+├── 2025-05-29-Logger-implementation-overview.md
 ├── 2025-05-30-arrow-functions-refactor-overview.md
 ├── 2025-05-30-bun-migration-overview.md
 ├── 2025-05-30-bun-server-migration-overview.md

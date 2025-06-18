@@ -16,12 +16,14 @@ interface EntityPlacementEvent {
 }
 
 type EntityPlacementListener = (event: EntityPlacementEvent) => void;
+type EntityDestroyCallback = (notifyServer: boolean) => void;
 
 /***** ENTITY MANAGER *****/
 export class EntityManager {
   private entities: Set<GameObject> = new Set();
   private entitiesByChunk: Map<ChunkKey, Set<GameObject>> = new Map();
   private placementListeners: Set<EntityPlacementListener> = new Set();
+  private destroyCallbacks: Map<GameObject, Set<EntityDestroyCallback>> = new Map();
   private game: Game;
 
   constructor(game: Game) {
@@ -31,21 +33,69 @@ export class EntityManager {
   /***** ENTITY TRACKING *****/
   public addEntity(entity: GameObject): void {
     this.entities.add(entity);
-  }
-
-  public removeEntity(entity: GameObject): void {
-    // Clean up entity traits before removing from tracking
+  }  
+  
+  public removeEntity(entity: GameObject, notifyServer: boolean = true): void {
+    // Call any registered destroy callbacks first
+    this.executeDestroyCallbacks(entity, notifyServer);
+      // Remove from layer system before destroying
+   
+    if (entity.hasTrait("container")) {
+      const container = entity.getTrait('container').container;
+      const layerManager = this.game.layerManager;
+      layerManager.removeFromLayer(container);
+    }
+    
+    // Clean up entity traits after removing from display
+    // Pass notifyServer flag to entity destroy method
     try {
-      entity.destroy();
+      if (entity.destroy) {
+        entity.destroy(notifyServer);
+      }
     } catch (error) {
       console.error('Error destroying entity:', error);
     }
     
     this.entities.delete(entity);
+    
+    // Clean up destroy callback references
+    this.destroyCallbacks.delete(entity);
   }
 
   public getEntities(): Set<GameObject> {
-    return this.entities;
+    return new Set(this.entities);
+  }
+
+  /***** DESTROY CALLBACK MANAGEMENT *****/
+  public onEntityDestroy(entity: GameObject, callback: EntityDestroyCallback): void {
+    if (!this.destroyCallbacks.has(entity)) {
+      this.destroyCallbacks.set(entity, new Set());
+    }
+    this.destroyCallbacks.get(entity)!.add(callback);
+  }
+
+  public offEntityDestroy(entity: GameObject, callback: EntityDestroyCallback): void {
+    const callbacks = this.destroyCallbacks.get(entity);
+    if (callbacks) {
+      callbacks.delete(callback);
+      if (callbacks.size === 0) {
+        this.destroyCallbacks.delete(entity);
+      }
+    }
+  }
+
+  private executeDestroyCallbacks(entity: GameObject, notifyServer: boolean): void {
+    const callbacks = this.destroyCallbacks.get(entity);
+    if (callbacks) {
+      for (const callback of callbacks) {
+        // Execute each callback, passing the notifyServer flag
+        try {
+          callback(notifyServer);
+        } catch (error) {
+          console.error('Error executing destroy callback:', error);
+        }
+      }
+    }
   }
 
   /***** CHUNK-BASED ENTITY MANAGEMENT *****/
@@ -56,12 +106,12 @@ export class EntityManager {
   public getEntitiesForChunk(chunkKey: ChunkKey): Set<GameObject> | undefined {
     return this.entitiesByChunk.get(chunkKey);
   }
-
   public removeEntitiesForChunk(chunkKey: ChunkKey): void {
     const entities = this.entitiesByChunk.get(chunkKey);
     if (entities) {
       for (const entity of entities) {
-        this.removeEntity(entity);
+        // Don't notify server when removing entities due to chunk unloading
+        this.removeEntity(entity, false);
       }
     }
     
@@ -75,9 +125,6 @@ export class EntityManager {
       // Store global position before conversion
       const globalPosition = { x: globalX, y: globalY };
 
-      // Get appropriate chunk
-      const chunk = this.game.controllers.chunkManager.getChunk(globalX, globalY);
-
       // Update entity state with global coordinates
       GhostableTrait.setGhostMode(entity, false);
       entity.getTrait('position').position.position = {
@@ -86,22 +133,30 @@ export class EntityManager {
         type: "global"
       };
 
-      // Convert global position to local chunk coordinates for PIXI container positioning
-      const { x, y } = chunk.toLocalPosition(entity.getTrait('position').position);
-      entity.getTrait('container').container.x = x;
-      entity.getTrait('container').container.y = y;
-
-      // Place entity in chunk and add to tracking
-      chunk.addChild(entity.getTrait('container').container);
+      // Place entity directly on main entity stage with global coordinates
+      const container = entity.getTrait('container').container;
+      container.x = globalX;
+      container.y = globalY;      // Add to entity layer for proper depth sorting
+      const layerManager = this.game.layerManager;
+      layerManager.addToLayer(container, 'entity');
       this.addEntity(entity);
 
       // Mark as placed
       PlaceableTrait.place(entity);
 
-      // Calculate chunk coordinates for multiplayer
+      // Calculate chunk coordinates for multiplayer tracking
       const chunkSize = this.game.consts.chunkAbsolute;
       const chunkX = Math.floor(globalX / chunkSize);
       const chunkY = Math.floor(globalY / chunkSize);
+
+      // Add entity to chunk tracking (for cleanup purposes)
+      const chunkKey = `${chunkX},${chunkY}` as any;
+      let chunkEntities = this.entitiesByChunk.get(chunkKey);
+      if (!chunkEntities) {
+        chunkEntities = new Set();
+        this.entitiesByChunk.set(chunkKey, chunkEntities);
+      }
+      chunkEntities.add(entity);
 
       // Notify placement listeners (including multiplayer)
       const placementEvent: EntityPlacementEvent = {
@@ -151,5 +206,6 @@ export class EntityManager {
     this.entities.clear();
     this.entitiesByChunk.clear();
     this.placementListeners.clear();
+    this.destroyCallbacks.clear();
   }
 }

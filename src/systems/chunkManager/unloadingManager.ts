@@ -1,6 +1,5 @@
 import { GameConstants } from "../../shared/constants";
 import type { Game } from "../../utilities/game/game";
-import { logger } from "../../utilities/logger";
 import type { ChunkKey } from "../../utilities/tagged";
 import type { ChunkManager } from "./index";
 
@@ -50,8 +49,6 @@ export class ChunkUnloadingManager {
     if (initialPosition.x !== undefined && initialPosition.y !== undefined) {
       this.handlePlayerPositionChange(initialPosition.x, initialPosition.y);
     }
-
-    logger.log('ChunkUnloadingManager: Initialized and monitoring player position');
   }
 
   /***** POSITION MONITORING *****/
@@ -77,9 +74,7 @@ export class ChunkUnloadingManager {
       this.performChunkUnloading(chunkX, chunkY);
       
       if (previousChunk) {
-        logger.log(`ChunkUnloadingManager: Player moved from chunk (${previousChunk.chunkX}, ${previousChunk.chunkY}) to (${chunkX}, ${chunkY})`);
       } else {
-        logger.log(`ChunkUnloadingManager: Initial player chunk position set to (${chunkX}, ${chunkY})`);
       }
     }
   }
@@ -148,6 +143,5 @@ export class ChunkUnloadingManager {
     }
     
     this.currentPlayerChunk = null;
-    logger.log('ChunkUnloadingManager: Destroyed');
   }
 }

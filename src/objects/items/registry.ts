@@ -18,8 +18,6 @@ class ItemConfigRegistry {
       this.registerConfig(duckConfig);
       this.registerConfig(fishingRodConfig);
       this.registerConfig(largeBoxConfig);
-
-      console.log(`Loaded ${this.configs.size} item configurations`);
     } catch (error) {
       console.error('Failed to load item configurations:', error);
       throw error;

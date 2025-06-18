@@ -1,14 +1,19 @@
 /***** TYPE DEFINITIONS *****/
 import invariant from "tiny-invariant";
+import { WorldObjects } from "utilities/world/worldObjects";
 import type { GameObject } from "../../objects/base";
 import { ContainerTrait } from "../../objects/traits/container";
 import { GhostableTrait } from "../../objects/traits/ghostable";
 import { PlaceableTrait } from "../../objects/traits/placeable";
 import { TransformTrait } from "../../objects/traits/transform";
 import type { EntityData } from "../../server/types";
-import type { Chunk } from "../../systems/chunkManager/chunk";
 import type { Game } from "../game/game";
-import { entitySyncRegistry } from "./entitySyncRegistry";
+
+/***** ENTITY TYPE MAPPING *****/
+const ENTITY_TYPE_MAP = {
+  "assembler": "assembler",
+  "spruce-tree": "spruceTree"
+} as const;
 
 /***** ENTITY SYNC MANAGER *****/
 export class EntitySyncManager {
@@ -26,44 +31,14 @@ export class EntitySyncManager {
     if (this.isReady) return;
     
     this.setupChunkLoadListener();
-    this.setupEntityPlacementListener();
     this.isReady = true;
     
     // Process any entities that were queued before initialization
     if (this.queuedEntities.length > 0) {
-      this.processQueuedEntities();
+      this.processQueuedEntities().catch(error => {
+        console.error('Failed to process queued entities:', error);
+      });
     }
-  }
-
-  /***** ENTITY PLACEMENT INTEGRATION *****/
-  private setupEntityPlacementListener(): void {
-    // Listen to local entity placements and notify server
-    this.game.entityManager.onEntityPlacement((event) => {
-      // Only notify server for locally placed entities (not server-generated ones)
-      if (!event.entity.multiplayerId) {
-        this.notifyServerEntityPlaced(
-          event.entity, 
-          event.globalPosition.x, 
-          event.globalPosition.y
-        );
-      }
-    });
-  }
-
-  /***** SERVER NOTIFICATION *****/
-  private notifyServerEntityPlaced(entity: GameObject, worldX: number, worldY: number): void {
-    // Calculate chunk coordinates for server
-    const chunkX = Math.floor(worldX / this.game.consts.chunkAbsolute);
-    const chunkY = Math.floor(worldY / this.game.consts.chunkAbsolute);
-    
-    // Send to server via multiplayer client
-    this.game.controllers.multiplayer?.client.sendEntityPlace?.(
-      entity.getEntityType(),
-      worldX,
-      worldY,
-      chunkX,
-      chunkY
-    );
   }
 
   /**
@@ -77,7 +52,9 @@ export class EntitySyncManager {
 
     // Subscribe to chunk loaded events from the chunk manager
     this.chunkLoadSubscription = this.game.controllers.chunkManager.subscribe(() => {
-      this.processQueuedEntities();
+      this.processQueuedEntities().catch(error => {
+        console.error('Failed to process queued entities on chunk load:', error);
+      });
     });
   }
 
@@ -95,7 +72,8 @@ export class EntitySyncManager {
   }
 
   /***** REMOTE ENTITY HANDLING *****/
-  public handleRemoteEntityPlaced(entityData: EntityData): void {
+  public async handleRemoteEntityPlaced(entityData: EntityData): Promise<void> {
+    
     // Server tells us about entity at world position
     // EntityManager figures out which chunk it belongs to
     
@@ -110,32 +88,33 @@ export class EntitySyncManager {
     if (existingEntity) {
       return;
     }
-
-    // Use registry to create entity
-    const entity = entitySyncRegistry.createEntity(entityData, this.game);
-    if (!entity) return;
-
-    // Try to get the appropriate chunk using global coordinates
-    // If chunk doesn't exist yet, queue this entity for later placement
+    // Use WorldObjects to create entity
+    const entity = await this.createEntityFromServerData(entityData);
+    if (!entity) {
+      console.error('EntitySync: Failed to create entity from server data');
+      return;
+    }
+    // Place entity directly on main stage (no chunk dependency)
     try {
-      const chunk = this.game.controllers.chunkManager.getChunk(entityData.x, entityData.y);
-      this.placeEntityInChunk(entity, entityData, chunk);
-    } catch {
+      this.placeEntityInMainStage(entity, entityData);
+    } catch (error) {
+      console.error('EntitySync: Failed to place entity, queuing for later:', error);
+      // If placement fails, queue for later
       this.queueEntityForLaterPlacement(entityData);
       return;
     }
   }
 
   /**
-   * Actually places an entity in a chunk
+   * Actually places an entity on the main stage with global coordinates
    */
-  private placeEntityInChunk(entity: GameObject, entityData: EntityData, chunk: Chunk): void {
+  private placeEntityInMainStage(entity: GameObject, entityData: EntityData): void {
     // Ensure entity is not in ghost mode (if it supports ghosting)
     GhostableTrait.setGhostMode(entity, false);
 
     // Set the entity's transform position to global coordinates
     invariant(TransformTrait.is(entity), "Entities must have a transform trait to set position");
-    invariant(ContainerTrait.is(entity), "Entities must have a container trait to be placed in a chunk");
+    invariant(ContainerTrait.is(entity), "Entities must have a container trait to be placed");
 
     const { position } = entity.getTrait('position');
     const { container } = entity.getTrait('container');
@@ -146,18 +125,24 @@ export class EntitySyncManager {
       type: "global"
     };
 
-    // Add to chunk and mark as placed
-    const { x, y } = chunk.toLocalPosition(position);
-    container.x = x;
-    container.y = y;
-
-    chunk.addChild(container);
+    // Place entity directly on main stage with global coordinates
+    container.x = entityData.x;
+    container.y = entityData.y;    // Add to entity layer for proper depth sorting
+    const layerManager = this.game.layerManager;
+    layerManager.addToLayer(container, 'entity');
 
     // Mark entity as placed if it has the placeable trait
     PlaceableTrait.place(entity);
 
-    // Add to unified entity manager
-    this.game.entityManager.addEntity(entity);
+    // Check if entity already has NetworkTrait (from new pattern)
+    // If not, add to EntityManager manually (legacy pattern)
+    try {
+      entity.getTrait('network');
+      // Entity has NetworkTrait, it will manage itself
+    } catch {
+      // Entity doesn't have NetworkTrait, add to EntityManager manually
+      this.game.entityManager.addEntity(entity);
+    }
   }
 
   /**
@@ -170,20 +155,30 @@ export class EntitySyncManager {
   /**
    * Try to place any queued entities (called when new chunks load)
    */
-  public processQueuedEntities(): void {
+  public async processQueuedEntities(): Promise<void> {
     if (this.queuedEntities.length === 0) {
       return;
     }
 
     const remainingQueue: EntityData[] = [];
     
-    this.queuedEntities.forEach(entityData => {
+    const entityPromises = this.queuedEntities.map(async (entityData) => {
       try {
         // Try to place the entity again
-        this.handleRemoteEntityPlaced(entityData);
+        await this.handleRemoteEntityPlaced(entityData);
+        return { success: true, entityData };
       } catch {
         // Still can't place it, keep it in queue
-        remainingQueue.push(entityData);
+        return { success: false, entityData };
+      }
+    });
+
+    const results = await Promise.allSettled(entityPromises);
+    
+    // Rebuild queue with failed entities
+    results.forEach((result) => {
+      if (result.status === 'fulfilled' && !result.value.success) {
+        remainingQueue.push(result.value.entityData);
       }
     });
     
@@ -194,17 +189,21 @@ export class EntitySyncManager {
   public handleRemoteEntityRemoved(data: { id: string }): void {
     const entity = this.findEntityById(data.id);
     if (entity) {
-      // Remove from chunk and game
+      // Remove from main entity stage
       if (ContainerTrait.is(entity)) {
-        entity.getTrait('container').container.parent?.removeChild(entity.getTrait('container').container);
+        const container = entity.getTrait('container').container;
+        if (container.parent) {
+          container.parent.removeChild(container);
+        }
       }
 
-      this.game.entityManager.removeEntity(entity);
+      // Don't notify server since this is a server-initiated removal
+      this.game.entityManager.removeEntity(entity, false);
     }
   }
 
   /***** ENTITY SYNC *****/
-  public syncExistingEntities(entities: EntityData[]): void {
+  public async syncExistingEntities(entities: EntityData[]): Promise<void> {
     // Clear existing server entities (if any)
     this.clearServerEntities();
 
@@ -215,9 +214,11 @@ export class EntitySyncManager {
     }
 
     // Add all entities from server
-    entities.forEach(entityData => {
-      this.handleRemoteEntityPlaced(entityData);
+    const entityPromises = entities.map(async (entityData) => {
+      await this.handleRemoteEntityPlaced(entityData);
     });
+    
+    await Promise.allSettled(entityPromises);
   }
 
   /***** CLEANUP *****/
@@ -291,5 +292,35 @@ export class EntitySyncManager {
       }
     }
     return count;
+  }  /**
+   * Creates an entity from server data using the WorldObjects system
+   */
+  private async createEntityFromServerData(entityData: EntityData): Promise<GameObject | null> {
+    // Map server entity type to WorldObjects key
+    const worldObjectKey = ENTITY_TYPE_MAP[entityData.type as keyof typeof ENTITY_TYPE_MAP];
+    if (!worldObjectKey) {
+      console.warn(`No WorldObjects mapping found for entity type: ${entityData.type}`);
+      return null;
+    }
+
+    const factory = WorldObjects[worldObjectKey];
+    if (!factory) {
+      console.warn(`No factory found for WorldObjects key: ${worldObjectKey}`);
+      return null;
+    }try {
+      // Create entity using the unified factory system      // Use createFromServer since this entity originated from the server
+      const entity = factory.createFromServer(this.game, {
+        x: entityData.x,
+        y: entityData.y
+      });
+
+      // Set multiplayer properties for remote entity
+      entity.setAsRemoteEntity(entityData.id, entityData.placedBy);
+      
+      return entity;
+    } catch (error) {
+      console.error(`Failed to create entity of type ${entityData.type}:`, error);
+      return null;
+    }
   }
 }

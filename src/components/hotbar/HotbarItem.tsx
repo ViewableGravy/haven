@@ -36,16 +36,18 @@ export const HotbarItem: React.FC<HotbarItemProps> = ({ index, item, children })
     // Clean up any existing selection
     if (selectionState.cleanup) {
       selectionState.cleanup();
-    }
-
-    // Create entity using the item's creator function
-    const followEntity = item.creatorFunction(game, new Position(0, 0));
+    }    
+    
+    // Create entity using the item's preview creator function (for ghost mode)
+    const previewCreator = item.previewCreatorFunction || item.creatorFunction;
+    const followEntity = previewCreator(game, new Position(0, 0));
 
     // Set ghost mode using the trait
-    GhostableTrait.setGhostMode(followEntity, true);
-
+    GhostableTrait.setGhostMode(followEntity, true);    
+    
     // Create mouse follower and assign cleanup function to ref
-    const mouseFollower = new MouseFollower(game, followEntity);
+    // Pass the actual creator function so it can create networked entities on placement
+    const mouseFollower = new MouseFollower(game, followEntity, item.creatorFunction);
     const cleanup = mouseFollower.start();
     ref.current = cleanup;
 

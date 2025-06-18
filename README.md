@@ -75,6 +75,117 @@ No more manual server restarts during development! 🎉
 - `agent-summaries/` - Historical code change documents (performed with agents instead of manual changes)
 - `instructions.md` - Project coding standards and conventions
 
+## 📚 System Documentation
+
+This section provides comprehensive documentation for all major systems in the Haven game engine. Each document includes architecture details, usage examples, and implementation guides.
+
+### Core Systems
+
+#### 🏭 [Entity Factory System](docs/EntityFactorySystem.md)
+Unified entity creation with consistent APIs across all entity types. Handles both local (client-only) and networked (server-synchronized) entity creation.
+
+**Key Features:**
+- Consistent factory API for all entities
+- Server-first networking with automatic synchronization
+- Type-safe entity creation with full TypeScript support
+- Easy conversion between local and networked entities
+
+**Usage:**
+```typescript
+// Create networked entities
+const tree = await WorldObjects.spruceTree.createNetworked(game, { x: 100, y: 200 });
+
+// Create local entities
+const preview = WorldObjects.assembler.createLocal(game, { x: 300, y: 400 });
+
+// Convert local to networked
+const converted = await WorldObjects.spruceTree.createNetworkedFromLocal(preview, game);
+```
+
+#### 🔧 [Entity Trait System](docs/EntityTraitSystem.md)
+Composition-based architecture that allows entities to gain functionality through modular traits. Replaces inheritance with flexible composition patterns.
+
+**Key Features:**
+- Modular trait system (Transform, Container, Network, Placeable, Ghostable)
+- Type-safe trait access with static type guards
+- Automatic trait synchronization across the network
+- Easy trait communication and dependencies
+
+**Usage:**
+```typescript
+// Add traits to entities
+entity.addTrait('position', new TransformTrait(entity, game, x, y, 'global'));
+entity.addTrait('container', new ContainerTrait(entity, transformTrait));
+
+// Access traits safely
+if (TransformTrait.is(entity)) {
+  const position = entity.getTrait('position').position.position;
+}
+```
+
+#### 🌐 [Multiplayer Networking System](docs/MultiplayerNetworking.md)
+Server-authoritative multiplayer with automatic synchronization, entity management, and real-time communication between clients and server.
+
+**Key Features:**
+- Server-first architecture with authoritative game state
+- Automatic trait synchronization with configurable frequency
+- Promise-based async requests with timeout handling
+- Real-time WebSocket communication with message routing
+
+**Usage:**
+```typescript
+// Async entity creation with server validation
+const entity = await WorldObjects.spruceTree.createNetworked(game, { x, y });
+
+// Automatic trait synchronization
+entity.getTrait('position').setPosition(newX, newY);
+// ↑ Automatically syncs to server and other clients
+```
+
+#### 🌍 [World and Chunk System](docs/WorldChunkSystem.md)
+Procedurally generated infinite world divided into manageable chunks. Handles terrain generation, dynamic loading, and performance optimization.
+
+**Key Features:**
+- Infinite procedural world generation using Perlin noise
+- Dynamic chunk loading/unloading based on player proximity
+- Entity-chunk decoupling for simplified management
+- Biome system with different terrain types and spawning rules
+
+**Usage:**
+```typescript
+// Automatic chunk loading around player
+worldManager.setPlayerPosition(playerX, playerY);
+
+// Entities positioned independently of chunks
+const entity = WorldObjects.spruceTree.createLocal(game, { x: 1500, y: 800 });
+// ↑ Automatically positioned correctly regardless of chunk boundaries
+```
+
+### Development Guides
+
+Each documentation file includes:
+- **Architecture Overview**: High-level system design and concepts
+- **Implementation Details**: Code examples and API references  
+- **Usage Patterns**: Common use cases and best practices
+- **Integration Guide**: How systems work together
+- **Performance Considerations**: Optimization tips and patterns
+- **Error Handling**: Common issues and solutions
+
+### Getting Started
+
+1. **New to the codebase?** Start with [Entity Factory System](docs/EntityFactorySystem.md) for entity creation
+2. **Want to understand entities?** Read [Entity Trait System](docs/EntityTraitSystem.md) for composition patterns
+3. **Building multiplayer features?** Check [Multiplayer Networking](docs/MultiplayerNetworking.md) for sync patterns
+4. **Working on world generation?** See [World and Chunk System](docs/WorldChunkSystem.md) for terrain systems
+
+### Contributing
+
+When adding new systems or modifying existing ones, please:
+- Update the relevant documentation files
+- Include code examples in your documentation
+- Follow the established architectural patterns
+- Add your system to this README's documentation index
+
 ## Files Modified (Key Components)
 
 ### Core Application

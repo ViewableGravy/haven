@@ -5,7 +5,6 @@ import { infographicStore } from "../../components/infographic/store";
 import { GameConstants } from "../../shared/constants";
 import { SpruceTreeSprite } from "../../spriteSheets/spruceTree";
 import type { Game } from "../../utilities/game/game";
-import { infographicsRegistry } from "../../utilities/infographics";
 import type { Position } from "../../utilities/position";
 import { GameObject } from "../base";
 import { ContainerTrait } from "../traits/container";
@@ -36,12 +35,12 @@ export class BaseSpruceTree extends GameObject {
     }));
     this.addTrait('contextMenu', new ContextMenuTrait(this, [
       {
+        action: () => console.log("Harvesting spruce tree... for twig"),
         label: "Twig",
-        action: () => console.log("Collected twig from spruce tree")
       },
       {
+        action: () => console.log("Harvesting spruce tree... for branch"),
         label: "Branch", 
-        action: () => console.log("Collected branch from spruce tree")
       }
     ]));
   }
@@ -78,7 +77,7 @@ export class BaseSpruceTree extends GameObject {
     return sprite;
   }
 
-  public setupInteractivity(): void {
+  public setupInteractivity = (): void => {
     this.spruceTreeSprite.addEventListener("mouseover", () => {
       // Only show selection if not in ghost mode
       if (this.getTrait('ghostable').ghostMode) return;
@@ -88,29 +87,17 @@ export class BaseSpruceTree extends GameObject {
       this.selectionSprite.eventMode = "none";
 
       // Get spruce tree infographic from the registry, passing this entity instance
-      const spruceTreeInfographic = infographicsRegistry.get("spruce-tree", this);
-
-      if (spruceTreeInfographic) {
-        infographicStore.setState(() => ({
-          active: true,
-          component: spruceTreeInfographic.component,
-          item: spruceTreeInfographic.creatorFunction ? {
-            name: spruceTreeInfographic.name,
-            node: spruceTreeInfographic.name,
-            creatorFunction: spruceTreeInfographic.creatorFunction
-          } : undefined
-        }));
-      }
+      infographicStore.setFromRegistry("spruce-tree", this);
     });
 
     this.getTrait("container").container.addEventListener("mouseout", () => {
       this.selectionSprite.renderable = false;
 
-      infographicStore.setState(() => ({ active: false }));
+      infographicStore.setInactive();
     });
   }
 
-  public destroy(): void {
+  public destroy(notifyServer: boolean = false): void {
     // Clean up spruce tree specific resources before calling super.destroy()
     if (ContainerTrait.is(this)) {
       const container = this.getTrait('container').container;
@@ -122,6 +109,6 @@ export class BaseSpruceTree extends GameObject {
     this.spruceTreeSprite.removeAllListeners();
     
     // Call the generic GameObject destroy to clean up all traits
-    super.destroy();
+    super.destroy(notifyServer);
   }
 }
