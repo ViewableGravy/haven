@@ -35,7 +35,7 @@ export class EntityManager {
     this.entities.add(entity);
   }  
   
-  public removeEntity(entity: GameObject, notifyServer: boolean = false): void {
+  public removeEntity(entity: GameObject, notifyServer: boolean = true): void {
     // Call any registered destroy callbacks first
     this.executeDestroyCallbacks(entity, notifyServer);
     

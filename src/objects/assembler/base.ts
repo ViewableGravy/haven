@@ -68,7 +68,7 @@ export class BaseAssembler extends GameObject {
     });
   }
   
-  public destroy(notifyServer: boolean = true): void {
+  public destroy(notifyServer: boolean = false): void {
     // Call the generic GameObject destroy first to clean up all traits
     super.destroy(notifyServer);
     

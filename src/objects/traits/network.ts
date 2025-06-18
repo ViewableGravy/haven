@@ -110,9 +110,8 @@ export class NetworkTrait {
       this.game.controllers.multiplayer.client.sendEntityRemove?.(multiplayerId);
     }
   }  
-  
-  /***** TRAIT CLEANUP *****/
-  public destroy = (notifyServer: boolean = true): void => {
+    /***** TRAIT CLEANUP *****/
+  public destroy = (notifyServer: boolean = false): void => {
     if (notifyServer) {
       this.notifyServerEntityRemoved();
     }

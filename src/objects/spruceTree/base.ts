@@ -97,7 +97,7 @@ export class BaseSpruceTree extends GameObject {
     });
   }
 
-  public destroy(notifyServer: boolean = true): void {
+  public destroy(notifyServer: boolean = false): void {
     // Clean up spruce tree specific resources before calling super.destroy()
     if (ContainerTrait.is(this)) {
       const container = this.getTrait('container').container;

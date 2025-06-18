@@ -24,7 +24,7 @@ export class Traitable {
     this.traits[traitName] = traitInstance;
   }
 
-  protected cleanupTraits = (notifyServer: boolean = true): void => {
+  protected cleanupTraits = (notifyServer: boolean = false): void => {
     for (const trait of Object.values(this.traits)) {
       if ("destroy" in trait && typeof trait?.destroy === 'function') {
         try {
