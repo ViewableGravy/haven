@@ -1,3 +1,4 @@
+import type { PoweredTrait } from "objects/traits/powered";
 import type { ContainerTrait } from "./container";
 import type { ContextMenuTrait } from './contextMenu';
 import type { GhostableTrait } from './ghostable';
@@ -16,6 +17,7 @@ export type Traits = {
   item: InstanceType<typeof ItemTrait>;
   contextMenu: InstanceType<typeof ContextMenuTrait>;
   network: InstanceType<typeof NetworkTrait>;
+  powered: InstanceType<typeof PoweredTrait>; // Alias for network trait
 }
 
 export type TraitNames = keyof Traits;

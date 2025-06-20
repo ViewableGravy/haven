@@ -14,8 +14,8 @@ export class Traitable {
     const trait = this.traits[traitName];
     invariant(trait, `Trait "${traitName}" not found on ${this.constructor.name}`);
     return trait as Traits[T];
-  }
-
+  }  
+  
   /**
    * Function to add a trait to the entity. This will throw an error if the trait already exists.
    */
@@ -27,7 +27,7 @@ export class Traitable {
   public hasTrait = <T extends TraitNames>(traitName: T): boolean => {
     return traitName in this.traits;  
   }
-
+  
   protected cleanupTraits = (notifyServer: boolean = false): void => {
     for (const trait of Object.values(this.traits)) {
       if ("destroy" in trait && typeof trait?.destroy === 'function') {

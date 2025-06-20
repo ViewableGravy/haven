@@ -7,6 +7,8 @@ import type { Position } from "../position";
 export type RegisteredInfographics = 
   | "spruce-tree"
   | "assembler"
+  | "conveyor-belt"
+  | "power-generator"
 
 export type InfographicDefinition = {
   name: string;

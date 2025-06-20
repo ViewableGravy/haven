@@ -10,10 +10,14 @@ import { SpruceTreeSprite } from "../../spriteSheets/spruceTree";
 import "../../objects/assembler";
 // Import spruce tree factory to ensure infographic registration happens
 import "../../objects/spruceTree/factory";
+// Import power system entities to ensure infographic registration happens
+import "../../objects/conveyorBelt/factory";
+import "../../objects/powerGenerator/factory";
 import { GameConstants } from "../../shared/constants";
 import { DesertSprite } from "../../spriteSheets/desert/desert";
 import { ChunkManager } from "../../systems/chunkManager";
 import { globalRenderTexturePool } from "../../systems/chunkManager/renderTexturePool";
+import { PowerManager } from "../../systems/power";
 import { KeyboardController } from "../keyboardController";
 import { MultiplayerManager } from "../multiplayer/manager";
 import { Player } from "../player";
@@ -61,11 +65,11 @@ export class Game {
   };
 
   // Game state - simplified
-  public readonly state: GameState;
-  // Managers
+  public readonly state: GameState;  // Managers
   public readonly entityManager: EntityManager;
   public readonly worldManager: World;
   public readonly layerManager: LayerManager;
+  public readonly powerManager: PowerManager;
 
   // Controllers
   public controllers: GlobalControllers = {
@@ -82,10 +86,10 @@ export class Game {
       zoom: 1.0,
       minZoom: 0.1,
       maxZoom: 3.0,
-    };
-      this.entityManager = new EntityManager(this);
+    };      this.entityManager = new EntityManager(this);
     this.worldManager = new World(this);
     this.layerManager = new LayerManager(this);
+    this.powerManager = new PowerManager(this);
   }
 
   public initialize = async (el: HTMLElement) => {
@@ -289,12 +293,15 @@ export class Game {
     await RunningSprite.load();
     await SpruceTreeSprite.load();
     await Assets.load(Selection);
-  }
-  private startGameLoop(player: Player) {
+  }  private startGameLoop(player: Player) {
     this.state.app.ticker.add((ticker) => {
       player.handleMovement(this, ticker);
-    // Update entity layer sorting based on y-position
-    this.layerManager.updateEntitySorting();
+      
+      // Update power system every tick
+      this.powerManager.evaluateAllGraphs();
+      
+      // Update entity layer sorting based on y-position
+      this.layerManager.updateEntitySorting();
     });
   }
 
@@ -317,5 +324,22 @@ export class Game {
     this.state.app.destroy(true, { children: true, texture: true });
     
     this.initialized = false;
+  }
+
+  /***** POWER SYSTEM TESTING *****/
+  public createTestPowerNetwork(): void {
+    const centerX = this.state.worldPointer.x;
+    const centerY = this.state.worldPointer.y;
+    
+    console.log(`Creating test power network at (${centerX}, ${centerY})`);
+    const entityIds = this.powerManager.createTestPowerNetwork(this, centerX, centerY);
+    
+    if (entityIds.length > 0) {
+      console.log('Test power network created successfully!');
+      // Log the power system status after a short delay to allow for initialization
+      setTimeout(() => {
+        this.powerManager.logPowerSystemStatus();
+      }, 100);
+    }
   }
 }

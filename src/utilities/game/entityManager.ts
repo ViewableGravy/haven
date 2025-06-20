@@ -29,17 +29,33 @@ export class EntityManager {
   constructor(game: Game) {
     this.game = game;
   }
-
   /***** ENTITY TRACKING *****/
   public addEntity(entity: GameObject): void {
     this.entities.add(entity);
-  }  
-  
-  public removeEntity(entity: GameObject, notifyServer: boolean = true): void {
+    
+    // Register with power system if entity has powered trait
+    if (entity.hasTrait('powered')) {
+      try {
+        this.game.powerManager.registerEntity(entity);
+      } catch (error) {
+        console.error('Failed to register entity with power system:', error);
+      }
+    }
+  }
+    public removeEntity(entity: GameObject, notifyServer: boolean = true): void {
     // Call any registered destroy callbacks first
     this.executeDestroyCallbacks(entity, notifyServer);
-      // Remove from layer system before destroying
-   
+    
+    // Unregister from power system if entity has powered trait
+    if (entity.hasTrait('powered')) {
+      try {
+        this.game.powerManager.unregisterEntity(entity.uid);
+      } catch (error) {
+        console.error('Failed to unregister entity from power system:', error);
+      }
+    }
+    
+    // Remove from layer system before destroying
     if (entity.hasTrait("container")) {
       const container = entity.getTrait('container').container;
       const layerManager = this.game.layerManager;
